@@ -1,0 +1,170 @@
+syntax = "proto3";
+option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen/account";
+
+/*
+  AccountService is used to manage accounts in HD Wallet.
+  It supports generating of addresses, listing unspents and balances for specific account or
+  list of addresses and selecting unspents.
+ */
+service AccountService {
+  // Create creates new account.
+  rpc Create(CreateRequest) returns (CreateReply);
+
+  // Updates existing account.
+  rpc Update(UpdateRequest) returns (UpdateReply);
+
+  // List all accounts
+  rpc List(ListRequest) returns (ListReply);
+
+  // Generates new address for the account.
+  rpc Address(AddressRequest) returns (AddressReply);
+
+  // Returns balance for the account, or specific list of account's addresses.
+  rpc Balance(BalanceRequest) returns (BalanceReply);
+
+  // Return unspents for the account, or specific list of account's addresses
+  rpc Unspents(UnspentsRequest) returns (UnspentsReply);
+
+  /*
+    Selects unspents, to be used in another transaction, for provided target amount and strategy.
+    Selected unspents are locked for predefined amount of time so that race conditions are avoided.
+   */
+  rpc SelectUnspents(SelectUnspentsRequest) returns (SelectUnspentsReply);
+}
+
+message CreateRequest{
+  // Name of the account.
+  string name = 1;
+}
+message CreateReply{
+  // Account index of the derivation path.
+  int64 account_index = 1;
+}
+
+message UpdateRequest{
+  // Id of the account.
+  int64 id = 1;
+  // Name of the account to be updated.
+  string name = 2;
+}
+message UpdateReply{}
+
+message ListRequest{}
+message ListReply{
+  // list of account's
+  repeated AccountInfo accounts = 1;
+}
+message AccountInfo {
+  // account id
+  int64 id = 1;
+  // account name
+  string name = 2;
+  // index of last generated internal address
+  int64 last_internal_index = 3;
+  // index of last generated external address
+  int64 last_external_index = 4;
+}
+
+message AddressRequest{
+  // Id of the account, either id or name needs to be provided.
+  int64 id = 1;
+  // Name of the account, either name or id needs to be provided.
+  string name = 2;
+  // address type.
+  enum Type {
+    P2WPKH = 0;
+    P2TR = 1;
+  }
+  Type type = 3;
+}
+message AddressReply{
+  // Confidential address.
+  string address = 1;
+  // Derivation path of the address.
+  string derivation_path = 2;
+  // Hex value of the output script of the address.
+  string output_script = 3;
+  // Hex value of blinding private key.
+  string blinding_private_key = 4;
+  // Hex value of blinding public key.
+  string blinding_public_key = 5;
+}
+
+message BalanceRequest{
+  // Id of the account, either id or name needs to be provided.
+  int64 id = 1;
+  // Name of the account, either name or id needs to be provided.
+  string name = 2;
+  // Addresses for which balance is to be calculated, if no address is provided accumulative balance is returned.
+  repeated string addresses = 3;
+}
+
+message BalanceInfo {
+  // The balance of the wallet
+  uint64 total_balance = 1;
+  // The confirmed balance of a wallet(with >= 1 confirmations)
+  uint64 confirmed_balance = 2;
+  // The unconfirmed balance of a wallet(with 0 confirmations)
+  uint64 unconfirmed_balance = 3;
+}
+message BalanceReply{
+  // The balance info (total, confirmed, unconfirmed) of the wallet grouped by asset
+  map<string, BalanceInfo> balance = 1;
+}
+
+message UnspentsRequest{
+  // Id of the account, either id or name needs to be provided.
+  int64 id = 1;
+  // Name of the account, either name or id needs to be provided.
+  string name = 2;
+  // Addresses for which balance is to be calculated, if no address is provided all account's unspents are returned.
+  repeated string addresses = 3;
+}
+message UnspentsReply{
+  // Unspents grouped by address
+  map<string, Unspents> unspents = 1;
+}
+message Unspents {
+  // Id of the account
+  int64 id = 1;
+  // Name of the account
+  string name = 2;
+  // list of unspents
+  repeated Unspent unspent = 3;
+}
+message Unspent {
+  // Tx id of the unspent
+  string tx_id = 1;
+  // Output index
+  int64 index = 2;
+  // Asset in bytes or asset_commitment if value is blinded
+  bytes asset = 3;
+  // Value in bytes or value_commitment if value is blinded
+  bytes value = 4;
+  // Script
+  bytes script = 5;
+  // Nonce
+  bytes nonce = 6;
+  // Range proof
+  bytes rangeProof = 7;
+  // Surjection proof
+  bytes surjectionProof = 8;
+}
+
+message SelectUnspentsRequest{
+  // Id of the account, either id or name needs to be provided.
+  int64 id = 1;
+  // Name of the account, either name or id needs to be provided.
+  string name = 2;
+  // Accumulative target amount that is to be selected
+  uint64 target_amount = 3;
+  // Unspents selection algorithm.
+  enum Strategy {
+    RANDOM = 0;
+  }
+  Strategy type = 4;
+}
+message SelectUnspentsReply{
+  // List of unspents
+  repeated Unspent unspent = 1;
+}
