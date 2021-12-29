@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen/wallet";
+option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen";
 
 /*
   WalletService is used to create, open and restore HD Wallet.
@@ -15,23 +15,23 @@ service WalletService {
   */
   rpc Seed(SeedRequest) returns (SeedReply);
 
-  // Create is used to create HD Wallet based on signing, blinding seeds and password
-  rpc Create (CreateRequest) returns (CreateResponse);
+  // CreateWallet is used to create HD Wallet based on signing, blinding seeds and password
+  rpc CreateWallet(CreateWalletRequest) returns (CreateWalletResponse);
 
   /*
-    Open is used to open existing HD Wallet based on password so that daemon can serve
+    Unlock is used to unlock existing HD Wallet based on password so that daemon can serve
     other calls
    */
-  rpc Open (OpenRequest) returns (OpenResponse);
+  rpc Unlock(UnlockRequest) returns (UnlockResponse);
 
   // ChangePassword is used to change password with which HD Wallet is encrypted
-  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
+  rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordResponse);
 
   // Restore is used to restore HD Wallet based on signing and blinding seeds
   rpc Restore (RestoreRequest) returns (RestoreResponse);
 
   // Status is used by other services to check current status of HD Wallet
-  rpc Status(StatusRequest) returns (StatusResponse);
+  rpc Status (StatusRequest) returns (StatusResponse);
 }
 
 message SeedRequest{
@@ -43,7 +43,7 @@ message SeedRequest{
 }
 message SeedReply{}
 
-message CreateRequest{
+message CreateWalletRequest{
   // signing_mnemonic is 24 length phrase used to derive addresses and scripts
   string signing_mnemonic = 1;
 
@@ -53,13 +53,13 @@ message CreateRequest{
   // password is used to encrypt HD Wallet wallet. After creation, password is required to unlock the wallet daemon.
   bytes  password = 3;
 }
-message CreateResponse{}
+message CreateWalletResponse{}
 
-message OpenRequest{
+message UnlockRequest{
   // password is used to decrypt HD Wallet wallet and start wallet daemon.
   bytes  password = 1;
 }
-message OpenResponse{}
+message UnlockResponse{}
 
 message ChangePasswordRequest{
   // current_password should be the current valid passphrase used to unlock wallet daemon.

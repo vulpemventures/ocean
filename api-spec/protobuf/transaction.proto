@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen/transaction";
+option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen";
 
 /*
   TransactionService is used to craft and sign various kind's of transactions.

@@ -1,5 +1,7 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen/notification";
+option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen";
+
+import "types.proto";
 
 /*
   NotificationService is used to notify interested parties about wallet events.
@@ -12,9 +14,9 @@ service NotificationService {
   //**************//
 
   // Notifies about transactions related to the wallet
-  rpc TransactionNotifications (TransactionNotificationsRequest) returns (stream TransactionNotificationsResponse);
+  rpc TransactionNotifications(TransactionNotificationsRequest) returns (stream TransactionNotificationsResponse);
   // Notifies about unspents related to the wallet's account
-  rpc UnspentsNotifications (UnspentsNotificationsRequest) returns (stream UnspentsNotificationsResponse);
+  rpc UnspentsNotifications(UnspentsNotificationsRequest) returns (stream UnspentsNotificationsResponse);
 
   //***************//
   //   WEBHOOKS    //
@@ -60,33 +62,6 @@ message UnspentsNotificationsRequest{
 message UnspentsNotificationsResponse{
     Unspents unspents = 1;
 }
-message Unspents {
-  // Id of the account
-  int64 id = 1;
-  // Name of the account
-  string name = 2;
-  // list of unspents
-  repeated Unspent unspent = 3;
-}
-message Unspent {
-  // Tx id of the unspent
-  string tx_id = 1;
-  // Output index
-  int64 index = 2;
-  // Asset in bytes or asset_commitment if value is blinded
-  bytes asset = 3;
-  // Value in bytes or value_commitment if value is blinded
-  bytes value = 4;
-  // Script
-  bytes script = 5;
-  // Nonce
-  bytes nonce = 6;
-  // Range proof
-  bytes rangeProof = 7;
-  // Surjection proof
-  bytes surjectionProof = 8;
-}
-
 enum EventType {
   // receive notification about transactions
   TRANSACTION = 0;

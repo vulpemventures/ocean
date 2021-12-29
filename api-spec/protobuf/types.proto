@@ -1,0 +1,39 @@
+syntax = "proto3";
+option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen";
+
+message AccountKey{
+  // Id of the account.
+  int64 id = 1;
+  // Name of the account to be updated.
+  string name = 2;
+}
+
+message Unspents {
+  // account key
+  AccountKey account_key = 1;
+  // list of unspents
+  repeated Unspent unspents = 2;
+}
+
+message Unspent {
+  // Tx id of the unspent
+  string tx_id = 1;
+  // Output index
+  int64 index = 2;
+  // Asset
+  bytes asset = 3;
+  // Asset commitment, empty if asset is not confidential
+  bytes asset_commitment = 4;
+  // Value
+  bytes value = 5;
+  // Value commitment, empty if value is not confidential
+  bytes value_commitment = 6;
+  // Script
+  bytes script = 7;
+  // Nonce
+  bytes nonce = 8;
+  // Range proof
+  bytes rangeProof = 9;
+  // Surjection proof
+  bytes surjectionProof = 10;
+}
