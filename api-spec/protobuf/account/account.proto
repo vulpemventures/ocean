@@ -1,7 +1,7 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen";
+option go_package = "github.com/vulpemventures/ocean/api-spec/protobuf/gen/account";
 
-import "types.proto";
+import "api-spec/protobuf/types/types.proto";
 /*
   AccountService is used to manage accounts in HD Wallet.
   It supports generating of addresses, listing unspents and balances for specific account or
@@ -40,6 +40,8 @@ message CreateAccountRequest{
 message CreateAccountReply{
   // Account index of the derivation path.
   int64 account_index = 1;
+  // Xpub for the account.
+  string xpub = 2;
 }
 
 message UpdateAccountRequest{
@@ -47,32 +49,30 @@ message UpdateAccountRequest{
   AccountKey account_key = 1;
   // Name of the account to be updated.
   string name = 2;
+  // Output descriptor template.
+  Template template = 3;
 }
 message UpdateAccountReply{}
 
 message ListAccountRequest{}
 message ListAccountReply{
-  // list of account's
+  // List of account's.
   repeated AccountInfo accounts = 1;
 }
 message AccountInfo {
-  // account key
+  // Account key.
   AccountKey account_key = 1;
-  // index of last generated internal address
+  // Index of last generated internal address.
   int64 last_internal_index = 2;
-  // index of last generated external address
+  // Index of last generated external address.
   int64 last_external_index = 3;
 }
 
 message AddressRequest{
-  // account key
+  // Account key.
   AccountKey account_key = 1;
-  // address type.
-  enum Type {
-    P2WPKH = 0;
-    P2TR = 1;
-  }
-  Type type = 3;
+  // Address output descriptor template.
+  Template template = 2;
 }
 message AddressReply{
   // Confidential address.
@@ -88,7 +88,7 @@ message AddressReply{
 }
 
 message BalanceRequest{
-  // account key
+  // Account key.
   AccountKey account_key = 1;
   // Addresses for which balance is to be calculated, if no address is provided accumulative balance is returned.
   repeated string addresses = 3;
@@ -108,20 +108,20 @@ message BalanceReply{
 }
 
 message UnspentsRequest{
-  // account key
+  // Account key.
   AccountKey account_key = 1;
   // Addresses for which balance is to be calculated, if no address is provided all account's unspents are returned.
   repeated string addresses = 3;
 }
 message UnspentsReply{
-  // Unspents grouped by address
+  // Unspents grouped by address.
   map<string, Unspents> unspents = 1;
 }
 
 message SelectUnspentsRequest{
-  // account key
+  // Account key.
   AccountKey account_key = 1;
-  // Accumulative target amount that is to be selected
+  // Accumulative target amount that is to be selected.
   uint64 target_amount = 3;
   // Unspents selection algorithm.
   enum Strategy {
@@ -131,6 +131,6 @@ message SelectUnspentsRequest{
   Strategy type = 4;
 }
 message SelectUnspentsReply{
-  // List of unspents
+  // List of unspents.
   repeated Unspent unspents = 1;
 }

@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen";
+option go_package = "github.com/vulpemventures/ocean/api-spec/protobuf/gen/types";
 
 message AccountKey{
   // Id of the account.
@@ -16,8 +16,8 @@ message Unspents {
 }
 
 message Unspent {
-  // Tx id of the unspent
-  string tx_id = 1;
+  // Txid of the unspent
+  string txid = 1;
   // Output index
   int64 index = 2;
   // Asset
@@ -36,4 +36,24 @@ message Unspent {
   bytes rangeProof = 9;
   // Surjection proof
   bytes surjectionProof = 10;
+}
+
+message Template {
+  enum Format {
+    DESCRIPTOR = 0;
+    MINISCRIPT = 1;
+    IONIO = 2;
+    RAW =3;
+  }
+  Format format = 1;
+  string value = 2;
+}
+
+enum TxEventType {
+  // Tx broadcasted.
+  BROADCASTED = 0;
+  // Tx unconfirmed.
+  UNCONFIRMED = 2;
+  // Tx confirmed.
+  CONFIRMED = 3;
 }

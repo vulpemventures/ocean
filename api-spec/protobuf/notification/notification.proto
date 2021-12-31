@@ -1,7 +1,7 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/wallet-elements/api-spec/protobuf/gen";
+option go_package = "github.com/vulpemventures/ocean/api-spec/protobuf/gen/notification";
 
-import "types.proto";
+import "api-spec/protobuf/types/types.proto";
 
 /*
   NotificationService is used to notify interested parties about wallet events.
@@ -14,9 +14,9 @@ service NotificationService {
   //**************//
 
   // Notifies about transactions related to the wallet
-  rpc TransactionNotifications(TransactionNotificationsRequest) returns (stream TransactionNotificationsResponse);
+  rpc TransactionNotifications(TransactionNotificationsRequest) returns (stream TransactionNotificationsReply);
   // Notifies about unspents related to the wallet's account
-  rpc UnspentsNotifications(UnspentsNotificationsRequest) returns (stream UnspentsNotificationsResponse);
+  rpc UnspentsNotifications(UnspentsNotificationsRequest) returns (stream UnspentsNotificationsReply);
 
   //***************//
   //   WEBHOOKS    //
@@ -33,18 +33,12 @@ service NotificationService {
 }
 
 message TransactionNotificationsRequest{}
-message TransactionNotificationsResponse{
-  // id of transaction
-  string tx_id = 1;
-  // tx event type
-  enum TxEventType {
-    // tx broadcasted
-    BROADCASTED = 0;
-    //tx confirmed
-    CONFIRMED = 1;
-  }
+message TransactionNotificationsReply{
+  // Txid of transaction.
+  string txid = 1;
+  // Tx event type.
   TxEventType event_type = 2;
-  // block details of the block that includes tx
+  // Block details of the block that includes tx..
   BlockDetails block_details = 3;
 }
 message BlockDetails {
@@ -54,18 +48,18 @@ message BlockDetails {
 }
 
 message UnspentsNotificationsRequest{
-  // Id of the account for which we want to track unspents, either id or name needs to be provided.
+  // Id of the account for which we tracking unspents, either id or name needs to be provided.
   int64 id = 1;
-  // Id of the account for which we want to track unspents, either name or id needs to be provided.
+  // Name of the account for which we tracking unspents, either name or id needs to be provided.
   string name = 2;
 }
-message UnspentsNotificationsResponse{
+message UnspentsNotificationsReply{
     Unspents unspents = 1;
 }
 enum EventType {
-  // receive notification about transactions
+  // Receive notification about transactions.
   TRANSACTION = 0;
-  // receive notifications about unspents
+  // Receive notifications about unspents.
   UNSPENTS = 1;
 }
 message AddWebhookRequest {
