@@ -66,6 +66,10 @@ message AccountInfo {
   int64 last_internal_index = 2;
   // Index of last generated external address.
   int64 last_external_index = 3;
+  // Derivation path.
+  string derivation_path = 4;
+  // XPub.
+  string xpub = 5;
 }
 
 message AddressRequest{

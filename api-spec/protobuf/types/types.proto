@@ -36,6 +36,14 @@ message Unspent {
   bytes rangeProof = 9;
   // Surjection proof
   bytes surjectionProof = 10;
+  enum UnspentStatus {
+    CONFIRMED = 0;
+    UNCONFIRMED = 1;
+    LOCKED = 2;
+    UNLOCKED = 3;
+  }
+  // Unspent status.
+  UnspentStatus status = 11;
 }
 
 message Template {

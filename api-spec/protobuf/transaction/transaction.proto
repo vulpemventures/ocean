@@ -76,7 +76,7 @@ message BroadcastTransactionRequest{
 message BroadcastTransactionReply{}
 
 message CreatePsbtRequest{
-  // Inputs(unspents) to be spent from, if no inputs are provided, daemon will select it.
+  // Unspents to spend to cover output amount. If no inputs are provided, they will be selected.
   repeated Input inputs = 1;
   // Outputs spending inputs.
   repeated Output outputs = 2;
