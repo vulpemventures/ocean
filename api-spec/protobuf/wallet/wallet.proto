@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package wallet;
+
+/*
+  WalletService is used to create, open and restore HD Wallet.
+  It stores signing and blinding seeds used for signing and blinding of transactions.
+  After HD Wallet is created seeds are encrypted and stored in disc.
+  On each daemon restart HD Wallet is locked and needs to be open.
+  It it possible to import seeds and restore HD Wallet.
+ */
+service WalletService {
+  /*
+    GenSeed is used to generate signing and blinding seed that are to be passed
+    to Create rpc which will create HD Wallet
+  */
+  rpc GenSeed(GenSeedRequest) returns (GenSeedReply);
+
+  // CreateWallet is used to create HD Wallet based on signing, blinding seeds and password
+  rpc CreateWallet(CreateWalletRequest) returns (CreateWalletReply);
+
+  /*
+    Unlock is used to unlock existing HD Wallet based on password so that daemon can serve
+    other calls
+   */
+  rpc Unlock(UnlockRequest) returns (UnlockReply);
+
+  // ChangePassword is used to change password with which HD Wallet is encrypted
+  rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordReply);
+
+  // RestoreWallet is used to restore HD Wallet based on signing and blinding seeds
+  rpc RestoreWallet (RestoreWalletRequest) returns (RestoreWalletReply);
+
+  // Status is used by other services to check current status of HD Wallet
+  rpc Status (StatusRequest) returns (StatusReply);
+}
+
+message GenSeedRequest{}
+message GenSeedReply{
+  // signing_mnemonic is 24 length phrase used to derive addresses and scripts
+  string signing_mnemonic = 1;
+
+  // blinding_mnemonic is 24 length phrase used to derive blinding keys
+  string blinding_mnemonic = 2;
+}
+
+message CreateWalletRequest{
+  // signing_mnemonic is 24 length phrase used to derive addresses and scripts
+  string signing_mnemonic = 1;
+
+  // blinding_mnemonic is 24 length phrase used to derive blinding keys
+  string blinding_mnemonic = 2;
+
+  // password is used to encrypt HD Wallet wallet. After creation, password is required to unlock the wallet daemon.
+  bytes  password = 3;
+}
+message CreateWalletReply{}
+
+message UnlockRequest{
+  // password is used to decrypt HD Wallet wallet and start wallet daemon.
+  bytes  password = 1;
+}
+message UnlockReply{}
+
+message ChangePasswordRequest{
+  // current_password should be the current valid passphrase used to unlock wallet daemon.
+  bytes current_password = 1;
+
+  // new_password should be the new passphrase that will be needed to unlock the wallet daemon.
+  bytes new_password = 2;
+}
+message ChangePasswordReply{}
+
+message RestoreWalletRequest{
+  // signing_mnemonic is 24 length phrase used to derive addresses and scripts
+  string signing_mnemonic = 1;
+
+  // blinding_mnemonic is 24 length phrase used to derive blinding keys
+  string blinding_mnemonic = 2;
+
+  // password is used to decrypt HD Wallet wallet and start wallet daemon.
+  bytes password = 3;
+}
+message RestoreWalletReply{}
+
+message StatusRequest{}
+message StatusReply{
+  enum Status {
+    // there is no data about wallet seeds
+    NOT_CREATED = 0;
+    // wallet is closed and it needs to be opened with correct password in order to be used
+    CLOSED = 1;
+    // wallet is trying to restore information's about unspents and used addresses
+    RESTORING = 2;
+    // wallet is opened and ready to use
+    OPEN = 3;
+  }
+  Status status = 1;
+}

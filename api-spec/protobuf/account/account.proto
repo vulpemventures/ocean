@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package account;
+
+import "types/types.proto";
+/*
+  AccountService is used to manage accounts in HD Wallet.
+  It supports generating of addresses, listing unspents and balances for specific account or
+  list of addresses and selecting unspents.
+ */
+service AccountService {
+  // Create creates new account.
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountReply);
+
+  // Updates name of existing account.
+  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountReply);
+
+  // List all accounts
+  rpc ListAccount(ListAccountRequest) returns (ListAccountReply);
+
+  // Generates new address for the account.
+  rpc Address(AddressRequest) returns (AddressReply);
+
+  // Returns balance for the account, or specific list of account's addresses.
+  rpc Balance(BalanceRequest) returns (BalanceReply);
+
+  // Return unspents for the account, or specific list of account's addresses
+  rpc Unspents(UnspentsRequest) returns (UnspentsReply);
+
+  /*
+    Selects unspents, to be used in another transaction, for provided target amount and strategy.
+    Selected unspents are locked for predefined amount of time so that race conditions are avoided.
+   */
+  rpc SelectUnspents(SelectUnspentsRequest) returns (SelectUnspentsReply);
+}
+
+message CreateAccountRequest{
+  // Name of the account.
+  string name = 1;
+}
+message CreateAccountReply{
+  // Account index of the derivation path.
+  int64 account_index = 1;
+  // Xpub for the account.
+  string xpub = 2;
+}
+
+message UpdateAccountRequest{
+  // Account key.
+  types.AccountKey account_key = 1;
+  // Name of the account to be updated.
+  string name = 2;
+  // Output descriptor template.
+  types.Template template = 3;
+}
+message UpdateAccountReply{}
+
+message ListAccountRequest{}
+message ListAccountReply{
+  // List of account's.
+  repeated AccountInfo accounts = 1;
+}
+message AccountInfo {
+  // Account key.
+  types.AccountKey account_key = 1;
+  // Index of last generated internal address.
+  int64 last_internal_index = 2;
+  // Index of last generated external address.
+  int64 last_external_index = 3;
+  // Derivation path.
+  string derivation_path = 4;
+  // XPub.
+  string xpub = 5;
+}
+
+message AddressRequest{
+  // Account key.
+  types.AccountKey account_key = 1;
+  // Address output descriptor template.
+  types.Template template = 2;
+}
+message AddressReply{
+  // Confidential address.
+  string address = 1;
+  // Derivation path of the address.
+  string derivation_path = 2;
+  // Hex value of the output script of the address.
+  string output_script = 3;
+  // Hex value of blinding private key.
+  string blinding_private_key = 4;
+  // Hex value of blinding public key.
+  string blinding_public_key = 5;
+}
+
+message BalanceRequest{
+  // Account key.
+  types.AccountKey account_key = 1;
+  // Addresses for which balance is to be calculated, if no address is provided accumulative balance is returned.
+  repeated string addresses = 3;
+}
+
+message BalanceInfo {
+  // The balance of the wallet
+  uint64 total_balance = 1;
+  // The confirmed balance of a wallet(with >= 1 confirmations)
+  uint64 confirmed_balance = 2;
+  // The unconfirmed balance of a wallet(with 0 confirmations)
+  uint64 unconfirmed_balance = 3;
+}
+message BalanceReply{
+  // The balance info (total, confirmed, unconfirmed) of the wallet grouped by asset
+  map<string, BalanceInfo> balance = 1;
+}
+
+message UnspentsRequest{
+  // Account key.
+  types.AccountKey account_key = 1;
+  // Addresses for which balance is to be calculated, if no address is provided all account's unspents are returned.
+  repeated string addresses = 3;
+}
+message UnspentsReply{
+  // Unspents grouped by address.
+  map<string, types.Unspents> unspents = 1;
+}
+
+message SelectUnspentsRequest{
+  // Account key.
+  types.AccountKey account_key = 1;
+  // Accumulative target amount that is to be selected.
+  uint64 target_amount = 3;
+  // Unspents selection algorithm.
+  enum Strategy {
+    BRANCH_BOUND = 0;
+    FRAGMENT =1;
+  }
+  Strategy type = 4;
+}
+message SelectUnspentsReply{
+  // List of unspents.
+  repeated types.Unspent unspents = 1;
+}
