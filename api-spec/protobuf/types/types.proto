@@ -1,5 +1,6 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/ocean/api-spec/protobuf/gen/types";
+
+package types;
 
 message AccountKey{
   // Id of the account.

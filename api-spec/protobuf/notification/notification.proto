@@ -1,7 +1,8 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/ocean/api-spec/protobuf/gen/notification";
 
-import "api-spec/protobuf/types/types.proto";
+package notification;
+
+import "types/types.proto";
 
 /*
   NotificationService is used to notify interested parties about wallet events.
@@ -37,7 +38,7 @@ message TransactionNotificationsReply{
   // Txid of transaction.
   string txid = 1;
   // Tx event type.
-  TxEventType event_type = 2;
+  types.TxEventType event_type = 2;
   // Block details of the block that includes tx..
   BlockDetails block_details = 3;
 }
@@ -54,7 +55,7 @@ message UnspentsNotificationsRequest{
   string name = 2;
 }
 message UnspentsNotificationsReply{
-    Unspents unspents = 1;
+  types.Unspents unspents = 1;
 }
 enum EventType {
   // Receive notification about transactions.

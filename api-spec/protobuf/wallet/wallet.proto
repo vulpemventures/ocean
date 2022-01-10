@@ -1,5 +1,6 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/ocean/api-spec/protobuf/gen/types";
+
+package wallet;
 
 /*
   WalletService is used to create, open and restore HD Wallet.

@@ -1,7 +1,8 @@
 syntax = "proto3";
-option go_package = "github.com/vulpemventures/ocean/api-spec/protobuf/gen/account";
 
-import "api-spec/protobuf/types/types.proto";
+package account;
+
+import "types/types.proto";
 /*
   AccountService is used to manage accounts in HD Wallet.
   It supports generating of addresses, listing unspents and balances for specific account or
@@ -46,11 +47,11 @@ message CreateAccountReply{
 
 message UpdateAccountRequest{
   // Account key.
-  AccountKey account_key = 1;
+  types.AccountKey account_key = 1;
   // Name of the account to be updated.
   string name = 2;
   // Output descriptor template.
-  Template template = 3;
+  types.Template template = 3;
 }
 message UpdateAccountReply{}
 
@@ -61,7 +62,7 @@ message ListAccountReply{
 }
 message AccountInfo {
   // Account key.
-  AccountKey account_key = 1;
+  types.AccountKey account_key = 1;
   // Index of last generated internal address.
   int64 last_internal_index = 2;
   // Index of last generated external address.
@@ -74,9 +75,9 @@ message AccountInfo {
 
 message AddressRequest{
   // Account key.
-  AccountKey account_key = 1;
+  types.AccountKey account_key = 1;
   // Address output descriptor template.
-  Template template = 2;
+  types.Template template = 2;
 }
 message AddressReply{
   // Confidential address.
@@ -93,7 +94,7 @@ message AddressReply{
 
 message BalanceRequest{
   // Account key.
-  AccountKey account_key = 1;
+  types.AccountKey account_key = 1;
   // Addresses for which balance is to be calculated, if no address is provided accumulative balance is returned.
   repeated string addresses = 3;
 }
@@ -113,18 +114,18 @@ message BalanceReply{
 
 message UnspentsRequest{
   // Account key.
-  AccountKey account_key = 1;
+  types.AccountKey account_key = 1;
   // Addresses for which balance is to be calculated, if no address is provided all account's unspents are returned.
   repeated string addresses = 3;
 }
 message UnspentsReply{
   // Unspents grouped by address.
-  map<string, Unspents> unspents = 1;
+  map<string, types.Unspents> unspents = 1;
 }
 
 message SelectUnspentsRequest{
   // Account key.
-  AccountKey account_key = 1;
+  types.AccountKey account_key = 1;
   // Accumulative target amount that is to be selected.
   uint64 target_amount = 3;
   // Unspents selection algorithm.
@@ -136,5 +137,5 @@ message SelectUnspentsRequest{
 }
 message SelectUnspentsReply{
   // List of unspents.
-  repeated Unspent unspents = 1;
+  repeated types.Unspent unspents = 1;
 }
