@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package notification;
 
-import "types/types.proto";
+import "types.proto";
 
 /*
   NotificationService is used to notify interested parties about wallet events.

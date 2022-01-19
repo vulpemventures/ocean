@@ -1,4 +1,4 @@
 .PHONY: proto
 
 proto:
-	cd api-spec/protobuf; buf generate
+	docker run --volume "$(shell pwd)/api-spec/protobuf:/specs" --workdir /specs bufbuild/buf generate

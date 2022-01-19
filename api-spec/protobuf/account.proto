@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package account;
 
-import "types/types.proto";
+import "types.proto";
 /*
   AccountService is used to manage accounts in HD Wallet.
   It supports generating of addresses, listing unspents and balances for specific account or
