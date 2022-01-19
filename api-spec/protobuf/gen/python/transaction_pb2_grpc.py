@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from transaction import transaction_pb2 as transaction_dot_transaction__pb2
+import transaction_pb2 as transaction__pb2
 
 
 class TransactionServiceStub(object):
@@ -18,68 +18,68 @@ class TransactionServiceStub(object):
         """
         self.Fee = channel.unary_unary(
                 '/transaction.TransactionService/Fee',
-                request_serializer=transaction_dot_transaction__pb2.FeeRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.FeeReply.FromString,
+                request_serializer=transaction__pb2.FeeRequest.SerializeToString,
+                response_deserializer=transaction__pb2.FeeReply.FromString,
                 )
         self.UpdateFee = channel.unary_unary(
                 '/transaction.TransactionService/UpdateFee',
-                request_serializer=transaction_dot_transaction__pb2.UpdateFeeRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.UpdateFeeReply.FromString,
+                request_serializer=transaction__pb2.UpdateFeeRequest.SerializeToString,
+                response_deserializer=transaction__pb2.UpdateFeeReply.FromString,
                 )
         self.SignTransaction = channel.unary_unary(
                 '/transaction.TransactionService/SignTransaction',
-                request_serializer=transaction_dot_transaction__pb2.SignTransactionRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.SignTransactionReply.FromString,
+                request_serializer=transaction__pb2.SignTransactionRequest.SerializeToString,
+                response_deserializer=transaction__pb2.SignTransactionReply.FromString,
                 )
         self.BroadcastTransaction = channel.unary_unary(
                 '/transaction.TransactionService/BroadcastTransaction',
-                request_serializer=transaction_dot_transaction__pb2.BroadcastTransactionRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.BroadcastTransactionReply.FromString,
+                request_serializer=transaction__pb2.BroadcastTransactionRequest.SerializeToString,
+                response_deserializer=transaction__pb2.BroadcastTransactionReply.FromString,
                 )
         self.CreatePsbt = channel.unary_unary(
                 '/transaction.TransactionService/CreatePsbt',
-                request_serializer=transaction_dot_transaction__pb2.CreatePsbtRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.CreatePsbtReply.FromString,
+                request_serializer=transaction__pb2.CreatePsbtRequest.SerializeToString,
+                response_deserializer=transaction__pb2.CreatePsbtReply.FromString,
                 )
         self.BlindPsbt = channel.unary_unary(
                 '/transaction.TransactionService/BlindPsbt',
-                request_serializer=transaction_dot_transaction__pb2.BlindPsbtRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.BlindPsbtReply.FromString,
+                request_serializer=transaction__pb2.BlindPsbtRequest.SerializeToString,
+                response_deserializer=transaction__pb2.BlindPsbtReply.FromString,
                 )
         self.SignPsbt = channel.unary_unary(
                 '/transaction.TransactionService/SignPsbt',
-                request_serializer=transaction_dot_transaction__pb2.SignPsbtRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.SignPsbtReply.FromString,
+                request_serializer=transaction__pb2.SignPsbtRequest.SerializeToString,
+                response_deserializer=transaction__pb2.SignPsbtReply.FromString,
                 )
         self.Mint = channel.unary_unary(
                 '/transaction.TransactionService/Mint',
-                request_serializer=transaction_dot_transaction__pb2.MintRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.MintReply.FromString,
+                request_serializer=transaction__pb2.MintRequest.SerializeToString,
+                response_deserializer=transaction__pb2.MintReply.FromString,
                 )
         self.ReMint = channel.unary_unary(
                 '/transaction.TransactionService/ReMint',
-                request_serializer=transaction_dot_transaction__pb2.ReMintRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.ReMintReply.FromString,
+                request_serializer=transaction__pb2.ReMintRequest.SerializeToString,
+                response_deserializer=transaction__pb2.ReMintReply.FromString,
                 )
         self.Burn = channel.unary_unary(
                 '/transaction.TransactionService/Burn',
-                request_serializer=transaction_dot_transaction__pb2.BurnRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.BurnReply.FromString,
+                request_serializer=transaction__pb2.BurnRequest.SerializeToString,
+                response_deserializer=transaction__pb2.BurnReply.FromString,
                 )
         self.Transfer = channel.unary_unary(
                 '/transaction.TransactionService/Transfer',
-                request_serializer=transaction_dot_transaction__pb2.TransferRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.TransferReply.FromString,
+                request_serializer=transaction__pb2.TransferRequest.SerializeToString,
+                response_deserializer=transaction__pb2.TransferReply.FromString,
                 )
         self.PegInAddress = channel.unary_unary(
                 '/transaction.TransactionService/PegInAddress',
-                request_serializer=transaction_dot_transaction__pb2.PegInAddressRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.PegInAddressReply.FromString,
+                request_serializer=transaction__pb2.PegInAddressRequest.SerializeToString,
+                response_deserializer=transaction__pb2.PegInAddressReply.FromString,
                 )
         self.ClaimPegIn = channel.unary_unary(
                 '/transaction.TransactionService/ClaimPegIn',
-                request_serializer=transaction_dot_transaction__pb2.ClaimPegInRequest.SerializeToString,
-                response_deserializer=transaction_dot_transaction__pb2.ClaimPegInReply.FromString,
+                request_serializer=transaction__pb2.ClaimPegInRequest.SerializeToString,
+                response_deserializer=transaction__pb2.ClaimPegInReply.FromString,
                 )
 
 
@@ -188,68 +188,68 @@ def add_TransactionServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Fee': grpc.unary_unary_rpc_method_handler(
                     servicer.Fee,
-                    request_deserializer=transaction_dot_transaction__pb2.FeeRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.FeeReply.SerializeToString,
+                    request_deserializer=transaction__pb2.FeeRequest.FromString,
+                    response_serializer=transaction__pb2.FeeReply.SerializeToString,
             ),
             'UpdateFee': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateFee,
-                    request_deserializer=transaction_dot_transaction__pb2.UpdateFeeRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.UpdateFeeReply.SerializeToString,
+                    request_deserializer=transaction__pb2.UpdateFeeRequest.FromString,
+                    response_serializer=transaction__pb2.UpdateFeeReply.SerializeToString,
             ),
             'SignTransaction': grpc.unary_unary_rpc_method_handler(
                     servicer.SignTransaction,
-                    request_deserializer=transaction_dot_transaction__pb2.SignTransactionRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.SignTransactionReply.SerializeToString,
+                    request_deserializer=transaction__pb2.SignTransactionRequest.FromString,
+                    response_serializer=transaction__pb2.SignTransactionReply.SerializeToString,
             ),
             'BroadcastTransaction': grpc.unary_unary_rpc_method_handler(
                     servicer.BroadcastTransaction,
-                    request_deserializer=transaction_dot_transaction__pb2.BroadcastTransactionRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.BroadcastTransactionReply.SerializeToString,
+                    request_deserializer=transaction__pb2.BroadcastTransactionRequest.FromString,
+                    response_serializer=transaction__pb2.BroadcastTransactionReply.SerializeToString,
             ),
             'CreatePsbt': grpc.unary_unary_rpc_method_handler(
                     servicer.CreatePsbt,
-                    request_deserializer=transaction_dot_transaction__pb2.CreatePsbtRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.CreatePsbtReply.SerializeToString,
+                    request_deserializer=transaction__pb2.CreatePsbtRequest.FromString,
+                    response_serializer=transaction__pb2.CreatePsbtReply.SerializeToString,
             ),
             'BlindPsbt': grpc.unary_unary_rpc_method_handler(
                     servicer.BlindPsbt,
-                    request_deserializer=transaction_dot_transaction__pb2.BlindPsbtRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.BlindPsbtReply.SerializeToString,
+                    request_deserializer=transaction__pb2.BlindPsbtRequest.FromString,
+                    response_serializer=transaction__pb2.BlindPsbtReply.SerializeToString,
             ),
             'SignPsbt': grpc.unary_unary_rpc_method_handler(
                     servicer.SignPsbt,
-                    request_deserializer=transaction_dot_transaction__pb2.SignPsbtRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.SignPsbtReply.SerializeToString,
+                    request_deserializer=transaction__pb2.SignPsbtRequest.FromString,
+                    response_serializer=transaction__pb2.SignPsbtReply.SerializeToString,
             ),
             'Mint': grpc.unary_unary_rpc_method_handler(
                     servicer.Mint,
-                    request_deserializer=transaction_dot_transaction__pb2.MintRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.MintReply.SerializeToString,
+                    request_deserializer=transaction__pb2.MintRequest.FromString,
+                    response_serializer=transaction__pb2.MintReply.SerializeToString,
             ),
             'ReMint': grpc.unary_unary_rpc_method_handler(
                     servicer.ReMint,
-                    request_deserializer=transaction_dot_transaction__pb2.ReMintRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.ReMintReply.SerializeToString,
+                    request_deserializer=transaction__pb2.ReMintRequest.FromString,
+                    response_serializer=transaction__pb2.ReMintReply.SerializeToString,
             ),
             'Burn': grpc.unary_unary_rpc_method_handler(
                     servicer.Burn,
-                    request_deserializer=transaction_dot_transaction__pb2.BurnRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.BurnReply.SerializeToString,
+                    request_deserializer=transaction__pb2.BurnRequest.FromString,
+                    response_serializer=transaction__pb2.BurnReply.SerializeToString,
             ),
             'Transfer': grpc.unary_unary_rpc_method_handler(
                     servicer.Transfer,
-                    request_deserializer=transaction_dot_transaction__pb2.TransferRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.TransferReply.SerializeToString,
+                    request_deserializer=transaction__pb2.TransferRequest.FromString,
+                    response_serializer=transaction__pb2.TransferReply.SerializeToString,
             ),
             'PegInAddress': grpc.unary_unary_rpc_method_handler(
                     servicer.PegInAddress,
-                    request_deserializer=transaction_dot_transaction__pb2.PegInAddressRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.PegInAddressReply.SerializeToString,
+                    request_deserializer=transaction__pb2.PegInAddressRequest.FromString,
+                    response_serializer=transaction__pb2.PegInAddressReply.SerializeToString,
             ),
             'ClaimPegIn': grpc.unary_unary_rpc_method_handler(
                     servicer.ClaimPegIn,
-                    request_deserializer=transaction_dot_transaction__pb2.ClaimPegInRequest.FromString,
-                    response_serializer=transaction_dot_transaction__pb2.ClaimPegInReply.SerializeToString,
+                    request_deserializer=transaction__pb2.ClaimPegInRequest.FromString,
+                    response_serializer=transaction__pb2.ClaimPegInReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -275,8 +275,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/Fee',
-            transaction_dot_transaction__pb2.FeeRequest.SerializeToString,
-            transaction_dot_transaction__pb2.FeeReply.FromString,
+            transaction__pb2.FeeRequest.SerializeToString,
+            transaction__pb2.FeeReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -292,8 +292,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/UpdateFee',
-            transaction_dot_transaction__pb2.UpdateFeeRequest.SerializeToString,
-            transaction_dot_transaction__pb2.UpdateFeeReply.FromString,
+            transaction__pb2.UpdateFeeRequest.SerializeToString,
+            transaction__pb2.UpdateFeeReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -309,8 +309,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/SignTransaction',
-            transaction_dot_transaction__pb2.SignTransactionRequest.SerializeToString,
-            transaction_dot_transaction__pb2.SignTransactionReply.FromString,
+            transaction__pb2.SignTransactionRequest.SerializeToString,
+            transaction__pb2.SignTransactionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -326,8 +326,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/BroadcastTransaction',
-            transaction_dot_transaction__pb2.BroadcastTransactionRequest.SerializeToString,
-            transaction_dot_transaction__pb2.BroadcastTransactionReply.FromString,
+            transaction__pb2.BroadcastTransactionRequest.SerializeToString,
+            transaction__pb2.BroadcastTransactionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -343,8 +343,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/CreatePsbt',
-            transaction_dot_transaction__pb2.CreatePsbtRequest.SerializeToString,
-            transaction_dot_transaction__pb2.CreatePsbtReply.FromString,
+            transaction__pb2.CreatePsbtRequest.SerializeToString,
+            transaction__pb2.CreatePsbtReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -360,8 +360,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/BlindPsbt',
-            transaction_dot_transaction__pb2.BlindPsbtRequest.SerializeToString,
-            transaction_dot_transaction__pb2.BlindPsbtReply.FromString,
+            transaction__pb2.BlindPsbtRequest.SerializeToString,
+            transaction__pb2.BlindPsbtReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -377,8 +377,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/SignPsbt',
-            transaction_dot_transaction__pb2.SignPsbtRequest.SerializeToString,
-            transaction_dot_transaction__pb2.SignPsbtReply.FromString,
+            transaction__pb2.SignPsbtRequest.SerializeToString,
+            transaction__pb2.SignPsbtReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -394,8 +394,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/Mint',
-            transaction_dot_transaction__pb2.MintRequest.SerializeToString,
-            transaction_dot_transaction__pb2.MintReply.FromString,
+            transaction__pb2.MintRequest.SerializeToString,
+            transaction__pb2.MintReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -411,8 +411,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/ReMint',
-            transaction_dot_transaction__pb2.ReMintRequest.SerializeToString,
-            transaction_dot_transaction__pb2.ReMintReply.FromString,
+            transaction__pb2.ReMintRequest.SerializeToString,
+            transaction__pb2.ReMintReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -428,8 +428,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/Burn',
-            transaction_dot_transaction__pb2.BurnRequest.SerializeToString,
-            transaction_dot_transaction__pb2.BurnReply.FromString,
+            transaction__pb2.BurnRequest.SerializeToString,
+            transaction__pb2.BurnReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -445,8 +445,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/Transfer',
-            transaction_dot_transaction__pb2.TransferRequest.SerializeToString,
-            transaction_dot_transaction__pb2.TransferReply.FromString,
+            transaction__pb2.TransferRequest.SerializeToString,
+            transaction__pb2.TransferReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -462,8 +462,8 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/PegInAddress',
-            transaction_dot_transaction__pb2.PegInAddressRequest.SerializeToString,
-            transaction_dot_transaction__pb2.PegInAddressReply.FromString,
+            transaction__pb2.PegInAddressRequest.SerializeToString,
+            transaction__pb2.PegInAddressReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -479,7 +479,7 @@ class TransactionService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/transaction.TransactionService/ClaimPegIn',
-            transaction_dot_transaction__pb2.ClaimPegInRequest.SerializeToString,
-            transaction_dot_transaction__pb2.ClaimPegInReply.FromString,
+            transaction__pb2.ClaimPegInRequest.SerializeToString,
+            transaction__pb2.ClaimPegInReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

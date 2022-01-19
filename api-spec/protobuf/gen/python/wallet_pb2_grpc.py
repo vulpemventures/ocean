@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from wallet import wallet_pb2 as wallet_dot_wallet__pb2
+import wallet_pb2 as wallet__pb2
 
 
 class WalletServiceStub(object):
@@ -22,33 +22,33 @@ class WalletServiceStub(object):
         """
         self.GenSeed = channel.unary_unary(
                 '/wallet.WalletService/GenSeed',
-                request_serializer=wallet_dot_wallet__pb2.GenSeedRequest.SerializeToString,
-                response_deserializer=wallet_dot_wallet__pb2.GenSeedReply.FromString,
+                request_serializer=wallet__pb2.GenSeedRequest.SerializeToString,
+                response_deserializer=wallet__pb2.GenSeedReply.FromString,
                 )
         self.CreateWallet = channel.unary_unary(
                 '/wallet.WalletService/CreateWallet',
-                request_serializer=wallet_dot_wallet__pb2.CreateWalletRequest.SerializeToString,
-                response_deserializer=wallet_dot_wallet__pb2.CreateWalletReply.FromString,
+                request_serializer=wallet__pb2.CreateWalletRequest.SerializeToString,
+                response_deserializer=wallet__pb2.CreateWalletReply.FromString,
                 )
         self.Unlock = channel.unary_unary(
                 '/wallet.WalletService/Unlock',
-                request_serializer=wallet_dot_wallet__pb2.UnlockRequest.SerializeToString,
-                response_deserializer=wallet_dot_wallet__pb2.UnlockReply.FromString,
+                request_serializer=wallet__pb2.UnlockRequest.SerializeToString,
+                response_deserializer=wallet__pb2.UnlockReply.FromString,
                 )
         self.ChangePassword = channel.unary_unary(
                 '/wallet.WalletService/ChangePassword',
-                request_serializer=wallet_dot_wallet__pb2.ChangePasswordRequest.SerializeToString,
-                response_deserializer=wallet_dot_wallet__pb2.ChangePasswordReply.FromString,
+                request_serializer=wallet__pb2.ChangePasswordRequest.SerializeToString,
+                response_deserializer=wallet__pb2.ChangePasswordReply.FromString,
                 )
         self.RestoreWallet = channel.unary_unary(
                 '/wallet.WalletService/RestoreWallet',
-                request_serializer=wallet_dot_wallet__pb2.RestoreWalletRequest.SerializeToString,
-                response_deserializer=wallet_dot_wallet__pb2.RestoreWalletReply.FromString,
+                request_serializer=wallet__pb2.RestoreWalletRequest.SerializeToString,
+                response_deserializer=wallet__pb2.RestoreWalletReply.FromString,
                 )
         self.Status = channel.unary_unary(
                 '/wallet.WalletService/Status',
-                request_serializer=wallet_dot_wallet__pb2.StatusRequest.SerializeToString,
-                response_deserializer=wallet_dot_wallet__pb2.StatusReply.FromString,
+                request_serializer=wallet__pb2.StatusRequest.SerializeToString,
+                response_deserializer=wallet__pb2.StatusReply.FromString,
                 )
 
 
@@ -112,33 +112,33 @@ def add_WalletServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'GenSeed': grpc.unary_unary_rpc_method_handler(
                     servicer.GenSeed,
-                    request_deserializer=wallet_dot_wallet__pb2.GenSeedRequest.FromString,
-                    response_serializer=wallet_dot_wallet__pb2.GenSeedReply.SerializeToString,
+                    request_deserializer=wallet__pb2.GenSeedRequest.FromString,
+                    response_serializer=wallet__pb2.GenSeedReply.SerializeToString,
             ),
             'CreateWallet': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateWallet,
-                    request_deserializer=wallet_dot_wallet__pb2.CreateWalletRequest.FromString,
-                    response_serializer=wallet_dot_wallet__pb2.CreateWalletReply.SerializeToString,
+                    request_deserializer=wallet__pb2.CreateWalletRequest.FromString,
+                    response_serializer=wallet__pb2.CreateWalletReply.SerializeToString,
             ),
             'Unlock': grpc.unary_unary_rpc_method_handler(
                     servicer.Unlock,
-                    request_deserializer=wallet_dot_wallet__pb2.UnlockRequest.FromString,
-                    response_serializer=wallet_dot_wallet__pb2.UnlockReply.SerializeToString,
+                    request_deserializer=wallet__pb2.UnlockRequest.FromString,
+                    response_serializer=wallet__pb2.UnlockReply.SerializeToString,
             ),
             'ChangePassword': grpc.unary_unary_rpc_method_handler(
                     servicer.ChangePassword,
-                    request_deserializer=wallet_dot_wallet__pb2.ChangePasswordRequest.FromString,
-                    response_serializer=wallet_dot_wallet__pb2.ChangePasswordReply.SerializeToString,
+                    request_deserializer=wallet__pb2.ChangePasswordRequest.FromString,
+                    response_serializer=wallet__pb2.ChangePasswordReply.SerializeToString,
             ),
             'RestoreWallet': grpc.unary_unary_rpc_method_handler(
                     servicer.RestoreWallet,
-                    request_deserializer=wallet_dot_wallet__pb2.RestoreWalletRequest.FromString,
-                    response_serializer=wallet_dot_wallet__pb2.RestoreWalletReply.SerializeToString,
+                    request_deserializer=wallet__pb2.RestoreWalletRequest.FromString,
+                    response_serializer=wallet__pb2.RestoreWalletReply.SerializeToString,
             ),
             'Status': grpc.unary_unary_rpc_method_handler(
                     servicer.Status,
-                    request_deserializer=wallet_dot_wallet__pb2.StatusRequest.FromString,
-                    response_serializer=wallet_dot_wallet__pb2.StatusReply.SerializeToString,
+                    request_deserializer=wallet__pb2.StatusRequest.FromString,
+                    response_serializer=wallet__pb2.StatusReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -168,8 +168,8 @@ class WalletService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/wallet.WalletService/GenSeed',
-            wallet_dot_wallet__pb2.GenSeedRequest.SerializeToString,
-            wallet_dot_wallet__pb2.GenSeedReply.FromString,
+            wallet__pb2.GenSeedRequest.SerializeToString,
+            wallet__pb2.GenSeedReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -185,8 +185,8 @@ class WalletService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/wallet.WalletService/CreateWallet',
-            wallet_dot_wallet__pb2.CreateWalletRequest.SerializeToString,
-            wallet_dot_wallet__pb2.CreateWalletReply.FromString,
+            wallet__pb2.CreateWalletRequest.SerializeToString,
+            wallet__pb2.CreateWalletReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -202,8 +202,8 @@ class WalletService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/wallet.WalletService/Unlock',
-            wallet_dot_wallet__pb2.UnlockRequest.SerializeToString,
-            wallet_dot_wallet__pb2.UnlockReply.FromString,
+            wallet__pb2.UnlockRequest.SerializeToString,
+            wallet__pb2.UnlockReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -219,8 +219,8 @@ class WalletService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/wallet.WalletService/ChangePassword',
-            wallet_dot_wallet__pb2.ChangePasswordRequest.SerializeToString,
-            wallet_dot_wallet__pb2.ChangePasswordReply.FromString,
+            wallet__pb2.ChangePasswordRequest.SerializeToString,
+            wallet__pb2.ChangePasswordReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -236,8 +236,8 @@ class WalletService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/wallet.WalletService/RestoreWallet',
-            wallet_dot_wallet__pb2.RestoreWalletRequest.SerializeToString,
-            wallet_dot_wallet__pb2.RestoreWalletReply.FromString,
+            wallet__pb2.RestoreWalletRequest.SerializeToString,
+            wallet__pb2.RestoreWalletReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -253,7 +253,7 @@ class WalletService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/wallet.WalletService/Status',
-            wallet_dot_wallet__pb2.StatusRequest.SerializeToString,
-            wallet_dot_wallet__pb2.StatusReply.FromString,
+            wallet__pb2.StatusRequest.SerializeToString,
+            wallet__pb2.StatusReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

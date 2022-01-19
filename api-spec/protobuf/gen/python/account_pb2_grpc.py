@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from account import account_pb2 as account_dot_account__pb2
+import account_pb2 as account__pb2
 
 
 class AccountServiceStub(object):
@@ -20,38 +20,38 @@ class AccountServiceStub(object):
         """
         self.CreateAccount = channel.unary_unary(
                 '/account.AccountService/CreateAccount',
-                request_serializer=account_dot_account__pb2.CreateAccountRequest.SerializeToString,
-                response_deserializer=account_dot_account__pb2.CreateAccountReply.FromString,
+                request_serializer=account__pb2.CreateAccountRequest.SerializeToString,
+                response_deserializer=account__pb2.CreateAccountReply.FromString,
                 )
         self.UpdateAccount = channel.unary_unary(
                 '/account.AccountService/UpdateAccount',
-                request_serializer=account_dot_account__pb2.UpdateAccountRequest.SerializeToString,
-                response_deserializer=account_dot_account__pb2.UpdateAccountReply.FromString,
+                request_serializer=account__pb2.UpdateAccountRequest.SerializeToString,
+                response_deserializer=account__pb2.UpdateAccountReply.FromString,
                 )
         self.ListAccount = channel.unary_unary(
                 '/account.AccountService/ListAccount',
-                request_serializer=account_dot_account__pb2.ListAccountRequest.SerializeToString,
-                response_deserializer=account_dot_account__pb2.ListAccountReply.FromString,
+                request_serializer=account__pb2.ListAccountRequest.SerializeToString,
+                response_deserializer=account__pb2.ListAccountReply.FromString,
                 )
         self.Address = channel.unary_unary(
                 '/account.AccountService/Address',
-                request_serializer=account_dot_account__pb2.AddressRequest.SerializeToString,
-                response_deserializer=account_dot_account__pb2.AddressReply.FromString,
+                request_serializer=account__pb2.AddressRequest.SerializeToString,
+                response_deserializer=account__pb2.AddressReply.FromString,
                 )
         self.Balance = channel.unary_unary(
                 '/account.AccountService/Balance',
-                request_serializer=account_dot_account__pb2.BalanceRequest.SerializeToString,
-                response_deserializer=account_dot_account__pb2.BalanceReply.FromString,
+                request_serializer=account__pb2.BalanceRequest.SerializeToString,
+                response_deserializer=account__pb2.BalanceReply.FromString,
                 )
         self.Unspents = channel.unary_unary(
                 '/account.AccountService/Unspents',
-                request_serializer=account_dot_account__pb2.UnspentsRequest.SerializeToString,
-                response_deserializer=account_dot_account__pb2.UnspentsReply.FromString,
+                request_serializer=account__pb2.UnspentsRequest.SerializeToString,
+                response_deserializer=account__pb2.UnspentsReply.FromString,
                 )
         self.SelectUnspents = channel.unary_unary(
                 '/account.AccountService/SelectUnspents',
-                request_serializer=account_dot_account__pb2.SelectUnspentsRequest.SerializeToString,
-                response_deserializer=account_dot_account__pb2.SelectUnspentsReply.FromString,
+                request_serializer=account__pb2.SelectUnspentsRequest.SerializeToString,
+                response_deserializer=account__pb2.SelectUnspentsReply.FromString,
                 )
 
 
@@ -118,38 +118,38 @@ def add_AccountServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'CreateAccount': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateAccount,
-                    request_deserializer=account_dot_account__pb2.CreateAccountRequest.FromString,
-                    response_serializer=account_dot_account__pb2.CreateAccountReply.SerializeToString,
+                    request_deserializer=account__pb2.CreateAccountRequest.FromString,
+                    response_serializer=account__pb2.CreateAccountReply.SerializeToString,
             ),
             'UpdateAccount': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateAccount,
-                    request_deserializer=account_dot_account__pb2.UpdateAccountRequest.FromString,
-                    response_serializer=account_dot_account__pb2.UpdateAccountReply.SerializeToString,
+                    request_deserializer=account__pb2.UpdateAccountRequest.FromString,
+                    response_serializer=account__pb2.UpdateAccountReply.SerializeToString,
             ),
             'ListAccount': grpc.unary_unary_rpc_method_handler(
                     servicer.ListAccount,
-                    request_deserializer=account_dot_account__pb2.ListAccountRequest.FromString,
-                    response_serializer=account_dot_account__pb2.ListAccountReply.SerializeToString,
+                    request_deserializer=account__pb2.ListAccountRequest.FromString,
+                    response_serializer=account__pb2.ListAccountReply.SerializeToString,
             ),
             'Address': grpc.unary_unary_rpc_method_handler(
                     servicer.Address,
-                    request_deserializer=account_dot_account__pb2.AddressRequest.FromString,
-                    response_serializer=account_dot_account__pb2.AddressReply.SerializeToString,
+                    request_deserializer=account__pb2.AddressRequest.FromString,
+                    response_serializer=account__pb2.AddressReply.SerializeToString,
             ),
             'Balance': grpc.unary_unary_rpc_method_handler(
                     servicer.Balance,
-                    request_deserializer=account_dot_account__pb2.BalanceRequest.FromString,
-                    response_serializer=account_dot_account__pb2.BalanceReply.SerializeToString,
+                    request_deserializer=account__pb2.BalanceRequest.FromString,
+                    response_serializer=account__pb2.BalanceReply.SerializeToString,
             ),
             'Unspents': grpc.unary_unary_rpc_method_handler(
                     servicer.Unspents,
-                    request_deserializer=account_dot_account__pb2.UnspentsRequest.FromString,
-                    response_serializer=account_dot_account__pb2.UnspentsReply.SerializeToString,
+                    request_deserializer=account__pb2.UnspentsRequest.FromString,
+                    response_serializer=account__pb2.UnspentsReply.SerializeToString,
             ),
             'SelectUnspents': grpc.unary_unary_rpc_method_handler(
                     servicer.SelectUnspents,
-                    request_deserializer=account_dot_account__pb2.SelectUnspentsRequest.FromString,
-                    response_serializer=account_dot_account__pb2.SelectUnspentsReply.SerializeToString,
+                    request_deserializer=account__pb2.SelectUnspentsRequest.FromString,
+                    response_serializer=account__pb2.SelectUnspentsReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -177,8 +177,8 @@ class AccountService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/account.AccountService/CreateAccount',
-            account_dot_account__pb2.CreateAccountRequest.SerializeToString,
-            account_dot_account__pb2.CreateAccountReply.FromString,
+            account__pb2.CreateAccountRequest.SerializeToString,
+            account__pb2.CreateAccountReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -194,8 +194,8 @@ class AccountService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/account.AccountService/UpdateAccount',
-            account_dot_account__pb2.UpdateAccountRequest.SerializeToString,
-            account_dot_account__pb2.UpdateAccountReply.FromString,
+            account__pb2.UpdateAccountRequest.SerializeToString,
+            account__pb2.UpdateAccountReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -211,8 +211,8 @@ class AccountService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/account.AccountService/ListAccount',
-            account_dot_account__pb2.ListAccountRequest.SerializeToString,
-            account_dot_account__pb2.ListAccountReply.FromString,
+            account__pb2.ListAccountRequest.SerializeToString,
+            account__pb2.ListAccountReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -228,8 +228,8 @@ class AccountService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/account.AccountService/Address',
-            account_dot_account__pb2.AddressRequest.SerializeToString,
-            account_dot_account__pb2.AddressReply.FromString,
+            account__pb2.AddressRequest.SerializeToString,
+            account__pb2.AddressReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -245,8 +245,8 @@ class AccountService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/account.AccountService/Balance',
-            account_dot_account__pb2.BalanceRequest.SerializeToString,
-            account_dot_account__pb2.BalanceReply.FromString,
+            account__pb2.BalanceRequest.SerializeToString,
+            account__pb2.BalanceReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -262,8 +262,8 @@ class AccountService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/account.AccountService/Unspents',
-            account_dot_account__pb2.UnspentsRequest.SerializeToString,
-            account_dot_account__pb2.UnspentsReply.FromString,
+            account__pb2.UnspentsRequest.SerializeToString,
+            account__pb2.UnspentsReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -279,7 +279,7 @@ class AccountService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/account.AccountService/SelectUnspents',
-            account_dot_account__pb2.SelectUnspentsRequest.SerializeToString,
-            account_dot_account__pb2.SelectUnspentsReply.FromString,
+            account__pb2.SelectUnspentsRequest.SerializeToString,
+            account__pb2.SelectUnspentsReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

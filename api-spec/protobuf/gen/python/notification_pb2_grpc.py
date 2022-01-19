@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from notification import notification_pb2 as notification_dot_notification__pb2
+import notification_pb2 as notification__pb2
 
 
 class NotificationServiceStub(object):
@@ -23,28 +23,28 @@ class NotificationServiceStub(object):
         """
         self.TransactionNotifications = channel.unary_stream(
                 '/notification.NotificationService/TransactionNotifications',
-                request_serializer=notification_dot_notification__pb2.TransactionNotificationsRequest.SerializeToString,
-                response_deserializer=notification_dot_notification__pb2.TransactionNotificationsReply.FromString,
+                request_serializer=notification__pb2.TransactionNotificationsRequest.SerializeToString,
+                response_deserializer=notification__pb2.TransactionNotificationsReply.FromString,
                 )
         self.UnspentsNotifications = channel.unary_stream(
                 '/notification.NotificationService/UnspentsNotifications',
-                request_serializer=notification_dot_notification__pb2.UnspentsNotificationsRequest.SerializeToString,
-                response_deserializer=notification_dot_notification__pb2.UnspentsNotificationsReply.FromString,
+                request_serializer=notification__pb2.UnspentsNotificationsRequest.SerializeToString,
+                response_deserializer=notification__pb2.UnspentsNotificationsReply.FromString,
                 )
         self.AddWebhook = channel.unary_unary(
                 '/notification.NotificationService/AddWebhook',
-                request_serializer=notification_dot_notification__pb2.AddWebhookRequest.SerializeToString,
-                response_deserializer=notification_dot_notification__pb2.AddWebhookReply.FromString,
+                request_serializer=notification__pb2.AddWebhookRequest.SerializeToString,
+                response_deserializer=notification__pb2.AddWebhookReply.FromString,
                 )
         self.RemoveWebhook = channel.unary_unary(
                 '/notification.NotificationService/RemoveWebhook',
-                request_serializer=notification_dot_notification__pb2.RemoveWebhookRequest.SerializeToString,
-                response_deserializer=notification_dot_notification__pb2.RemoveWebhookReply.FromString,
+                request_serializer=notification__pb2.RemoveWebhookRequest.SerializeToString,
+                response_deserializer=notification__pb2.RemoveWebhookReply.FromString,
                 )
         self.ListWebhooks = channel.unary_unary(
                 '/notification.NotificationService/ListWebhooks',
-                request_serializer=notification_dot_notification__pb2.ListWebhooksRequest.SerializeToString,
-                response_deserializer=notification_dot_notification__pb2.ListWebhooksReply.FromString,
+                request_serializer=notification__pb2.ListWebhooksRequest.SerializeToString,
+                response_deserializer=notification__pb2.ListWebhooksReply.FromString,
                 )
 
 
@@ -102,28 +102,28 @@ def add_NotificationServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'TransactionNotifications': grpc.unary_stream_rpc_method_handler(
                     servicer.TransactionNotifications,
-                    request_deserializer=notification_dot_notification__pb2.TransactionNotificationsRequest.FromString,
-                    response_serializer=notification_dot_notification__pb2.TransactionNotificationsReply.SerializeToString,
+                    request_deserializer=notification__pb2.TransactionNotificationsRequest.FromString,
+                    response_serializer=notification__pb2.TransactionNotificationsReply.SerializeToString,
             ),
             'UnspentsNotifications': grpc.unary_stream_rpc_method_handler(
                     servicer.UnspentsNotifications,
-                    request_deserializer=notification_dot_notification__pb2.UnspentsNotificationsRequest.FromString,
-                    response_serializer=notification_dot_notification__pb2.UnspentsNotificationsReply.SerializeToString,
+                    request_deserializer=notification__pb2.UnspentsNotificationsRequest.FromString,
+                    response_serializer=notification__pb2.UnspentsNotificationsReply.SerializeToString,
             ),
             'AddWebhook': grpc.unary_unary_rpc_method_handler(
                     servicer.AddWebhook,
-                    request_deserializer=notification_dot_notification__pb2.AddWebhookRequest.FromString,
-                    response_serializer=notification_dot_notification__pb2.AddWebhookReply.SerializeToString,
+                    request_deserializer=notification__pb2.AddWebhookRequest.FromString,
+                    response_serializer=notification__pb2.AddWebhookReply.SerializeToString,
             ),
             'RemoveWebhook': grpc.unary_unary_rpc_method_handler(
                     servicer.RemoveWebhook,
-                    request_deserializer=notification_dot_notification__pb2.RemoveWebhookRequest.FromString,
-                    response_serializer=notification_dot_notification__pb2.RemoveWebhookReply.SerializeToString,
+                    request_deserializer=notification__pb2.RemoveWebhookRequest.FromString,
+                    response_serializer=notification__pb2.RemoveWebhookReply.SerializeToString,
             ),
             'ListWebhooks': grpc.unary_unary_rpc_method_handler(
                     servicer.ListWebhooks,
-                    request_deserializer=notification_dot_notification__pb2.ListWebhooksRequest.FromString,
-                    response_serializer=notification_dot_notification__pb2.ListWebhooksReply.SerializeToString,
+                    request_deserializer=notification__pb2.ListWebhooksRequest.FromString,
+                    response_serializer=notification__pb2.ListWebhooksReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -154,8 +154,8 @@ class NotificationService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/notification.NotificationService/TransactionNotifications',
-            notification_dot_notification__pb2.TransactionNotificationsRequest.SerializeToString,
-            notification_dot_notification__pb2.TransactionNotificationsReply.FromString,
+            notification__pb2.TransactionNotificationsRequest.SerializeToString,
+            notification__pb2.TransactionNotificationsReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -171,8 +171,8 @@ class NotificationService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/notification.NotificationService/UnspentsNotifications',
-            notification_dot_notification__pb2.UnspentsNotificationsRequest.SerializeToString,
-            notification_dot_notification__pb2.UnspentsNotificationsReply.FromString,
+            notification__pb2.UnspentsNotificationsRequest.SerializeToString,
+            notification__pb2.UnspentsNotificationsReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -188,8 +188,8 @@ class NotificationService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/notification.NotificationService/AddWebhook',
-            notification_dot_notification__pb2.AddWebhookRequest.SerializeToString,
-            notification_dot_notification__pb2.AddWebhookReply.FromString,
+            notification__pb2.AddWebhookRequest.SerializeToString,
+            notification__pb2.AddWebhookReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -205,8 +205,8 @@ class NotificationService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/notification.NotificationService/RemoveWebhook',
-            notification_dot_notification__pb2.RemoveWebhookRequest.SerializeToString,
-            notification_dot_notification__pb2.RemoveWebhookReply.FromString,
+            notification__pb2.RemoveWebhookRequest.SerializeToString,
+            notification__pb2.RemoveWebhookReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -222,7 +222,7 @@ class NotificationService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/notification.NotificationService/ListWebhooks',
-            notification_dot_notification__pb2.ListWebhooksRequest.SerializeToString,
-            notification_dot_notification__pb2.ListWebhooksReply.FromString,
+            notification__pb2.ListWebhooksRequest.SerializeToString,
+            notification__pb2.ListWebhooksReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
