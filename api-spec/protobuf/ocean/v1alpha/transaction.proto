@@ -1,0 +1,229 @@
+syntax = "proto3";
+
+package ocean.v1alpha;
+
+import "ocean/v1alpha/types.proto";
+
+/*
+  TransactionService is used to craft and sign various kind's of transactions.
+ */
+service TransactionService {
+  // SelectUtxos returns a selction of utxos, to be used in another 
+  // transaction, for provided target amount and strategy.
+  // Selected utxos are locked for predefined amount of time to prevent 
+  // double-spending them.
+  rpc SelectUtxos(SelectUtxosRequest) returns (SelectUtxosResponse);
+
+  // EstimateFees returns the fee amount to pay for a tx containing the given 
+  // inputs and outputs.
+  rpc EstimateFees(EstimateFeesRequest) returns (EstimateFeesResponse);
+
+  // SignTransaction signs a raw transaction in hex format.
+  rpc SignTransaction(SignTransactionRequest) returns (SignTransactionResponse);
+
+  // BroadcastTransaction broadacats a raw transaction in hex format.
+  rpc BroadcastTransaction(BroadcastTransactionRequest) returns (BroadcastTransactionResponse);
+
+  // CreatePset returns an unsigned pset for given inputs and outputs.
+  rpc CreatePset(CreatePsetRequest) returns (CreatePsetResponse);
+
+  // UpdatePset adds the given inputs and outputs to the partial transaction.
+  rpc UpdatePset(UpdatePsetRequest) returns (UpdatePsetResponse);
+
+  // BlindPset updates the given pset with required ins and outs blinded.
+  rpc BlindPset(BlindPsetRequest) returns (BlindPsetResponse);
+
+  // SignPset updates the given pset adding the required signatures.
+  rpc SignPset(SignPsetRequest) returns (SignPsetResponse);
+
+  // Mint returns a transaction that issues a new asset.
+  rpc Mint(MintRequest) returns (MintResponse);
+
+  // Remint returns a transaction that re-issues an existing asset.
+  rpc Remint(RemintRequest) returns (RemintResponse);
+
+  // Burn returns a transaction that burns some funds.
+  rpc Burn(BurnRequest) returns (BurnResponse);
+
+  // Transfer returns a transaction to send funds to some receiver.
+  rpc Transfer(TransferRequest) returns (TransferResponse);
+
+  
+  // PegInAddress returns what's necessary to peg funds of the Bitcoin 
+  // main-chain and have them available on the Liquid side-chain.
+  // Bitcoin funds must be sent to the main-chain address while the claim
+  // output script must be used to redeem the LBTC ones.
+  rpc PegInAddress(PegInAddressRequest) returns (PegInAddressResponse);
+
+  
+  // ClaimPegIn returns a transaction to claim funds pegged on the Bitcoin 
+  // main-chain to have them available on the Liquid side-chain.
+  rpc ClaimPegIn(ClaimPegInRequest) returns (ClaimPegInResponse);
+}
+
+message SelectUtxosRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // Asset hash of the utxos to select.
+  string target_asset = 2;
+  // Target amount to cover.
+  uint64 target_amount = 3;
+  // Coin-selection algorithm.
+  enum Strategy {
+    STRATEGY_UNSPECIFIED = 0;
+    STRATEGY_BRANCH_BOUND = 1;
+    STRATEGY_FRAGMENT = 2;
+  }
+  Strategy strategy = 4;
+}
+message SelectUtxosResponse{
+  // List of selected utxos.
+  repeated Utxo utxos = 1;
+  uint64 change = 2;
+}
+
+message EstimateFeesRequest{
+  repeated Input inputs = 1;
+  repeated Output outputs = 2;
+}
+message EstimateFeesResponse{
+  uint64 fee_amount = 1;
+}
+
+message SignTransactionRequest{
+  // Raw transaction to sign.
+  string tx_hex = 1;
+}
+message SignTransactionResponse{
+  // Raw signed transaction.
+  string tx_hex = 1;
+}
+
+message BroadcastTransactionRequest{
+  // Transaction to broadcast.
+  string tx_hex = 1;
+}
+message BroadcastTransactionResponse{
+  // Hash of the broadcasted transaction.
+  string txid = 1;
+}
+
+message CreatePsetRequest{
+  // Inputs of the partial transaction.
+  repeated Input inputs = 1;
+  // Outputs of the partial transaction
+  repeated Output outputs = 2;
+}
+message CreatePsetResponse{
+  // New partial transaction in base64 format.
+  string pset = 1;
+}
+
+message UpdatePsetRequest{
+  // The partial transaction to update in base64 format.
+  string pset = 1;
+  // Inputs to add to the partial transaction.
+  repeated Input inputs = 2;
+  // Outputs to add to the partil transaction.
+  repeated Output outputs = 3;
+}
+message UpdatePsetResponse{
+  // Updated partial transaction in base64 format.
+  string pset = 1;
+}
+
+message BlindPsetRequest{
+  // The partial transaction with inputs/outputs to blind.
+  string pset = 1;
+}
+message BlindPsetResponse{
+  // Updated partial transaction with blinded inputs/outputs in base64 format.
+  string pset = 1;
+}
+
+message SignPsetRequest{
+  // The partial transaction to sign in base64 format.
+  string pset = 1;
+}
+message SignPsetResponse{
+  // Signed partial transaction in base64 format.
+  string pset = 1;
+}
+
+message MintRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // Asset amount to mint.
+  uint64 asset_amount = 2;
+  // Token amount to mint.
+  uint64 token_amount = 3;
+  // Name of the asset.
+  string asset_name = 4;
+  // Ticker of the asset.
+  string asset_ticker = 5;
+  // Domain of the asset.
+  string asset_domain = 6;
+}
+message MintResponse{
+  // Signed tx in hex format.
+  string tx_hex = 1;
+}
+
+message RemintRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // Hash of the asset to remint.
+  string asset = 2;
+  // Amount to remint.
+  uint64 amount = 3;
+}
+message RemintResponse{
+  // Signed tx in hex format.
+  string tx_hex = 1;
+}
+
+message BurnRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // Receivers contains a list of asset-amount to burn and their addresses are 
+  // ignored and replaced with OP_RETURN output scripts.
+  repeated Output receivers = 2;
+}
+message BurnResponse{
+  // Signed tx in hex format.
+  string tx_hex = 1;
+}
+
+message TransferRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // Receivers are the receivers of the funds.
+  repeated Output receivers = 2;
+}
+message TransferResponse{
+  // Signed tx in hex format.
+  string tx_hex = 1;
+}
+
+message PegInAddressRequest{}
+message PegInAddressResponse{
+  // Account key.
+  AccountKey account_key = 1;
+  // Main-chain deposit address to send bitcoin to.
+  string main_chain_address = 2;
+  // Claim script committed to by the main-chain address.
+  string claim_script = 3;
+}
+
+message ClaimPegInRequest{
+  // The raw bitcoin transaction (in hex) depositing bitcoin to the main-chain address generated by PegInAddress.
+  string bitcoin_tx = 1;
+  // A raw tx_out_proof (in hex) generated by the main-chain daemon's `gettxoutproof` containing a proof of only bitcoin_tx.
+  string tx_out_proof = 2;
+  // The witness program generated by PegInAddress.
+  string claim_script = 3;
+}
+message ClaimPegInResponse{
+  // Signed tx in hex format.
+  string tx_hex = 1;
+}
