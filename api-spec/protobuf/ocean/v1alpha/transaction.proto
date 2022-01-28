@@ -135,6 +135,7 @@ message UpdatePsetResponse{
 message BlindPsetRequest{
   // The partial transaction with inputs/outputs to blind.
   string pset = 1;
+  bool last_blinder = 2;
 }
 message BlindPsetResponse{
   // Updated partial transaction with blinded inputs/outputs in base64 format.
