@@ -39,20 +39,13 @@ service WalletService {
 
 message GenSeedRequest{}
 message GenSeedResponse{
-  // A mnemonic from where deriving signing key pairs.
-  string signing_mnemonic = 1;
-
-  // A mnemonic from where deriving blinding key pairs.
-  string blinding_mnemonic = 2;
+  // A mnemonic from where deriving signing and blinding key pairs.
+  string mnemonic = 1;
 }
 
 message CreateWalletRequest{
-  // The mnemonic from where deriving signing key pairs.
-  string signing_mnemonic = 1;
-
-  // The mnemonic from where deriving blinding key pairs. If not defined, the
-  // signing one is used.
-  string blinding_mnemonic = 2;
+  // The mnemonic from where deriving signing and blinding key pairs.
+  string mnemonic = 1;
 
   // The password to decrypt HD wallet. After creation, the wallet is locked
   // and the same password is required to unlock it.
@@ -76,12 +69,8 @@ message ChangePasswordRequest{
 message ChangePasswordResponse{}
 
 message RestoreWalletRequest{
-  // The mnemonic from where deriving signing key pairs.
-  string signing_mnemonic = 1;
-
-  // The mnemonic from where deriving blinding key pairs. If not defined, the
-  // signing one is used.
-  string blinding_mnemonic = 2;
+  // The mnemonic from where deriving signing and blinding key pairs.
+  string mnemonic = 1;
 
   // The password to decrypt HD wallet. After restoration, the wallet is locked and
   // the same password is required to unlock it.
