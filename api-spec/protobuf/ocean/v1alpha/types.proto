@@ -18,17 +18,6 @@ message AccountInfo {
   string xpub = 3;
 }
 
-message AddressInfo {
-  // (Un)Confidential address.
-  string address = 1;
-  // Derivation path of the address.
-  string derivation_path = 2;
-  // Hex value of the output script of the address.
-  string output_script = 3;
-  // Hex value of blinding private key.
-  string blinding_private_key = 4;
-}
-
 message BalanceInfo {
   // The balance of the wallet (excludes locked utxos)
   uint64 total_balance = 1;
