@@ -28,6 +28,8 @@ type AccountServiceClient interface {
 	SetAccountTemplate(ctx context.Context, in *SetAccountTemplateRequest, opts ...grpc.CallOption) (*SetAccountTemplateResponse, error)
 	// DeriveAddress generates new address(es) for the account.
 	DeriveAddress(ctx context.Context, in *DeriveAddressRequest, opts ...grpc.CallOption) (*DeriveAddressResponse, error)
+	// DeriveChangeAddress generates new change address(es) for the account.
+	DeriveChangeAddress(ctx context.Context, in *DeriveChangeAddressRequest, opts ...grpc.CallOption) (*DeriveChangeAddressResponse, error)
 	// ListAddresses returns all derived addresses for the account.
 	ListAddresses(ctx context.Context, in *ListAddressesRequest, opts ...grpc.CallOption) (*ListAddressesResponse, error)
 	// Balance returns the balance for the account, or for specific list of
@@ -73,6 +75,15 @@ func (c *accountServiceClient) DeriveAddress(ctx context.Context, in *DeriveAddr
 	return out, nil
 }
 
+func (c *accountServiceClient) DeriveChangeAddress(ctx context.Context, in *DeriveChangeAddressRequest, opts ...grpc.CallOption) (*DeriveChangeAddressResponse, error) {
+	out := new(DeriveChangeAddressResponse)
+	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/DeriveChangeAddress", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *accountServiceClient) ListAddresses(ctx context.Context, in *ListAddressesRequest, opts ...grpc.CallOption) (*ListAddressesResponse, error) {
 	out := new(ListAddressesResponse)
 	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/ListAddresses", in, out, opts...)
@@ -110,6 +121,8 @@ type AccountServiceServer interface {
 	SetAccountTemplate(context.Context, *SetAccountTemplateRequest) (*SetAccountTemplateResponse, error)
 	// DeriveAddress generates new address(es) for the account.
 	DeriveAddress(context.Context, *DeriveAddressRequest) (*DeriveAddressResponse, error)
+	// DeriveChangeAddress generates new change address(es) for the account.
+	DeriveChangeAddress(context.Context, *DeriveChangeAddressRequest) (*DeriveChangeAddressResponse, error)
 	// ListAddresses returns all derived addresses for the account.
 	ListAddresses(context.Context, *ListAddressesRequest) (*ListAddressesResponse, error)
 	// Balance returns the balance for the account, or for specific list of
@@ -132,6 +145,9 @@ func (UnimplementedAccountServiceServer) SetAccountTemplate(context.Context, *Se
 }
 func (UnimplementedAccountServiceServer) DeriveAddress(context.Context, *DeriveAddressRequest) (*DeriveAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeriveAddress not implemented")
+}
+func (UnimplementedAccountServiceServer) DeriveChangeAddress(context.Context, *DeriveChangeAddressRequest) (*DeriveChangeAddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeriveChangeAddress not implemented")
 }
 func (UnimplementedAccountServiceServer) ListAddresses(context.Context, *ListAddressesRequest) (*ListAddressesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAddresses not implemented")
@@ -208,6 +224,24 @@ func _AccountService_DeriveAddress_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_DeriveChangeAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeriveChangeAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).DeriveChangeAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocean.v1alpha.AccountService/DeriveChangeAddress",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).DeriveChangeAddress(ctx, req.(*DeriveChangeAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AccountService_ListAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListAddressesRequest)
 	if err := dec(in); err != nil {
@@ -280,6 +314,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeriveAddress",
 			Handler:    _AccountService_DeriveAddress_Handler,
+		},
+		{
+			MethodName: "DeriveChangeAddress",
+			Handler:    _AccountService_DeriveChangeAddress_Handler,
 		},
 		{
 			MethodName: "ListAddresses",

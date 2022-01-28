@@ -15,7 +15,7 @@ _sym_db = _symbol_database.Default()
 from ocean.v1alpha import types_pb2 as ocean_dot_v1alpha_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1aocean/v1alpha/wallet.proto\x12\rocean.v1alpha\x1a\x19ocean/v1alpha/types.proto\"\x10\n\x0eGenSeedRequest\"i\n\x0fGenSeedResponse\x12)\n\x10signing_mnemonic\x18\x01 \x01(\tR\x0fsigningMnemonic\x12+\n\x11\x62linding_mnemonic\x18\x02 \x01(\tR\x10\x62lindingMnemonic\"\x89\x01\n\x13\x43reateWalletRequest\x12)\n\x10signing_mnemonic\x18\x01 \x01(\tR\x0fsigningMnemonic\x12+\n\x11\x62linding_mnemonic\x18\x02 \x01(\tR\x10\x62lindingMnemonic\x12\x1a\n\x08password\x18\x03 \x01(\x0cR\x08password\"\x16\n\x14\x43reateWalletResponse\"+\n\rUnlockRequest\x12\x1a\n\x08password\x18\x01 \x01(\x0cR\x08password\"\x10\n\x0eUnlockResponse\"e\n\x15\x43hangePasswordRequest\x12)\n\x10\x63urrent_password\x18\x01 \x01(\x0cR\x0f\x63urrentPassword\x12!\n\x0cnew_password\x18\x02 \x01(\x0cR\x0bnewPassword\"\x18\n\x16\x43hangePasswordResponse\"\x8a\x01\n\x14RestoreWalletRequest\x12)\n\x10signing_mnemonic\x18\x01 \x01(\tR\x0fsigningMnemonic\x12+\n\x11\x62linding_mnemonic\x18\x02 \x01(\tR\x10\x62lindingMnemonic\x12\x1a\n\x08password\x18\x03 \x01(\x0cR\x08password\"\x17\n\x15RestoreWalletResponse\"\x0f\n\rStatusRequest\"f\n\x0eStatusResponse\x12 \n\x0binitialized\x18\x01 \x01(\x08R\x0binitialized\x12\x16\n\x06synced\x18\x02 \x01(\x08R\x06synced\x12\x1a\n\x08unlocked\x18\x03 \x01(\x08R\x08unlocked\"\x10\n\x0eGetInfoRequest\"\xde\x02\n\x0fGetInfoResponse\x12@\n\x07network\x18\x01 \x01(\x0e\x32&.ocean.v1alpha.GetInfoResponse.NetworkR\x07network\x12!\n\x0cnative_asset\x18\x02 \x01(\tR\x0bnativeAsset\x12\x1b\n\troot_path\x18\x03 \x01(\tR\x08rootPath\x12.\n\x13master_blinding_key\x18\x04 \x01(\tR\x11masterBlindingKey\x12\x36\n\x08\x61\x63\x63ounts\x18\x05 \x03(\x0b\x32\x1a.ocean.v1alpha.AccountInfoR\x08\x61\x63\x63ounts\"a\n\x07Network\x12\x17\n\x13NETWORK_UNSPECIFIED\x10\x00\x12\x13\n\x0fNETWORK_MAINNET\x10\x01\x12\x13\n\x0fNETWORK_TESTNET\x10\x02\x12\x13\n\x0fNETWORK_REGTEST\x10\x03\x32\xc5\x04\n\rWalletService\x12H\n\x07GenSeed\x12\x1d.ocean.v1alpha.GenSeedRequest\x1a\x1e.ocean.v1alpha.GenSeedResponse\x12W\n\x0c\x43reateWallet\x12\".ocean.v1alpha.CreateWalletRequest\x1a#.ocean.v1alpha.CreateWalletResponse\x12\x45\n\x06Unlock\x12\x1c.ocean.v1alpha.UnlockRequest\x1a\x1d.ocean.v1alpha.UnlockResponse\x12]\n\x0e\x43hangePassword\x12$.ocean.v1alpha.ChangePasswordRequest\x1a%.ocean.v1alpha.ChangePasswordResponse\x12Z\n\rRestoreWallet\x12#.ocean.v1alpha.RestoreWalletRequest\x1a$.ocean.v1alpha.RestoreWalletResponse\x12\x45\n\x06Status\x12\x1c.ocean.v1alpha.StatusRequest\x1a\x1d.ocean.v1alpha.StatusResponse\x12H\n\x07GetInfo\x12\x1d.ocean.v1alpha.GetInfoRequest\x1a\x1e.ocean.v1alpha.GetInfoResponseB\xd8\x01\n\x11\x63om.ocean.v1alphaB\x0bWalletProtoP\x01Zagithub.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1aocean/v1alpha/wallet.proto\x12\rocean.v1alpha\x1a\x19ocean/v1alpha/types.proto\"\x10\n\x0eGenSeedRequest\"-\n\x0fGenSeedResponse\x12\x1a\n\x08mnemonic\x18\x01 \x01(\tR\x08mnemonic\"M\n\x13\x43reateWalletRequest\x12\x1a\n\x08mnemonic\x18\x01 \x01(\tR\x08mnemonic\x12\x1a\n\x08password\x18\x03 \x01(\x0cR\x08password\"\x16\n\x14\x43reateWalletResponse\"+\n\rUnlockRequest\x12\x1a\n\x08password\x18\x01 \x01(\x0cR\x08password\"\x10\n\x0eUnlockResponse\"e\n\x15\x43hangePasswordRequest\x12)\n\x10\x63urrent_password\x18\x01 \x01(\x0cR\x0f\x63urrentPassword\x12!\n\x0cnew_password\x18\x02 \x01(\x0cR\x0bnewPassword\"\x18\n\x16\x43hangePasswordResponse\"N\n\x14RestoreWalletRequest\x12\x1a\n\x08mnemonic\x18\x01 \x01(\tR\x08mnemonic\x12\x1a\n\x08password\x18\x03 \x01(\x0cR\x08password\"\x17\n\x15RestoreWalletResponse\"\x0f\n\rStatusRequest\"f\n\x0eStatusResponse\x12 \n\x0binitialized\x18\x01 \x01(\x08R\x0binitialized\x12\x16\n\x06synced\x18\x02 \x01(\x08R\x06synced\x12\x1a\n\x08unlocked\x18\x03 \x01(\x08R\x08unlocked\"\x10\n\x0eGetInfoRequest\"\xde\x02\n\x0fGetInfoResponse\x12@\n\x07network\x18\x01 \x01(\x0e\x32&.ocean.v1alpha.GetInfoResponse.NetworkR\x07network\x12!\n\x0cnative_asset\x18\x02 \x01(\tR\x0bnativeAsset\x12\x1b\n\troot_path\x18\x03 \x01(\tR\x08rootPath\x12.\n\x13master_blinding_key\x18\x04 \x01(\tR\x11masterBlindingKey\x12\x36\n\x08\x61\x63\x63ounts\x18\x05 \x03(\x0b\x32\x1a.ocean.v1alpha.AccountInfoR\x08\x61\x63\x63ounts\"a\n\x07Network\x12\x17\n\x13NETWORK_UNSPECIFIED\x10\x00\x12\x13\n\x0fNETWORK_MAINNET\x10\x01\x12\x13\n\x0fNETWORK_TESTNET\x10\x02\x12\x13\n\x0fNETWORK_REGTEST\x10\x03\x32\xc5\x04\n\rWalletService\x12H\n\x07GenSeed\x12\x1d.ocean.v1alpha.GenSeedRequest\x1a\x1e.ocean.v1alpha.GenSeedResponse\x12W\n\x0c\x43reateWallet\x12\".ocean.v1alpha.CreateWalletRequest\x1a#.ocean.v1alpha.CreateWalletResponse\x12\x45\n\x06Unlock\x12\x1c.ocean.v1alpha.UnlockRequest\x1a\x1d.ocean.v1alpha.UnlockResponse\x12]\n\x0e\x43hangePassword\x12$.ocean.v1alpha.ChangePasswordRequest\x1a%.ocean.v1alpha.ChangePasswordResponse\x12Z\n\rRestoreWallet\x12#.ocean.v1alpha.RestoreWalletRequest\x1a$.ocean.v1alpha.RestoreWalletResponse\x12\x45\n\x06Status\x12\x1c.ocean.v1alpha.StatusRequest\x1a\x1d.ocean.v1alpha.StatusResponse\x12H\n\x07GetInfo\x12\x1d.ocean.v1alpha.GetInfoRequest\x1a\x1e.ocean.v1alpha.GetInfoResponseB\xd8\x01\n\x11\x63om.ocean.v1alphaB\x0bWalletProtoP\x01Zagithub.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
 
 
 
@@ -140,33 +140,33 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _GENSEEDREQUEST._serialized_start=72
   _GENSEEDREQUEST._serialized_end=88
   _GENSEEDRESPONSE._serialized_start=90
-  _GENSEEDRESPONSE._serialized_end=195
-  _CREATEWALLETREQUEST._serialized_start=198
-  _CREATEWALLETREQUEST._serialized_end=335
-  _CREATEWALLETRESPONSE._serialized_start=337
-  _CREATEWALLETRESPONSE._serialized_end=359
-  _UNLOCKREQUEST._serialized_start=361
-  _UNLOCKREQUEST._serialized_end=404
-  _UNLOCKRESPONSE._serialized_start=406
-  _UNLOCKRESPONSE._serialized_end=422
-  _CHANGEPASSWORDREQUEST._serialized_start=424
-  _CHANGEPASSWORDREQUEST._serialized_end=525
-  _CHANGEPASSWORDRESPONSE._serialized_start=527
-  _CHANGEPASSWORDRESPONSE._serialized_end=551
-  _RESTOREWALLETREQUEST._serialized_start=554
-  _RESTOREWALLETREQUEST._serialized_end=692
-  _RESTOREWALLETRESPONSE._serialized_start=694
-  _RESTOREWALLETRESPONSE._serialized_end=717
-  _STATUSREQUEST._serialized_start=719
-  _STATUSREQUEST._serialized_end=734
-  _STATUSRESPONSE._serialized_start=736
-  _STATUSRESPONSE._serialized_end=838
-  _GETINFOREQUEST._serialized_start=840
-  _GETINFOREQUEST._serialized_end=856
-  _GETINFORESPONSE._serialized_start=859
-  _GETINFORESPONSE._serialized_end=1209
-  _GETINFORESPONSE_NETWORK._serialized_start=1112
-  _GETINFORESPONSE_NETWORK._serialized_end=1209
-  _WALLETSERVICE._serialized_start=1212
-  _WALLETSERVICE._serialized_end=1793
+  _GENSEEDRESPONSE._serialized_end=135
+  _CREATEWALLETREQUEST._serialized_start=137
+  _CREATEWALLETREQUEST._serialized_end=214
+  _CREATEWALLETRESPONSE._serialized_start=216
+  _CREATEWALLETRESPONSE._serialized_end=238
+  _UNLOCKREQUEST._serialized_start=240
+  _UNLOCKREQUEST._serialized_end=283
+  _UNLOCKRESPONSE._serialized_start=285
+  _UNLOCKRESPONSE._serialized_end=301
+  _CHANGEPASSWORDREQUEST._serialized_start=303
+  _CHANGEPASSWORDREQUEST._serialized_end=404
+  _CHANGEPASSWORDRESPONSE._serialized_start=406
+  _CHANGEPASSWORDRESPONSE._serialized_end=430
+  _RESTOREWALLETREQUEST._serialized_start=432
+  _RESTOREWALLETREQUEST._serialized_end=510
+  _RESTOREWALLETRESPONSE._serialized_start=512
+  _RESTOREWALLETRESPONSE._serialized_end=535
+  _STATUSREQUEST._serialized_start=537
+  _STATUSREQUEST._serialized_end=552
+  _STATUSRESPONSE._serialized_start=554
+  _STATUSRESPONSE._serialized_end=656
+  _GETINFOREQUEST._serialized_start=658
+  _GETINFOREQUEST._serialized_end=674
+  _GETINFORESPONSE._serialized_start=677
+  _GETINFORESPONSE._serialized_end=1027
+  _GETINFORESPONSE_NETWORK._serialized_start=930
+  _GETINFORESPONSE_NETWORK._serialized_end=1027
+  _WALLETSERVICE._serialized_start=1030
+  _WALLETSERVICE._serialized_end=1611
 # @@protoc_insertion_point(module_scope)

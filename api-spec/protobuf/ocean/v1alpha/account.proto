@@ -18,7 +18,7 @@ service AccountService {
   rpc DeriveAddress(DeriveAddressRequest) returns (DeriveAddressResponse);
 
   // DeriveChangeAddress generates new change address(es) for the account.
-  rpc DeriveChangeAddress(DeriveAddressRequest) returns (DeriveAddressResponse);
+  rpc DeriveChangeAddress(DeriveChangeAddressRequest) returns (DeriveChangeAddressResponse);
 
   // ListAddresses returns all derived addresses for the account.
   rpc ListAddresses(ListAddressesRequest) returns (ListAddressesResponse);
@@ -58,6 +58,16 @@ message DeriveAddressRequest{
   uint64 num_of_addresses = 2;
 }
 message DeriveAddressResponse{
+  repeated string addresses = 1;
+}
+
+message DeriveChangeAddressRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // The number of addresses to generate.
+  uint64 num_of_addresses = 2;
+}
+message DeriveChangeAddressResponse{
   repeated string addresses = 1;
 }
 

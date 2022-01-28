@@ -15,7 +15,7 @@ _sym_db = _symbol_database.Default()
 from ocean.v1alpha import types_pb2 as ocean_dot_v1alpha_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1focean/v1alpha/transaction.proto\x12\rocean.v1alpha\x1a\x19ocean/v1alpha/types.proto\"\xb8\x02\n\x12SelectUtxosRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12!\n\x0ctarget_asset\x18\x02 \x01(\tR\x0btargetAsset\x12#\n\rtarget_amount\x18\x03 \x01(\x04R\x0ctargetAmount\x12\x46\n\x08strategy\x18\x04 \x01(\x0e\x32*.ocean.v1alpha.SelectUtxosRequest.StrategyR\x08strategy\"V\n\x08Strategy\x12\x18\n\x14STRATEGY_UNSPECIFIED\x10\x00\x12\x19\n\x15STRATEGY_BRANCH_BOUND\x10\x01\x12\x15\n\x11STRATEGY_FRAGMENT\x10\x02\"X\n\x13SelectUtxosResponse\x12)\n\x05utxos\x18\x01 \x03(\x0b\x32\x13.ocean.v1alpha.UtxoR\x05utxos\x12\x16\n\x06\x63hange\x18\x02 \x01(\x04R\x06\x63hange\"t\n\x13\x45stimateFeesRequest\x12,\n\x06inputs\x18\x01 \x03(\x0b\x32\x14.ocean.v1alpha.InputR\x06inputs\x12/\n\x07outputs\x18\x02 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\x07outputs\"5\n\x14\x45stimateFeesResponse\x12\x1d\n\nfee_amount\x18\x01 \x01(\x04R\tfeeAmount\"/\n\x16SignTransactionRequest\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"0\n\x17SignTransactionResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"4\n\x1b\x42roadcastTransactionRequest\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"2\n\x1c\x42roadcastTransactionResponse\x12\x12\n\x04txid\x18\x01 \x01(\tR\x04txid\"r\n\x11\x43reatePsetRequest\x12,\n\x06inputs\x18\x01 \x03(\x0b\x32\x14.ocean.v1alpha.InputR\x06inputs\x12/\n\x07outputs\x18\x02 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\x07outputs\"(\n\x12\x43reatePsetResponse\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"\x86\x01\n\x11UpdatePsetRequest\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\x12,\n\x06inputs\x18\x02 \x03(\x0b\x32\x14.ocean.v1alpha.InputR\x06inputs\x12/\n\x07outputs\x18\x03 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\x07outputs\"(\n\x12UpdatePsetResponse\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"&\n\x10\x42lindPsetRequest\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"\'\n\x11\x42lindPsetResponse\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"%\n\x0fSignPsetRequest\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"&\n\x10SignPsetResponse\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"\xf4\x01\n\x0bMintRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12!\n\x0c\x61sset_amount\x18\x02 \x01(\x04R\x0b\x61ssetAmount\x12!\n\x0ctoken_amount\x18\x03 \x01(\x04R\x0btokenAmount\x12\x1d\n\nasset_name\x18\x04 \x01(\tR\tassetName\x12!\n\x0c\x61sset_ticker\x18\x05 \x01(\tR\x0b\x61ssetTicker\x12!\n\x0c\x61sset_domain\x18\x06 \x01(\tR\x0b\x61ssetDomain\"%\n\x0cMintResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"y\n\rRemintRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x14\n\x05\x61sset\x18\x02 \x01(\tR\x05\x61sset\x12\x16\n\x06\x61mount\x18\x03 \x01(\x04R\x06\x61mount\"\'\n\x0eRemintResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"~\n\x0b\x42urnRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x33\n\treceivers\x18\x02 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\treceivers\"%\n\x0c\x42urnResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"\x82\x01\n\x0fTransferRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x33\n\treceivers\x18\x02 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\treceivers\")\n\x10TransferResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"\x15\n\x13PegInAddressRequest\"\xa3\x01\n\x14PegInAddressResponse\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12,\n\x12main_chain_address\x18\x02 \x01(\tR\x10mainChainAddress\x12!\n\x0c\x63laim_script\x18\x03 \x01(\tR\x0b\x63laimScript\"w\n\x11\x43laimPegInRequest\x12\x1d\n\nbitcoin_tx\x18\x01 \x01(\tR\tbitcoinTx\x12 \n\x0ctx_out_proof\x18\x02 \x01(\tR\ntxOutProof\x12!\n\x0c\x63laim_script\x18\x03 \x01(\tR\x0b\x63laimScript\"+\n\x12\x43laimPegInResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex2\x9b\t\n\x12TransactionService\x12T\n\x0bSelectUtxos\x12!.ocean.v1alpha.SelectUtxosRequest\x1a\".ocean.v1alpha.SelectUtxosResponse\x12W\n\x0c\x45stimateFees\x12\".ocean.v1alpha.EstimateFeesRequest\x1a#.ocean.v1alpha.EstimateFeesResponse\x12`\n\x0fSignTransaction\x12%.ocean.v1alpha.SignTransactionRequest\x1a&.ocean.v1alpha.SignTransactionResponse\x12o\n\x14\x42roadcastTransaction\x12*.ocean.v1alpha.BroadcastTransactionRequest\x1a+.ocean.v1alpha.BroadcastTransactionResponse\x12Q\n\nCreatePset\x12 .ocean.v1alpha.CreatePsetRequest\x1a!.ocean.v1alpha.CreatePsetResponse\x12Q\n\nUpdatePset\x12 .ocean.v1alpha.UpdatePsetRequest\x1a!.ocean.v1alpha.UpdatePsetResponse\x12N\n\tBlindPset\x12\x1f.ocean.v1alpha.BlindPsetRequest\x1a .ocean.v1alpha.BlindPsetResponse\x12K\n\x08SignPset\x12\x1e.ocean.v1alpha.SignPsetRequest\x1a\x1f.ocean.v1alpha.SignPsetResponse\x12?\n\x04Mint\x12\x1a.ocean.v1alpha.MintRequest\x1a\x1b.ocean.v1alpha.MintResponse\x12\x45\n\x06Remint\x12\x1c.ocean.v1alpha.RemintRequest\x1a\x1d.ocean.v1alpha.RemintResponse\x12?\n\x04\x42urn\x12\x1a.ocean.v1alpha.BurnRequest\x1a\x1b.ocean.v1alpha.BurnResponse\x12K\n\x08Transfer\x12\x1e.ocean.v1alpha.TransferRequest\x1a\x1f.ocean.v1alpha.TransferResponse\x12W\n\x0cPegInAddress\x12\".ocean.v1alpha.PegInAddressRequest\x1a#.ocean.v1alpha.PegInAddressResponse\x12Q\n\nClaimPegIn\x12 .ocean.v1alpha.ClaimPegInRequest\x1a!.ocean.v1alpha.ClaimPegInResponseB\xdd\x01\n\x11\x63om.ocean.v1alphaB\x10TransactionProtoP\x01Zagithub.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1focean/v1alpha/transaction.proto\x12\rocean.v1alpha\x1a\x19ocean/v1alpha/types.proto\"\xb8\x02\n\x12SelectUtxosRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12!\n\x0ctarget_asset\x18\x02 \x01(\tR\x0btargetAsset\x12#\n\rtarget_amount\x18\x03 \x01(\x04R\x0ctargetAmount\x12\x46\n\x08strategy\x18\x04 \x01(\x0e\x32*.ocean.v1alpha.SelectUtxosRequest.StrategyR\x08strategy\"V\n\x08Strategy\x12\x18\n\x14STRATEGY_UNSPECIFIED\x10\x00\x12\x19\n\x15STRATEGY_BRANCH_BOUND\x10\x01\x12\x15\n\x11STRATEGY_FRAGMENT\x10\x02\"X\n\x13SelectUtxosResponse\x12)\n\x05utxos\x18\x01 \x03(\x0b\x32\x13.ocean.v1alpha.UtxoR\x05utxos\x12\x16\n\x06\x63hange\x18\x02 \x01(\x04R\x06\x63hange\"t\n\x13\x45stimateFeesRequest\x12,\n\x06inputs\x18\x01 \x03(\x0b\x32\x14.ocean.v1alpha.InputR\x06inputs\x12/\n\x07outputs\x18\x02 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\x07outputs\"5\n\x14\x45stimateFeesResponse\x12\x1d\n\nfee_amount\x18\x01 \x01(\x04R\tfeeAmount\"/\n\x16SignTransactionRequest\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"0\n\x17SignTransactionResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"4\n\x1b\x42roadcastTransactionRequest\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"2\n\x1c\x42roadcastTransactionResponse\x12\x12\n\x04txid\x18\x01 \x01(\tR\x04txid\"r\n\x11\x43reatePsetRequest\x12,\n\x06inputs\x18\x01 \x03(\x0b\x32\x14.ocean.v1alpha.InputR\x06inputs\x12/\n\x07outputs\x18\x02 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\x07outputs\"(\n\x12\x43reatePsetResponse\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"\x86\x01\n\x11UpdatePsetRequest\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\x12,\n\x06inputs\x18\x02 \x03(\x0b\x32\x14.ocean.v1alpha.InputR\x06inputs\x12/\n\x07outputs\x18\x03 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\x07outputs\"(\n\x12UpdatePsetResponse\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"I\n\x10\x42lindPsetRequest\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\x12!\n\x0clast_blinder\x18\x02 \x01(\x08R\x0blastBlinder\"\'\n\x11\x42lindPsetResponse\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"%\n\x0fSignPsetRequest\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"&\n\x10SignPsetResponse\x12\x12\n\x04pset\x18\x01 \x01(\tR\x04pset\"\xf4\x01\n\x0bMintRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12!\n\x0c\x61sset_amount\x18\x02 \x01(\x04R\x0b\x61ssetAmount\x12!\n\x0ctoken_amount\x18\x03 \x01(\x04R\x0btokenAmount\x12\x1d\n\nasset_name\x18\x04 \x01(\tR\tassetName\x12!\n\x0c\x61sset_ticker\x18\x05 \x01(\tR\x0b\x61ssetTicker\x12!\n\x0c\x61sset_domain\x18\x06 \x01(\tR\x0b\x61ssetDomain\"%\n\x0cMintResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"y\n\rRemintRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x14\n\x05\x61sset\x18\x02 \x01(\tR\x05\x61sset\x12\x16\n\x06\x61mount\x18\x03 \x01(\x04R\x06\x61mount\"\'\n\x0eRemintResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"~\n\x0b\x42urnRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x33\n\treceivers\x18\x02 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\treceivers\"%\n\x0c\x42urnResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"\x82\x01\n\x0fTransferRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x33\n\treceivers\x18\x02 \x03(\x0b\x32\x15.ocean.v1alpha.OutputR\treceivers\")\n\x10TransferResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex\"\x15\n\x13PegInAddressRequest\"\xa3\x01\n\x14PegInAddressResponse\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12,\n\x12main_chain_address\x18\x02 \x01(\tR\x10mainChainAddress\x12!\n\x0c\x63laim_script\x18\x03 \x01(\tR\x0b\x63laimScript\"w\n\x11\x43laimPegInRequest\x12\x1d\n\nbitcoin_tx\x18\x01 \x01(\tR\tbitcoinTx\x12 \n\x0ctx_out_proof\x18\x02 \x01(\tR\ntxOutProof\x12!\n\x0c\x63laim_script\x18\x03 \x01(\tR\x0b\x63laimScript\"+\n\x12\x43laimPegInResponse\x12\x15\n\x06tx_hex\x18\x01 \x01(\tR\x05txHex2\x9b\t\n\x12TransactionService\x12T\n\x0bSelectUtxos\x12!.ocean.v1alpha.SelectUtxosRequest\x1a\".ocean.v1alpha.SelectUtxosResponse\x12W\n\x0c\x45stimateFees\x12\".ocean.v1alpha.EstimateFeesRequest\x1a#.ocean.v1alpha.EstimateFeesResponse\x12`\n\x0fSignTransaction\x12%.ocean.v1alpha.SignTransactionRequest\x1a&.ocean.v1alpha.SignTransactionResponse\x12o\n\x14\x42roadcastTransaction\x12*.ocean.v1alpha.BroadcastTransactionRequest\x1a+.ocean.v1alpha.BroadcastTransactionResponse\x12Q\n\nCreatePset\x12 .ocean.v1alpha.CreatePsetRequest\x1a!.ocean.v1alpha.CreatePsetResponse\x12Q\n\nUpdatePset\x12 .ocean.v1alpha.UpdatePsetRequest\x1a!.ocean.v1alpha.UpdatePsetResponse\x12N\n\tBlindPset\x12\x1f.ocean.v1alpha.BlindPsetRequest\x1a .ocean.v1alpha.BlindPsetResponse\x12K\n\x08SignPset\x12\x1e.ocean.v1alpha.SignPsetRequest\x1a\x1f.ocean.v1alpha.SignPsetResponse\x12?\n\x04Mint\x12\x1a.ocean.v1alpha.MintRequest\x1a\x1b.ocean.v1alpha.MintResponse\x12\x45\n\x06Remint\x12\x1c.ocean.v1alpha.RemintRequest\x1a\x1d.ocean.v1alpha.RemintResponse\x12?\n\x04\x42urn\x12\x1a.ocean.v1alpha.BurnRequest\x1a\x1b.ocean.v1alpha.BurnResponse\x12K\n\x08Transfer\x12\x1e.ocean.v1alpha.TransferRequest\x1a\x1f.ocean.v1alpha.TransferResponse\x12W\n\x0cPegInAddress\x12\".ocean.v1alpha.PegInAddressRequest\x1a#.ocean.v1alpha.PegInAddressResponse\x12Q\n\nClaimPegIn\x12 .ocean.v1alpha.ClaimPegInRequest\x1a!.ocean.v1alpha.ClaimPegInResponseB\xdd\x01\n\x11\x63om.ocean.v1alphaB\x10TransactionProtoP\x01Zagithub.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
 
 
 
@@ -276,37 +276,37 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _UPDATEPSETRESPONSE._serialized_start=1155
   _UPDATEPSETRESPONSE._serialized_end=1195
   _BLINDPSETREQUEST._serialized_start=1197
-  _BLINDPSETREQUEST._serialized_end=1235
-  _BLINDPSETRESPONSE._serialized_start=1237
-  _BLINDPSETRESPONSE._serialized_end=1276
-  _SIGNPSETREQUEST._serialized_start=1278
-  _SIGNPSETREQUEST._serialized_end=1315
-  _SIGNPSETRESPONSE._serialized_start=1317
-  _SIGNPSETRESPONSE._serialized_end=1355
-  _MINTREQUEST._serialized_start=1358
-  _MINTREQUEST._serialized_end=1602
-  _MINTRESPONSE._serialized_start=1604
-  _MINTRESPONSE._serialized_end=1641
-  _REMINTREQUEST._serialized_start=1643
-  _REMINTREQUEST._serialized_end=1764
-  _REMINTRESPONSE._serialized_start=1766
-  _REMINTRESPONSE._serialized_end=1805
-  _BURNREQUEST._serialized_start=1807
-  _BURNREQUEST._serialized_end=1933
-  _BURNRESPONSE._serialized_start=1935
-  _BURNRESPONSE._serialized_end=1972
-  _TRANSFERREQUEST._serialized_start=1975
-  _TRANSFERREQUEST._serialized_end=2105
-  _TRANSFERRESPONSE._serialized_start=2107
-  _TRANSFERRESPONSE._serialized_end=2148
-  _PEGINADDRESSREQUEST._serialized_start=2150
-  _PEGINADDRESSREQUEST._serialized_end=2171
-  _PEGINADDRESSRESPONSE._serialized_start=2174
-  _PEGINADDRESSRESPONSE._serialized_end=2337
-  _CLAIMPEGINREQUEST._serialized_start=2339
-  _CLAIMPEGINREQUEST._serialized_end=2458
-  _CLAIMPEGINRESPONSE._serialized_start=2460
-  _CLAIMPEGINRESPONSE._serialized_end=2503
-  _TRANSACTIONSERVICE._serialized_start=2506
-  _TRANSACTIONSERVICE._serialized_end=3685
+  _BLINDPSETREQUEST._serialized_end=1270
+  _BLINDPSETRESPONSE._serialized_start=1272
+  _BLINDPSETRESPONSE._serialized_end=1311
+  _SIGNPSETREQUEST._serialized_start=1313
+  _SIGNPSETREQUEST._serialized_end=1350
+  _SIGNPSETRESPONSE._serialized_start=1352
+  _SIGNPSETRESPONSE._serialized_end=1390
+  _MINTREQUEST._serialized_start=1393
+  _MINTREQUEST._serialized_end=1637
+  _MINTRESPONSE._serialized_start=1639
+  _MINTRESPONSE._serialized_end=1676
+  _REMINTREQUEST._serialized_start=1678
+  _REMINTREQUEST._serialized_end=1799
+  _REMINTRESPONSE._serialized_start=1801
+  _REMINTRESPONSE._serialized_end=1840
+  _BURNREQUEST._serialized_start=1842
+  _BURNREQUEST._serialized_end=1968
+  _BURNRESPONSE._serialized_start=1970
+  _BURNRESPONSE._serialized_end=2007
+  _TRANSFERREQUEST._serialized_start=2010
+  _TRANSFERREQUEST._serialized_end=2140
+  _TRANSFERRESPONSE._serialized_start=2142
+  _TRANSFERRESPONSE._serialized_end=2183
+  _PEGINADDRESSREQUEST._serialized_start=2185
+  _PEGINADDRESSREQUEST._serialized_end=2206
+  _PEGINADDRESSRESPONSE._serialized_start=2209
+  _PEGINADDRESSRESPONSE._serialized_end=2372
+  _CLAIMPEGINREQUEST._serialized_start=2374
+  _CLAIMPEGINREQUEST._serialized_end=2493
+  _CLAIMPEGINRESPONSE._serialized_start=2495
+  _CLAIMPEGINRESPONSE._serialized_end=2538
+  _TRANSACTIONSERVICE._serialized_start=2541
+  _TRANSACTIONSERVICE._serialized_end=3720
 # @@protoc_insertion_point(module_scope)
