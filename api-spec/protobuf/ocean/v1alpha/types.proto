@@ -102,6 +102,7 @@ enum UtxoEventType {
   UTXO_EVENT_TYPE_LOCKED = 1;
   UTXO_EVENT_TYPE_UNLOCKED = 2;
   UTXO_EVENT_TYPE_SPENT = 3;
+  UTXO_EVENT_TYPE_NEW = 4;
 }
 
 enum WebhookEventType {

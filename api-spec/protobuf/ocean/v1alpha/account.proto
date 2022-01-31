@@ -76,7 +76,6 @@ message ListAddressesRequest {
   AccountKey account_key = 1;
 }
 message ListAddressesResponse {
-  // Account key.
   repeated string addresses = 1;
 }
 
