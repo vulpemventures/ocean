@@ -90,7 +90,7 @@ message SelectUtxosRequest{
 }
 message SelectUtxosResponse{
   // List of selected utxos.
-  repeated Utxo utxos = 1;
+  Utxos utxos = 1;
   uint64 change = 2;
 }
 
