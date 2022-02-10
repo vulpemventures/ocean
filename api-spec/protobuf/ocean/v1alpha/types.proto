@@ -66,6 +66,15 @@ message Utxo {
   bool is_locked = 7;
 }
 
+message BlockDetails {
+  // Hash of the block.
+  bytes hash = 1;
+  // Heighth (index) of the block.
+  int32 height = 2;
+  // Timestamp of the block.
+  int64 timestamp = 3;
+}
+
 message Template {
   enum Format {
     FORMAT_UNSPECIFIED = 0;

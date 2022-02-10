@@ -67,7 +67,111 @@ func (x SelectUtxosRequest_Strategy) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SelectUtxosRequest_Strategy.Descriptor instead.
 func (SelectUtxosRequest_Strategy) EnumDescriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{0, 0}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{2, 0}
+}
+
+type GetTransactionRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Txid string `protobuf:"bytes,1,opt,name=txid,proto3" json:"txid,omitempty"`
+}
+
+func (x *GetTransactionRequest) Reset() {
+	*x = GetTransactionRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTransactionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTransactionRequest) ProtoMessage() {}
+
+func (x *GetTransactionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTransactionRequest.ProtoReflect.Descriptor instead.
+func (*GetTransactionRequest) Descriptor() ([]byte, []int) {
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetTransactionRequest) GetTxid() string {
+	if x != nil {
+		return x.Txid
+	}
+	return ""
+}
+
+type GetTransactionResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Raw transaction in hex format.
+	TxHex string `protobuf:"bytes,1,opt,name=tx_hex,json=txHex,proto3" json:"tx_hex,omitempty"`
+	// Deatils of the block including the transaction.
+	BlockDetails *BlockDetails `protobuf:"bytes,2,opt,name=block_details,json=blockDetails,proto3" json:"block_details,omitempty"`
+}
+
+func (x *GetTransactionResponse) Reset() {
+	*x = GetTransactionResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTransactionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTransactionResponse) ProtoMessage() {}
+
+func (x *GetTransactionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTransactionResponse.ProtoReflect.Descriptor instead.
+func (*GetTransactionResponse) Descriptor() ([]byte, []int) {
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetTransactionResponse) GetTxHex() string {
+	if x != nil {
+		return x.TxHex
+	}
+	return ""
+}
+
+func (x *GetTransactionResponse) GetBlockDetails() *BlockDetails {
+	if x != nil {
+		return x.BlockDetails
+	}
+	return nil
 }
 
 type SelectUtxosRequest struct {
@@ -87,7 +191,7 @@ type SelectUtxosRequest struct {
 func (x *SelectUtxosRequest) Reset() {
 	*x = SelectUtxosRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[0]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -100,7 +204,7 @@ func (x *SelectUtxosRequest) String() string {
 func (*SelectUtxosRequest) ProtoMessage() {}
 
 func (x *SelectUtxosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[0]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -113,7 +217,7 @@ func (x *SelectUtxosRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SelectUtxosRequest.ProtoReflect.Descriptor instead.
 func (*SelectUtxosRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{0}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SelectUtxosRequest) GetAccountKey() *AccountKey {
@@ -157,7 +261,7 @@ type SelectUtxosResponse struct {
 func (x *SelectUtxosResponse) Reset() {
 	*x = SelectUtxosResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[1]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -170,7 +274,7 @@ func (x *SelectUtxosResponse) String() string {
 func (*SelectUtxosResponse) ProtoMessage() {}
 
 func (x *SelectUtxosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[1]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -183,7 +287,7 @@ func (x *SelectUtxosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SelectUtxosResponse.ProtoReflect.Descriptor instead.
 func (*SelectUtxosResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{1}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SelectUtxosResponse) GetUtxos() []*Utxo {
@@ -212,7 +316,7 @@ type EstimateFeesRequest struct {
 func (x *EstimateFeesRequest) Reset() {
 	*x = EstimateFeesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[2]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -225,7 +329,7 @@ func (x *EstimateFeesRequest) String() string {
 func (*EstimateFeesRequest) ProtoMessage() {}
 
 func (x *EstimateFeesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[2]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -238,7 +342,7 @@ func (x *EstimateFeesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EstimateFeesRequest.ProtoReflect.Descriptor instead.
 func (*EstimateFeesRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{2}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *EstimateFeesRequest) GetInputs() []*Input {
@@ -266,7 +370,7 @@ type EstimateFeesResponse struct {
 func (x *EstimateFeesResponse) Reset() {
 	*x = EstimateFeesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[3]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -279,7 +383,7 @@ func (x *EstimateFeesResponse) String() string {
 func (*EstimateFeesResponse) ProtoMessage() {}
 
 func (x *EstimateFeesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[3]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -292,7 +396,7 @@ func (x *EstimateFeesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EstimateFeesResponse.ProtoReflect.Descriptor instead.
 func (*EstimateFeesResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{3}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *EstimateFeesResponse) GetFeeAmount() uint64 {
@@ -314,7 +418,7 @@ type SignTransactionRequest struct {
 func (x *SignTransactionRequest) Reset() {
 	*x = SignTransactionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[4]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -327,7 +431,7 @@ func (x *SignTransactionRequest) String() string {
 func (*SignTransactionRequest) ProtoMessage() {}
 
 func (x *SignTransactionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[4]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -340,7 +444,7 @@ func (x *SignTransactionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignTransactionRequest.ProtoReflect.Descriptor instead.
 func (*SignTransactionRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{4}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SignTransactionRequest) GetTxHex() string {
@@ -362,7 +466,7 @@ type SignTransactionResponse struct {
 func (x *SignTransactionResponse) Reset() {
 	*x = SignTransactionResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[5]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -375,7 +479,7 @@ func (x *SignTransactionResponse) String() string {
 func (*SignTransactionResponse) ProtoMessage() {}
 
 func (x *SignTransactionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[5]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -388,7 +492,7 @@ func (x *SignTransactionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignTransactionResponse.ProtoReflect.Descriptor instead.
 func (*SignTransactionResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{5}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SignTransactionResponse) GetTxHex() string {
@@ -410,7 +514,7 @@ type BroadcastTransactionRequest struct {
 func (x *BroadcastTransactionRequest) Reset() {
 	*x = BroadcastTransactionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[6]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -423,7 +527,7 @@ func (x *BroadcastTransactionRequest) String() string {
 func (*BroadcastTransactionRequest) ProtoMessage() {}
 
 func (x *BroadcastTransactionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[6]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -436,7 +540,7 @@ func (x *BroadcastTransactionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BroadcastTransactionRequest.ProtoReflect.Descriptor instead.
 func (*BroadcastTransactionRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{6}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *BroadcastTransactionRequest) GetTxHex() string {
@@ -458,7 +562,7 @@ type BroadcastTransactionResponse struct {
 func (x *BroadcastTransactionResponse) Reset() {
 	*x = BroadcastTransactionResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[7]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -471,7 +575,7 @@ func (x *BroadcastTransactionResponse) String() string {
 func (*BroadcastTransactionResponse) ProtoMessage() {}
 
 func (x *BroadcastTransactionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[7]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,7 +588,7 @@ func (x *BroadcastTransactionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BroadcastTransactionResponse.ProtoReflect.Descriptor instead.
 func (*BroadcastTransactionResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{7}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *BroadcastTransactionResponse) GetTxid() string {
@@ -508,7 +612,7 @@ type CreatePsetRequest struct {
 func (x *CreatePsetRequest) Reset() {
 	*x = CreatePsetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[8]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -521,7 +625,7 @@ func (x *CreatePsetRequest) String() string {
 func (*CreatePsetRequest) ProtoMessage() {}
 
 func (x *CreatePsetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[8]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -534,7 +638,7 @@ func (x *CreatePsetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePsetRequest.ProtoReflect.Descriptor instead.
 func (*CreatePsetRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{8}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CreatePsetRequest) GetInputs() []*Input {
@@ -563,7 +667,7 @@ type CreatePsetResponse struct {
 func (x *CreatePsetResponse) Reset() {
 	*x = CreatePsetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[9]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -576,7 +680,7 @@ func (x *CreatePsetResponse) String() string {
 func (*CreatePsetResponse) ProtoMessage() {}
 
 func (x *CreatePsetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[9]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -589,7 +693,7 @@ func (x *CreatePsetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePsetResponse.ProtoReflect.Descriptor instead.
 func (*CreatePsetResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{9}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CreatePsetResponse) GetPset() string {
@@ -615,7 +719,7 @@ type UpdatePsetRequest struct {
 func (x *UpdatePsetRequest) Reset() {
 	*x = UpdatePsetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[10]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -628,7 +732,7 @@ func (x *UpdatePsetRequest) String() string {
 func (*UpdatePsetRequest) ProtoMessage() {}
 
 func (x *UpdatePsetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[10]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -641,7 +745,7 @@ func (x *UpdatePsetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePsetRequest.ProtoReflect.Descriptor instead.
 func (*UpdatePsetRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{10}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *UpdatePsetRequest) GetPset() string {
@@ -677,7 +781,7 @@ type UpdatePsetResponse struct {
 func (x *UpdatePsetResponse) Reset() {
 	*x = UpdatePsetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[11]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -690,7 +794,7 @@ func (x *UpdatePsetResponse) String() string {
 func (*UpdatePsetResponse) ProtoMessage() {}
 
 func (x *UpdatePsetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[11]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,7 +807,7 @@ func (x *UpdatePsetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePsetResponse.ProtoReflect.Descriptor instead.
 func (*UpdatePsetResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{11}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *UpdatePsetResponse) GetPset() string {
@@ -726,7 +830,7 @@ type BlindPsetRequest struct {
 func (x *BlindPsetRequest) Reset() {
 	*x = BlindPsetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[12]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -739,7 +843,7 @@ func (x *BlindPsetRequest) String() string {
 func (*BlindPsetRequest) ProtoMessage() {}
 
 func (x *BlindPsetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[12]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -752,7 +856,7 @@ func (x *BlindPsetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlindPsetRequest.ProtoReflect.Descriptor instead.
 func (*BlindPsetRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{12}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *BlindPsetRequest) GetPset() string {
@@ -781,7 +885,7 @@ type BlindPsetResponse struct {
 func (x *BlindPsetResponse) Reset() {
 	*x = BlindPsetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[13]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -794,7 +898,7 @@ func (x *BlindPsetResponse) String() string {
 func (*BlindPsetResponse) ProtoMessage() {}
 
 func (x *BlindPsetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[13]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -807,7 +911,7 @@ func (x *BlindPsetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlindPsetResponse.ProtoReflect.Descriptor instead.
 func (*BlindPsetResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{13}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *BlindPsetResponse) GetPset() string {
@@ -829,7 +933,7 @@ type SignPsetRequest struct {
 func (x *SignPsetRequest) Reset() {
 	*x = SignPsetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[14]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -842,7 +946,7 @@ func (x *SignPsetRequest) String() string {
 func (*SignPsetRequest) ProtoMessage() {}
 
 func (x *SignPsetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[14]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +959,7 @@ func (x *SignPsetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignPsetRequest.ProtoReflect.Descriptor instead.
 func (*SignPsetRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{14}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SignPsetRequest) GetPset() string {
@@ -877,7 +981,7 @@ type SignPsetResponse struct {
 func (x *SignPsetResponse) Reset() {
 	*x = SignPsetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[15]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -890,7 +994,7 @@ func (x *SignPsetResponse) String() string {
 func (*SignPsetResponse) ProtoMessage() {}
 
 func (x *SignPsetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[15]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -903,7 +1007,7 @@ func (x *SignPsetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignPsetResponse.ProtoReflect.Descriptor instead.
 func (*SignPsetResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{15}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SignPsetResponse) GetPset() string {
@@ -935,7 +1039,7 @@ type MintRequest struct {
 func (x *MintRequest) Reset() {
 	*x = MintRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[16]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -948,7 +1052,7 @@ func (x *MintRequest) String() string {
 func (*MintRequest) ProtoMessage() {}
 
 func (x *MintRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[16]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -961,7 +1065,7 @@ func (x *MintRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MintRequest.ProtoReflect.Descriptor instead.
 func (*MintRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{16}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *MintRequest) GetAccountKey() *AccountKey {
@@ -1018,7 +1122,7 @@ type MintResponse struct {
 func (x *MintResponse) Reset() {
 	*x = MintResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[17]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1031,7 +1135,7 @@ func (x *MintResponse) String() string {
 func (*MintResponse) ProtoMessage() {}
 
 func (x *MintResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[17]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1044,7 +1148,7 @@ func (x *MintResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MintResponse.ProtoReflect.Descriptor instead.
 func (*MintResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{17}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *MintResponse) GetTxHex() string {
@@ -1070,7 +1174,7 @@ type RemintRequest struct {
 func (x *RemintRequest) Reset() {
 	*x = RemintRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[18]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1083,7 +1187,7 @@ func (x *RemintRequest) String() string {
 func (*RemintRequest) ProtoMessage() {}
 
 func (x *RemintRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[18]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1096,7 +1200,7 @@ func (x *RemintRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemintRequest.ProtoReflect.Descriptor instead.
 func (*RemintRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{18}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *RemintRequest) GetAccountKey() *AccountKey {
@@ -1132,7 +1236,7 @@ type RemintResponse struct {
 func (x *RemintResponse) Reset() {
 	*x = RemintResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[19]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1145,7 +1249,7 @@ func (x *RemintResponse) String() string {
 func (*RemintResponse) ProtoMessage() {}
 
 func (x *RemintResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[19]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1158,7 +1262,7 @@ func (x *RemintResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemintResponse.ProtoReflect.Descriptor instead.
 func (*RemintResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{19}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *RemintResponse) GetTxHex() string {
@@ -1183,7 +1287,7 @@ type BurnRequest struct {
 func (x *BurnRequest) Reset() {
 	*x = BurnRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[20]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1196,7 +1300,7 @@ func (x *BurnRequest) String() string {
 func (*BurnRequest) ProtoMessage() {}
 
 func (x *BurnRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[20]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1209,7 +1313,7 @@ func (x *BurnRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BurnRequest.ProtoReflect.Descriptor instead.
 func (*BurnRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{20}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *BurnRequest) GetAccountKey() *AccountKey {
@@ -1238,7 +1342,7 @@ type BurnResponse struct {
 func (x *BurnResponse) Reset() {
 	*x = BurnResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[21]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1251,7 +1355,7 @@ func (x *BurnResponse) String() string {
 func (*BurnResponse) ProtoMessage() {}
 
 func (x *BurnResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[21]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1264,7 +1368,7 @@ func (x *BurnResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BurnResponse.ProtoReflect.Descriptor instead.
 func (*BurnResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{21}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *BurnResponse) GetTxHex() string {
@@ -1288,7 +1392,7 @@ type TransferRequest struct {
 func (x *TransferRequest) Reset() {
 	*x = TransferRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[22]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1301,7 +1405,7 @@ func (x *TransferRequest) String() string {
 func (*TransferRequest) ProtoMessage() {}
 
 func (x *TransferRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[22]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1314,7 +1418,7 @@ func (x *TransferRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferRequest.ProtoReflect.Descriptor instead.
 func (*TransferRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{22}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *TransferRequest) GetAccountKey() *AccountKey {
@@ -1343,7 +1447,7 @@ type TransferResponse struct {
 func (x *TransferResponse) Reset() {
 	*x = TransferResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[23]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1356,7 +1460,7 @@ func (x *TransferResponse) String() string {
 func (*TransferResponse) ProtoMessage() {}
 
 func (x *TransferResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[23]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1369,7 +1473,7 @@ func (x *TransferResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferResponse.ProtoReflect.Descriptor instead.
 func (*TransferResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{23}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *TransferResponse) GetTxHex() string {
@@ -1388,7 +1492,7 @@ type PegInAddressRequest struct {
 func (x *PegInAddressRequest) Reset() {
 	*x = PegInAddressRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[24]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1401,7 +1505,7 @@ func (x *PegInAddressRequest) String() string {
 func (*PegInAddressRequest) ProtoMessage() {}
 
 func (x *PegInAddressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[24]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1414,7 +1518,7 @@ func (x *PegInAddressRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PegInAddressRequest.ProtoReflect.Descriptor instead.
 func (*PegInAddressRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{24}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{26}
 }
 
 type PegInAddressResponse struct {
@@ -1433,7 +1537,7 @@ type PegInAddressResponse struct {
 func (x *PegInAddressResponse) Reset() {
 	*x = PegInAddressResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[25]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1446,7 +1550,7 @@ func (x *PegInAddressResponse) String() string {
 func (*PegInAddressResponse) ProtoMessage() {}
 
 func (x *PegInAddressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[25]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1459,7 +1563,7 @@ func (x *PegInAddressResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PegInAddressResponse.ProtoReflect.Descriptor instead.
 func (*PegInAddressResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{25}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *PegInAddressResponse) GetAccountKey() *AccountKey {
@@ -1499,7 +1603,7 @@ type ClaimPegInRequest struct {
 func (x *ClaimPegInRequest) Reset() {
 	*x = ClaimPegInRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[26]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1512,7 +1616,7 @@ func (x *ClaimPegInRequest) String() string {
 func (*ClaimPegInRequest) ProtoMessage() {}
 
 func (x *ClaimPegInRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[26]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1525,7 +1629,7 @@ func (x *ClaimPegInRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClaimPegInRequest.ProtoReflect.Descriptor instead.
 func (*ClaimPegInRequest) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{26}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ClaimPegInRequest) GetBitcoinTx() string {
@@ -1561,7 +1665,7 @@ type ClaimPegInResponse struct {
 func (x *ClaimPegInResponse) Reset() {
 	*x = ClaimPegInResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[27]
+		mi := &file_ocean_v1alpha_transaction_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1574,7 +1678,7 @@ func (x *ClaimPegInResponse) String() string {
 func (*ClaimPegInResponse) ProtoMessage() {}
 
 func (x *ClaimPegInResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[27]
+	mi := &file_ocean_v1alpha_transaction_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1587,7 +1691,7 @@ func (x *ClaimPegInResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClaimPegInResponse.ProtoReflect.Descriptor instead.
 func (*ClaimPegInResponse) Descriptor() ([]byte, []int) {
-	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{27}
+	return file_ocean_v1alpha_transaction_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ClaimPegInResponse) GetTxHex() string {
@@ -1604,7 +1708,17 @@ var file_ocean_v1alpha_transaction_proto_rawDesc = []byte{
 	0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x12, 0x0d, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
 	0x1a, 0x19, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2f,
-	0x74, 0x79, 0x70, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xb8, 0x02, 0x0a, 0x12,
+	0x74, 0x79, 0x70, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x2b, 0x0a, 0x15, 0x47,
+	0x65, 0x74, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x78, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x74, 0x78, 0x69, 0x64, 0x22, 0x71, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x54,
+	0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x15, 0x0a, 0x06, 0x74, 0x78, 0x5f, 0x68, 0x65, 0x78, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x05, 0x74, 0x78, 0x48, 0x65, 0x78, 0x12, 0x40, 0x0a, 0x0d, 0x62, 0x6c, 0x6f,
+	0x63, 0x6b, 0x5f, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x1b, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
+	0x2e, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x52, 0x0c, 0x62,
+	0x6c, 0x6f, 0x63, 0x6b, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0xb8, 0x02, 0x0a, 0x12,
 	0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x55, 0x74, 0x78, 0x6f, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x12, 0x3a, 0x0a, 0x0b, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x6b, 0x65,
 	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e,
@@ -1758,95 +1872,101 @@ var file_ocean_v1alpha_transaction_proto_rawDesc = []byte{
 	0x52, 0x0b, 0x63, 0x6c, 0x61, 0x69, 0x6d, 0x53, 0x63, 0x72, 0x69, 0x70, 0x74, 0x22, 0x2b, 0x0a,
 	0x12, 0x43, 0x6c, 0x61, 0x69, 0x6d, 0x50, 0x65, 0x67, 0x49, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
 	0x6e, 0x73, 0x65, 0x12, 0x15, 0x0a, 0x06, 0x74, 0x78, 0x5f, 0x68, 0x65, 0x78, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x78, 0x48, 0x65, 0x78, 0x32, 0x9b, 0x09, 0x0a, 0x12, 0x54,
+	0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x78, 0x48, 0x65, 0x78, 0x32, 0xfa, 0x09, 0x0a, 0x12, 0x54,
 	0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
-	0x65, 0x12, 0x54, 0x0a, 0x0b, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x55, 0x74, 0x78, 0x6f, 0x73,
-	0x12, 0x21, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
-	0x2e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x55, 0x74, 0x78, 0x6f, 0x73, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x2e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x55, 0x74, 0x78, 0x6f, 0x73, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x57, 0x0a, 0x0c, 0x45, 0x73, 0x74, 0x69, 0x6d,
-	0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x73, 0x12, 0x22, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e,
-	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x45, 0x73, 0x74, 0x69, 0x6d, 0x61, 0x74, 0x65,
-	0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x6f, 0x63,
-	0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x45, 0x73, 0x74, 0x69,
-	0x6d, 0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x60, 0x0a, 0x0f, 0x53, 0x69, 0x67, 0x6e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74,
-	0x69, 0x6f, 0x6e, 0x12, 0x25, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74,
-	0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x6f, 0x63, 0x65,
-	0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x54,
+	0x65, 0x12, 0x5d, 0x0a, 0x0e, 0x47, 0x65, 0x74, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74,
+	0x69, 0x6f, 0x6e, 0x12, 0x24, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c,
+	0x70, 0x68, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x6f, 0x63, 0x65, 0x61,
+	0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x72, 0x61,
+	0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x54, 0x0a, 0x0b, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x55, 0x74, 0x78, 0x6f, 0x73, 0x12,
+	0x21, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e,
+	0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x55, 0x74, 0x78, 0x6f, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x22, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
+	0x68, 0x61, 0x2e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x55, 0x74, 0x78, 0x6f, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x57, 0x0a, 0x0c, 0x45, 0x73, 0x74, 0x69, 0x6d, 0x61,
+	0x74, 0x65, 0x46, 0x65, 0x65, 0x73, 0x12, 0x22, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76,
+	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x45, 0x73, 0x74, 0x69, 0x6d, 0x61, 0x74, 0x65, 0x46,
+	0x65, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x6f, 0x63, 0x65,
+	0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x45, 0x73, 0x74, 0x69, 0x6d,
+	0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x60, 0x0a, 0x0f, 0x53, 0x69, 0x67, 0x6e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x12, 0x25, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
+	0x68, 0x61, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x6f, 0x63, 0x65, 0x61,
+	0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x54, 0x72,
+	0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x6f, 0x0a, 0x14, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x54, 0x72,
+	0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x2a, 0x2e, 0x6f, 0x63, 0x65, 0x61,
+	0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63,
+	0x61, 0x73, 0x74, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2b, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31,
+	0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x54,
 	0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x6f, 0x0a, 0x14, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x54,
-	0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x2a, 0x2e, 0x6f, 0x63, 0x65,
-	0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x72, 0x6f, 0x61, 0x64,
-	0x63, 0x61, 0x73, 0x74, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2b, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76,
-	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74,
-	0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65,
-	0x74, 0x12, 0x20, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68,
-	0x61, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x0a, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x50, 0x73, 0x65, 0x74, 0x12, 0x20, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61,
-	0x6c, 0x70, 0x68, 0x61, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65, 0x74, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76,
-	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65,
-	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x09, 0x42, 0x6c, 0x69,
-	0x6e, 0x64, 0x50, 0x73, 0x65, 0x74, 0x12, 0x1f, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76,
-	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x6c, 0x69, 0x6e, 0x64, 0x50, 0x73, 0x65, 0x74,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e,
-	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x6c, 0x69, 0x6e, 0x64, 0x50, 0x73, 0x65,
-	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b, 0x0a, 0x08, 0x53, 0x69, 0x67,
-	0x6e, 0x50, 0x73, 0x65, 0x74, 0x12, 0x1e, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x50, 0x73, 0x65, 0x74, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x50, 0x73, 0x65, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3f, 0x0a, 0x04, 0x4d, 0x69, 0x6e, 0x74, 0x12, 0x1a,
-	0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x4d,
-	0x69, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x6f, 0x63, 0x65,
-	0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x4d, 0x69, 0x6e, 0x74, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x45, 0x0a, 0x06, 0x52, 0x65, 0x6d, 0x69, 0x6e,
-	0x74, 0x12, 0x1c, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68,
-	0x61, 0x2e, 0x52, 0x65, 0x6d, 0x69, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x1d, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e,
-	0x52, 0x65, 0x6d, 0x69, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3f,
-	0x0a, 0x04, 0x42, 0x75, 0x72, 0x6e, 0x12, 0x1a, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76,
-	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x75, 0x72, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
-	0x68, 0x61, 0x2e, 0x42, 0x75, 0x72, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x4b, 0x0a, 0x08, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x12, 0x1e, 0x2e, 0x6f, 0x63,
-	0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x54, 0x72, 0x61, 0x6e,
-	0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x6f, 0x63,
-	0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x54, 0x72, 0x61, 0x6e,
-	0x73, 0x66, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x57, 0x0a, 0x0c,
-	0x50, 0x65, 0x67, 0x49, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x22, 0x2e, 0x6f,
-	0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x50, 0x65, 0x67,
-	0x49, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x23, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
-	0x2e, 0x50, 0x65, 0x67, 0x49, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x0a, 0x43, 0x6c, 0x61, 0x69, 0x6d, 0x50, 0x65,
-	0x67, 0x49, 0x6e, 0x12, 0x20, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x2e, 0x43, 0x6c, 0x61, 0x69, 0x6d, 0x50, 0x65, 0x67, 0x49, 0x6e, 0x52, 0x65,
+	0x73, 0x65, 0x12, 0x51, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65, 0x74,
+	0x12, 0x20, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
+	0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x21, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
+	0x68, 0x61, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65, 0x74, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x0a, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50,
+	0x73, 0x65, 0x74, 0x12, 0x20, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c,
+	0x70, 0x68, 0x61, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65, 0x74, 0x52, 0x65,
 	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x43, 0x6c, 0x61, 0x69, 0x6d, 0x50, 0x65, 0x67, 0x49, 0x6e,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0xdd, 0x01, 0x0a, 0x11, 0x63, 0x6f, 0x6d,
-	0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x42, 0x10,
-	0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f,
-	0x50, 0x01, 0x5a, 0x61, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x76,
-	0x75, 0x6c, 0x70, 0x65, 0x6d, 0x76, 0x65, 0x6e, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2f, 0x6f, 0x63,
-	0x65, 0x61, 0x6e, 0x2f, 0x61, 0x70, 0x69, 0x2d, 0x73, 0x70, 0x65, 0x63, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2f, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x67, 0x6f, 0x2f, 0x6f, 0x63, 0x65, 0x61, 0x6e,
-	0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x3b, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0xa2, 0x02, 0x03, 0x4f, 0x58, 0x58, 0xaa, 0x02, 0x0d, 0x4f, 0x63,
-	0x65, 0x61, 0x6e, 0x2e, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0xca, 0x02, 0x0d, 0x4f, 0x63,
-	0x65, 0x61, 0x6e, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0xe2, 0x02, 0x19, 0x4f, 0x63,
-	0x65, 0x61, 0x6e, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x5c, 0x47, 0x50, 0x42, 0x4d,
-	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0e, 0x4f, 0x63, 0x65, 0x61, 0x6e, 0x3a,
-	0x3a, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x73, 0x65, 0x74,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x09, 0x42, 0x6c, 0x69, 0x6e,
+	0x64, 0x50, 0x73, 0x65, 0x74, 0x12, 0x1f, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31,
+	0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x6c, 0x69, 0x6e, 0x64, 0x50, 0x73, 0x65, 0x74, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76,
+	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x6c, 0x69, 0x6e, 0x64, 0x50, 0x73, 0x65, 0x74,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b, 0x0a, 0x08, 0x53, 0x69, 0x67, 0x6e,
+	0x50, 0x73, 0x65, 0x74, 0x12, 0x1e, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61,
+	0x6c, 0x70, 0x68, 0x61, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x50, 0x73, 0x65, 0x74, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61,
+	0x6c, 0x70, 0x68, 0x61, 0x2e, 0x53, 0x69, 0x67, 0x6e, 0x50, 0x73, 0x65, 0x74, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3f, 0x0a, 0x04, 0x4d, 0x69, 0x6e, 0x74, 0x12, 0x1a, 0x2e,
+	0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x4d, 0x69,
+	0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x6f, 0x63, 0x65, 0x61,
+	0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x4d, 0x69, 0x6e, 0x74, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x45, 0x0a, 0x06, 0x52, 0x65, 0x6d, 0x69, 0x6e, 0x74,
+	0x12, 0x1c, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
+	0x2e, 0x52, 0x65, 0x6d, 0x69, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d,
+	0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x52,
+	0x65, 0x6d, 0x69, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3f, 0x0a,
+	0x04, 0x42, 0x75, 0x72, 0x6e, 0x12, 0x1a, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31,
+	0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x42, 0x75, 0x72, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x1b, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68,
+	0x61, 0x2e, 0x42, 0x75, 0x72, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b,
+	0x0a, 0x08, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x12, 0x1e, 0x2e, 0x6f, 0x63, 0x65,
+	0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73,
+	0x66, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x6f, 0x63, 0x65,
+	0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73,
+	0x66, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x57, 0x0a, 0x0c, 0x50,
+	0x65, 0x67, 0x49, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x22, 0x2e, 0x6f, 0x63,
+	0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x50, 0x65, 0x67, 0x49,
+	0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x23, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x2e,
+	0x50, 0x65, 0x67, 0x49, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x0a, 0x43, 0x6c, 0x61, 0x69, 0x6d, 0x50, 0x65, 0x67,
+	0x49, 0x6e, 0x12, 0x20, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
+	0x68, 0x61, 0x2e, 0x43, 0x6c, 0x61, 0x69, 0x6d, 0x50, 0x65, 0x67, 0x49, 0x6e, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61,
+	0x6c, 0x70, 0x68, 0x61, 0x2e, 0x43, 0x6c, 0x61, 0x69, 0x6d, 0x50, 0x65, 0x67, 0x49, 0x6e, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0xdd, 0x01, 0x0a, 0x11, 0x63, 0x6f, 0x6d, 0x2e,
+	0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x42, 0x10, 0x54,
+	0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50,
+	0x01, 0x5a, 0x61, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x76, 0x75,
+	0x6c, 0x70, 0x65, 0x6d, 0x76, 0x65, 0x6e, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2f, 0x6f, 0x63, 0x65,
+	0x61, 0x6e, 0x2f, 0x61, 0x70, 0x69, 0x2d, 0x73, 0x70, 0x65, 0x63, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x75, 0x66, 0x2f, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70,
+	0x68, 0x61, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x67, 0x6f, 0x2f, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x2f,
+	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x3b, 0x6f, 0x63, 0x65, 0x61, 0x6e, 0x76, 0x31, 0x61,
+	0x6c, 0x70, 0x68, 0x61, 0xa2, 0x02, 0x03, 0x4f, 0x58, 0x58, 0xaa, 0x02, 0x0d, 0x4f, 0x63, 0x65,
+	0x61, 0x6e, 0x2e, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0xca, 0x02, 0x0d, 0x4f, 0x63, 0x65,
+	0x61, 0x6e, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0xe2, 0x02, 0x19, 0x4f, 0x63, 0x65,
+	0x61, 0x6e, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0e, 0x4f, 0x63, 0x65, 0x61, 0x6e, 0x3a, 0x3a,
+	0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1862,92 +1982,98 @@ func file_ocean_v1alpha_transaction_proto_rawDescGZIP() []byte {
 }
 
 var file_ocean_v1alpha_transaction_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_ocean_v1alpha_transaction_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_ocean_v1alpha_transaction_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_ocean_v1alpha_transaction_proto_goTypes = []interface{}{
 	(SelectUtxosRequest_Strategy)(0),     // 0: ocean.v1alpha.SelectUtxosRequest.Strategy
-	(*SelectUtxosRequest)(nil),           // 1: ocean.v1alpha.SelectUtxosRequest
-	(*SelectUtxosResponse)(nil),          // 2: ocean.v1alpha.SelectUtxosResponse
-	(*EstimateFeesRequest)(nil),          // 3: ocean.v1alpha.EstimateFeesRequest
-	(*EstimateFeesResponse)(nil),         // 4: ocean.v1alpha.EstimateFeesResponse
-	(*SignTransactionRequest)(nil),       // 5: ocean.v1alpha.SignTransactionRequest
-	(*SignTransactionResponse)(nil),      // 6: ocean.v1alpha.SignTransactionResponse
-	(*BroadcastTransactionRequest)(nil),  // 7: ocean.v1alpha.BroadcastTransactionRequest
-	(*BroadcastTransactionResponse)(nil), // 8: ocean.v1alpha.BroadcastTransactionResponse
-	(*CreatePsetRequest)(nil),            // 9: ocean.v1alpha.CreatePsetRequest
-	(*CreatePsetResponse)(nil),           // 10: ocean.v1alpha.CreatePsetResponse
-	(*UpdatePsetRequest)(nil),            // 11: ocean.v1alpha.UpdatePsetRequest
-	(*UpdatePsetResponse)(nil),           // 12: ocean.v1alpha.UpdatePsetResponse
-	(*BlindPsetRequest)(nil),             // 13: ocean.v1alpha.BlindPsetRequest
-	(*BlindPsetResponse)(nil),            // 14: ocean.v1alpha.BlindPsetResponse
-	(*SignPsetRequest)(nil),              // 15: ocean.v1alpha.SignPsetRequest
-	(*SignPsetResponse)(nil),             // 16: ocean.v1alpha.SignPsetResponse
-	(*MintRequest)(nil),                  // 17: ocean.v1alpha.MintRequest
-	(*MintResponse)(nil),                 // 18: ocean.v1alpha.MintResponse
-	(*RemintRequest)(nil),                // 19: ocean.v1alpha.RemintRequest
-	(*RemintResponse)(nil),               // 20: ocean.v1alpha.RemintResponse
-	(*BurnRequest)(nil),                  // 21: ocean.v1alpha.BurnRequest
-	(*BurnResponse)(nil),                 // 22: ocean.v1alpha.BurnResponse
-	(*TransferRequest)(nil),              // 23: ocean.v1alpha.TransferRequest
-	(*TransferResponse)(nil),             // 24: ocean.v1alpha.TransferResponse
-	(*PegInAddressRequest)(nil),          // 25: ocean.v1alpha.PegInAddressRequest
-	(*PegInAddressResponse)(nil),         // 26: ocean.v1alpha.PegInAddressResponse
-	(*ClaimPegInRequest)(nil),            // 27: ocean.v1alpha.ClaimPegInRequest
-	(*ClaimPegInResponse)(nil),           // 28: ocean.v1alpha.ClaimPegInResponse
-	(*AccountKey)(nil),                   // 29: ocean.v1alpha.AccountKey
-	(*Utxo)(nil),                         // 30: ocean.v1alpha.Utxo
-	(*Input)(nil),                        // 31: ocean.v1alpha.Input
-	(*Output)(nil),                       // 32: ocean.v1alpha.Output
+	(*GetTransactionRequest)(nil),        // 1: ocean.v1alpha.GetTransactionRequest
+	(*GetTransactionResponse)(nil),       // 2: ocean.v1alpha.GetTransactionResponse
+	(*SelectUtxosRequest)(nil),           // 3: ocean.v1alpha.SelectUtxosRequest
+	(*SelectUtxosResponse)(nil),          // 4: ocean.v1alpha.SelectUtxosResponse
+	(*EstimateFeesRequest)(nil),          // 5: ocean.v1alpha.EstimateFeesRequest
+	(*EstimateFeesResponse)(nil),         // 6: ocean.v1alpha.EstimateFeesResponse
+	(*SignTransactionRequest)(nil),       // 7: ocean.v1alpha.SignTransactionRequest
+	(*SignTransactionResponse)(nil),      // 8: ocean.v1alpha.SignTransactionResponse
+	(*BroadcastTransactionRequest)(nil),  // 9: ocean.v1alpha.BroadcastTransactionRequest
+	(*BroadcastTransactionResponse)(nil), // 10: ocean.v1alpha.BroadcastTransactionResponse
+	(*CreatePsetRequest)(nil),            // 11: ocean.v1alpha.CreatePsetRequest
+	(*CreatePsetResponse)(nil),           // 12: ocean.v1alpha.CreatePsetResponse
+	(*UpdatePsetRequest)(nil),            // 13: ocean.v1alpha.UpdatePsetRequest
+	(*UpdatePsetResponse)(nil),           // 14: ocean.v1alpha.UpdatePsetResponse
+	(*BlindPsetRequest)(nil),             // 15: ocean.v1alpha.BlindPsetRequest
+	(*BlindPsetResponse)(nil),            // 16: ocean.v1alpha.BlindPsetResponse
+	(*SignPsetRequest)(nil),              // 17: ocean.v1alpha.SignPsetRequest
+	(*SignPsetResponse)(nil),             // 18: ocean.v1alpha.SignPsetResponse
+	(*MintRequest)(nil),                  // 19: ocean.v1alpha.MintRequest
+	(*MintResponse)(nil),                 // 20: ocean.v1alpha.MintResponse
+	(*RemintRequest)(nil),                // 21: ocean.v1alpha.RemintRequest
+	(*RemintResponse)(nil),               // 22: ocean.v1alpha.RemintResponse
+	(*BurnRequest)(nil),                  // 23: ocean.v1alpha.BurnRequest
+	(*BurnResponse)(nil),                 // 24: ocean.v1alpha.BurnResponse
+	(*TransferRequest)(nil),              // 25: ocean.v1alpha.TransferRequest
+	(*TransferResponse)(nil),             // 26: ocean.v1alpha.TransferResponse
+	(*PegInAddressRequest)(nil),          // 27: ocean.v1alpha.PegInAddressRequest
+	(*PegInAddressResponse)(nil),         // 28: ocean.v1alpha.PegInAddressResponse
+	(*ClaimPegInRequest)(nil),            // 29: ocean.v1alpha.ClaimPegInRequest
+	(*ClaimPegInResponse)(nil),           // 30: ocean.v1alpha.ClaimPegInResponse
+	(*BlockDetails)(nil),                 // 31: ocean.v1alpha.BlockDetails
+	(*AccountKey)(nil),                   // 32: ocean.v1alpha.AccountKey
+	(*Utxo)(nil),                         // 33: ocean.v1alpha.Utxo
+	(*Input)(nil),                        // 34: ocean.v1alpha.Input
+	(*Output)(nil),                       // 35: ocean.v1alpha.Output
 }
 var file_ocean_v1alpha_transaction_proto_depIdxs = []int32{
-	29, // 0: ocean.v1alpha.SelectUtxosRequest.account_key:type_name -> ocean.v1alpha.AccountKey
-	0,  // 1: ocean.v1alpha.SelectUtxosRequest.strategy:type_name -> ocean.v1alpha.SelectUtxosRequest.Strategy
-	30, // 2: ocean.v1alpha.SelectUtxosResponse.utxos:type_name -> ocean.v1alpha.Utxo
-	31, // 3: ocean.v1alpha.EstimateFeesRequest.inputs:type_name -> ocean.v1alpha.Input
-	32, // 4: ocean.v1alpha.EstimateFeesRequest.outputs:type_name -> ocean.v1alpha.Output
-	31, // 5: ocean.v1alpha.CreatePsetRequest.inputs:type_name -> ocean.v1alpha.Input
-	32, // 6: ocean.v1alpha.CreatePsetRequest.outputs:type_name -> ocean.v1alpha.Output
-	31, // 7: ocean.v1alpha.UpdatePsetRequest.inputs:type_name -> ocean.v1alpha.Input
-	32, // 8: ocean.v1alpha.UpdatePsetRequest.outputs:type_name -> ocean.v1alpha.Output
-	29, // 9: ocean.v1alpha.MintRequest.account_key:type_name -> ocean.v1alpha.AccountKey
-	29, // 10: ocean.v1alpha.RemintRequest.account_key:type_name -> ocean.v1alpha.AccountKey
-	29, // 11: ocean.v1alpha.BurnRequest.account_key:type_name -> ocean.v1alpha.AccountKey
-	32, // 12: ocean.v1alpha.BurnRequest.receivers:type_name -> ocean.v1alpha.Output
-	29, // 13: ocean.v1alpha.TransferRequest.account_key:type_name -> ocean.v1alpha.AccountKey
-	32, // 14: ocean.v1alpha.TransferRequest.receivers:type_name -> ocean.v1alpha.Output
-	29, // 15: ocean.v1alpha.PegInAddressResponse.account_key:type_name -> ocean.v1alpha.AccountKey
-	1,  // 16: ocean.v1alpha.TransactionService.SelectUtxos:input_type -> ocean.v1alpha.SelectUtxosRequest
-	3,  // 17: ocean.v1alpha.TransactionService.EstimateFees:input_type -> ocean.v1alpha.EstimateFeesRequest
-	5,  // 18: ocean.v1alpha.TransactionService.SignTransaction:input_type -> ocean.v1alpha.SignTransactionRequest
-	7,  // 19: ocean.v1alpha.TransactionService.BroadcastTransaction:input_type -> ocean.v1alpha.BroadcastTransactionRequest
-	9,  // 20: ocean.v1alpha.TransactionService.CreatePset:input_type -> ocean.v1alpha.CreatePsetRequest
-	11, // 21: ocean.v1alpha.TransactionService.UpdatePset:input_type -> ocean.v1alpha.UpdatePsetRequest
-	13, // 22: ocean.v1alpha.TransactionService.BlindPset:input_type -> ocean.v1alpha.BlindPsetRequest
-	15, // 23: ocean.v1alpha.TransactionService.SignPset:input_type -> ocean.v1alpha.SignPsetRequest
-	17, // 24: ocean.v1alpha.TransactionService.Mint:input_type -> ocean.v1alpha.MintRequest
-	19, // 25: ocean.v1alpha.TransactionService.Remint:input_type -> ocean.v1alpha.RemintRequest
-	21, // 26: ocean.v1alpha.TransactionService.Burn:input_type -> ocean.v1alpha.BurnRequest
-	23, // 27: ocean.v1alpha.TransactionService.Transfer:input_type -> ocean.v1alpha.TransferRequest
-	25, // 28: ocean.v1alpha.TransactionService.PegInAddress:input_type -> ocean.v1alpha.PegInAddressRequest
-	27, // 29: ocean.v1alpha.TransactionService.ClaimPegIn:input_type -> ocean.v1alpha.ClaimPegInRequest
-	2,  // 30: ocean.v1alpha.TransactionService.SelectUtxos:output_type -> ocean.v1alpha.SelectUtxosResponse
-	4,  // 31: ocean.v1alpha.TransactionService.EstimateFees:output_type -> ocean.v1alpha.EstimateFeesResponse
-	6,  // 32: ocean.v1alpha.TransactionService.SignTransaction:output_type -> ocean.v1alpha.SignTransactionResponse
-	8,  // 33: ocean.v1alpha.TransactionService.BroadcastTransaction:output_type -> ocean.v1alpha.BroadcastTransactionResponse
-	10, // 34: ocean.v1alpha.TransactionService.CreatePset:output_type -> ocean.v1alpha.CreatePsetResponse
-	12, // 35: ocean.v1alpha.TransactionService.UpdatePset:output_type -> ocean.v1alpha.UpdatePsetResponse
-	14, // 36: ocean.v1alpha.TransactionService.BlindPset:output_type -> ocean.v1alpha.BlindPsetResponse
-	16, // 37: ocean.v1alpha.TransactionService.SignPset:output_type -> ocean.v1alpha.SignPsetResponse
-	18, // 38: ocean.v1alpha.TransactionService.Mint:output_type -> ocean.v1alpha.MintResponse
-	20, // 39: ocean.v1alpha.TransactionService.Remint:output_type -> ocean.v1alpha.RemintResponse
-	22, // 40: ocean.v1alpha.TransactionService.Burn:output_type -> ocean.v1alpha.BurnResponse
-	24, // 41: ocean.v1alpha.TransactionService.Transfer:output_type -> ocean.v1alpha.TransferResponse
-	26, // 42: ocean.v1alpha.TransactionService.PegInAddress:output_type -> ocean.v1alpha.PegInAddressResponse
-	28, // 43: ocean.v1alpha.TransactionService.ClaimPegIn:output_type -> ocean.v1alpha.ClaimPegInResponse
-	30, // [30:44] is the sub-list for method output_type
-	16, // [16:30] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	31, // 0: ocean.v1alpha.GetTransactionResponse.block_details:type_name -> ocean.v1alpha.BlockDetails
+	32, // 1: ocean.v1alpha.SelectUtxosRequest.account_key:type_name -> ocean.v1alpha.AccountKey
+	0,  // 2: ocean.v1alpha.SelectUtxosRequest.strategy:type_name -> ocean.v1alpha.SelectUtxosRequest.Strategy
+	33, // 3: ocean.v1alpha.SelectUtxosResponse.utxos:type_name -> ocean.v1alpha.Utxo
+	34, // 4: ocean.v1alpha.EstimateFeesRequest.inputs:type_name -> ocean.v1alpha.Input
+	35, // 5: ocean.v1alpha.EstimateFeesRequest.outputs:type_name -> ocean.v1alpha.Output
+	34, // 6: ocean.v1alpha.CreatePsetRequest.inputs:type_name -> ocean.v1alpha.Input
+	35, // 7: ocean.v1alpha.CreatePsetRequest.outputs:type_name -> ocean.v1alpha.Output
+	34, // 8: ocean.v1alpha.UpdatePsetRequest.inputs:type_name -> ocean.v1alpha.Input
+	35, // 9: ocean.v1alpha.UpdatePsetRequest.outputs:type_name -> ocean.v1alpha.Output
+	32, // 10: ocean.v1alpha.MintRequest.account_key:type_name -> ocean.v1alpha.AccountKey
+	32, // 11: ocean.v1alpha.RemintRequest.account_key:type_name -> ocean.v1alpha.AccountKey
+	32, // 12: ocean.v1alpha.BurnRequest.account_key:type_name -> ocean.v1alpha.AccountKey
+	35, // 13: ocean.v1alpha.BurnRequest.receivers:type_name -> ocean.v1alpha.Output
+	32, // 14: ocean.v1alpha.TransferRequest.account_key:type_name -> ocean.v1alpha.AccountKey
+	35, // 15: ocean.v1alpha.TransferRequest.receivers:type_name -> ocean.v1alpha.Output
+	32, // 16: ocean.v1alpha.PegInAddressResponse.account_key:type_name -> ocean.v1alpha.AccountKey
+	1,  // 17: ocean.v1alpha.TransactionService.GetTransaction:input_type -> ocean.v1alpha.GetTransactionRequest
+	3,  // 18: ocean.v1alpha.TransactionService.SelectUtxos:input_type -> ocean.v1alpha.SelectUtxosRequest
+	5,  // 19: ocean.v1alpha.TransactionService.EstimateFees:input_type -> ocean.v1alpha.EstimateFeesRequest
+	7,  // 20: ocean.v1alpha.TransactionService.SignTransaction:input_type -> ocean.v1alpha.SignTransactionRequest
+	9,  // 21: ocean.v1alpha.TransactionService.BroadcastTransaction:input_type -> ocean.v1alpha.BroadcastTransactionRequest
+	11, // 22: ocean.v1alpha.TransactionService.CreatePset:input_type -> ocean.v1alpha.CreatePsetRequest
+	13, // 23: ocean.v1alpha.TransactionService.UpdatePset:input_type -> ocean.v1alpha.UpdatePsetRequest
+	15, // 24: ocean.v1alpha.TransactionService.BlindPset:input_type -> ocean.v1alpha.BlindPsetRequest
+	17, // 25: ocean.v1alpha.TransactionService.SignPset:input_type -> ocean.v1alpha.SignPsetRequest
+	19, // 26: ocean.v1alpha.TransactionService.Mint:input_type -> ocean.v1alpha.MintRequest
+	21, // 27: ocean.v1alpha.TransactionService.Remint:input_type -> ocean.v1alpha.RemintRequest
+	23, // 28: ocean.v1alpha.TransactionService.Burn:input_type -> ocean.v1alpha.BurnRequest
+	25, // 29: ocean.v1alpha.TransactionService.Transfer:input_type -> ocean.v1alpha.TransferRequest
+	27, // 30: ocean.v1alpha.TransactionService.PegInAddress:input_type -> ocean.v1alpha.PegInAddressRequest
+	29, // 31: ocean.v1alpha.TransactionService.ClaimPegIn:input_type -> ocean.v1alpha.ClaimPegInRequest
+	2,  // 32: ocean.v1alpha.TransactionService.GetTransaction:output_type -> ocean.v1alpha.GetTransactionResponse
+	4,  // 33: ocean.v1alpha.TransactionService.SelectUtxos:output_type -> ocean.v1alpha.SelectUtxosResponse
+	6,  // 34: ocean.v1alpha.TransactionService.EstimateFees:output_type -> ocean.v1alpha.EstimateFeesResponse
+	8,  // 35: ocean.v1alpha.TransactionService.SignTransaction:output_type -> ocean.v1alpha.SignTransactionResponse
+	10, // 36: ocean.v1alpha.TransactionService.BroadcastTransaction:output_type -> ocean.v1alpha.BroadcastTransactionResponse
+	12, // 37: ocean.v1alpha.TransactionService.CreatePset:output_type -> ocean.v1alpha.CreatePsetResponse
+	14, // 38: ocean.v1alpha.TransactionService.UpdatePset:output_type -> ocean.v1alpha.UpdatePsetResponse
+	16, // 39: ocean.v1alpha.TransactionService.BlindPset:output_type -> ocean.v1alpha.BlindPsetResponse
+	18, // 40: ocean.v1alpha.TransactionService.SignPset:output_type -> ocean.v1alpha.SignPsetResponse
+	20, // 41: ocean.v1alpha.TransactionService.Mint:output_type -> ocean.v1alpha.MintResponse
+	22, // 42: ocean.v1alpha.TransactionService.Remint:output_type -> ocean.v1alpha.RemintResponse
+	24, // 43: ocean.v1alpha.TransactionService.Burn:output_type -> ocean.v1alpha.BurnResponse
+	26, // 44: ocean.v1alpha.TransactionService.Transfer:output_type -> ocean.v1alpha.TransferResponse
+	28, // 45: ocean.v1alpha.TransactionService.PegInAddress:output_type -> ocean.v1alpha.PegInAddressResponse
+	30, // 46: ocean.v1alpha.TransactionService.ClaimPegIn:output_type -> ocean.v1alpha.ClaimPegInResponse
+	32, // [32:47] is the sub-list for method output_type
+	17, // [17:32] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_ocean_v1alpha_transaction_proto_init() }
@@ -1958,7 +2084,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 	file_ocean_v1alpha_types_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_ocean_v1alpha_transaction_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SelectUtxosRequest); i {
+			switch v := v.(*GetTransactionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1970,7 +2096,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SelectUtxosResponse); i {
+			switch v := v.(*GetTransactionResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1982,7 +2108,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EstimateFeesRequest); i {
+			switch v := v.(*SelectUtxosRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1994,7 +2120,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EstimateFeesResponse); i {
+			switch v := v.(*SelectUtxosResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2006,7 +2132,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SignTransactionRequest); i {
+			switch v := v.(*EstimateFeesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2018,7 +2144,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SignTransactionResponse); i {
+			switch v := v.(*EstimateFeesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2030,7 +2156,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BroadcastTransactionRequest); i {
+			switch v := v.(*SignTransactionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2042,7 +2168,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BroadcastTransactionResponse); i {
+			switch v := v.(*SignTransactionResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2054,7 +2180,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreatePsetRequest); i {
+			switch v := v.(*BroadcastTransactionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2066,7 +2192,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreatePsetResponse); i {
+			switch v := v.(*BroadcastTransactionResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2078,7 +2204,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdatePsetRequest); i {
+			switch v := v.(*CreatePsetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2090,7 +2216,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdatePsetResponse); i {
+			switch v := v.(*CreatePsetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2102,7 +2228,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BlindPsetRequest); i {
+			switch v := v.(*UpdatePsetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2114,7 +2240,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BlindPsetResponse); i {
+			switch v := v.(*UpdatePsetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2126,7 +2252,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SignPsetRequest); i {
+			switch v := v.(*BlindPsetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2138,7 +2264,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SignPsetResponse); i {
+			switch v := v.(*BlindPsetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2150,7 +2276,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MintRequest); i {
+			switch v := v.(*SignPsetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2162,7 +2288,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MintResponse); i {
+			switch v := v.(*SignPsetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2174,7 +2300,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RemintRequest); i {
+			switch v := v.(*MintRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2186,7 +2312,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RemintResponse); i {
+			switch v := v.(*MintResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2198,7 +2324,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BurnRequest); i {
+			switch v := v.(*RemintRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2210,7 +2336,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BurnResponse); i {
+			switch v := v.(*RemintResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2222,7 +2348,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TransferRequest); i {
+			switch v := v.(*BurnRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2234,7 +2360,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TransferResponse); i {
+			switch v := v.(*BurnResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2246,7 +2372,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PegInAddressRequest); i {
+			switch v := v.(*TransferRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2258,7 +2384,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PegInAddressResponse); i {
+			switch v := v.(*TransferResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2270,7 +2396,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ClaimPegInRequest); i {
+			switch v := v.(*PegInAddressRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2282,6 +2408,30 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			}
 		}
 		file_ocean_v1alpha_transaction_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PegInAddressResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_ocean_v1alpha_transaction_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ClaimPegInRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_ocean_v1alpha_transaction_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ClaimPegInResponse); i {
 			case 0:
 				return &v.state
@@ -2300,7 +2450,7 @@ func file_ocean_v1alpha_transaction_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_ocean_v1alpha_transaction_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   28,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

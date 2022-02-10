@@ -45,16 +45,8 @@ message TransactionNotificationsResponse{
   string txid = 2;
   // Tx event type.
   TxEventType event_type = 3;
-  // Block details of the block that includes tx.
+  // Details of the block including the tx.
   BlockDetails block_details = 4;
-}
-message BlockDetails {
-  // Hash of the block.
-  bytes hash = 1;
-  // Heighth (index) of the block.
-  int32 height = 2;
-  // Timestamp of the block.
-  int64 timestamp = 3;
 }
 
 message UtxosNotificationsRequest{

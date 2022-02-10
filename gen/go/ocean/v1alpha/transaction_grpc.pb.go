@@ -22,6 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TransactionServiceClient interface {
+	// GetTransaction returns the hex of a transaction given its id.
+	GetTransaction(ctx context.Context, in *GetTransactionRequest, opts ...grpc.CallOption) (*GetTransactionResponse, error)
 	// SelectUtxos returns a selction of utxos, to be used in another
 	// transaction, for provided target amount and strategy.
 	// Selected utxos are locked for predefined amount of time to prevent
@@ -66,6 +68,15 @@ type transactionServiceClient struct {
 
 func NewTransactionServiceClient(cc grpc.ClientConnInterface) TransactionServiceClient {
 	return &transactionServiceClient{cc}
+}
+
+func (c *transactionServiceClient) GetTransaction(ctx context.Context, in *GetTransactionRequest, opts ...grpc.CallOption) (*GetTransactionResponse, error) {
+	out := new(GetTransactionResponse)
+	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/GetTransaction", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *transactionServiceClient) SelectUtxos(ctx context.Context, in *SelectUtxosRequest, opts ...grpc.CallOption) (*SelectUtxosResponse, error) {
@@ -198,6 +209,8 @@ func (c *transactionServiceClient) ClaimPegIn(ctx context.Context, in *ClaimPegI
 // All implementations should embed UnimplementedTransactionServiceServer
 // for forward compatibility
 type TransactionServiceServer interface {
+	// GetTransaction returns the hex of a transaction given its id.
+	GetTransaction(context.Context, *GetTransactionRequest) (*GetTransactionResponse, error)
 	// SelectUtxos returns a selction of utxos, to be used in another
 	// transaction, for provided target amount and strategy.
 	// Selected utxos are locked for predefined amount of time to prevent
@@ -240,6 +253,9 @@ type TransactionServiceServer interface {
 type UnimplementedTransactionServiceServer struct {
 }
 
+func (UnimplementedTransactionServiceServer) GetTransaction(context.Context, *GetTransactionRequest) (*GetTransactionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTransaction not implemented")
+}
 func (UnimplementedTransactionServiceServer) SelectUtxos(context.Context, *SelectUtxosRequest) (*SelectUtxosResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SelectUtxos not implemented")
 }
@@ -292,6 +308,24 @@ type UnsafeTransactionServiceServer interface {
 
 func RegisterTransactionServiceServer(s grpc.ServiceRegistrar, srv TransactionServiceServer) {
 	s.RegisterService(&TransactionService_ServiceDesc, srv)
+}
+
+func _TransactionService_GetTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTransactionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransactionServiceServer).GetTransaction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocean.v1alpha.TransactionService/GetTransaction",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransactionServiceServer).GetTransaction(ctx, req.(*GetTransactionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _TransactionService_SelectUtxos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -553,6 +587,10 @@ var TransactionService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ocean.v1alpha.TransactionService",
 	HandlerType: (*TransactionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetTransaction",
+			Handler:    _TransactionService_GetTransaction_Handler,
+		},
 		{
 			MethodName: "SelectUtxos",
 			Handler:    _TransactionService_SelectUtxos_Handler,

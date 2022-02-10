@@ -16,6 +16,11 @@ class TransactionServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
+        self.GetTransaction = channel.unary_unary(
+                '/ocean.v1alpha.TransactionService/GetTransaction',
+                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionResponse.FromString,
+                )
         self.SelectUtxos = channel.unary_unary(
                 '/ocean.v1alpha.TransactionService/SelectUtxos',
                 request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.SelectUtxosRequest.SerializeToString,
@@ -92,6 +97,13 @@ class TransactionServiceServicer(object):
     """
     TransactionService is used to craft and sign various kind's of transactions.
     """
+
+    def GetTransaction(self, request, context):
+        """GetTransaction returns the hex of a transaction given its id.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
 
     def SelectUtxos(self, request, context):
         """SelectUtxos returns a selction of utxos, to be used in another 
@@ -202,6 +214,11 @@ class TransactionServiceServicer(object):
 
 def add_TransactionServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
+            'GetTransaction': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetTransaction,
+                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionRequest.FromString,
+                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionResponse.SerializeToString,
+            ),
             'SelectUtxos': grpc.unary_unary_rpc_method_handler(
                     servicer.SelectUtxos,
                     request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.SelectUtxosRequest.FromString,
@@ -283,6 +300,23 @@ class TransactionService(object):
     """
     TransactionService is used to craft and sign various kind's of transactions.
     """
+
+    @staticmethod
+    def GetTransaction(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/GetTransaction',
+            ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionRequest.SerializeToString,
+            ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def SelectUtxos(request,
