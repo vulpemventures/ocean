@@ -49,22 +49,22 @@ message CreateWalletRequest{
 
   // The password to decrypt HD wallet. After creation, the wallet is locked
   // and the same password is required to unlock it.
-  bytes  password = 3;
+  string  password = 3;
 }
 message CreateWalletResponse{}
 
 message UnlockRequest{
   // The password to unlock the wallet.
-  bytes password = 1;
+  string password = 1;
 }
 message UnlockResponse{}
 
 message ChangePasswordRequest{
   // The current password used to encrypt the walley.
-  bytes current_password = 1;
+  string current_password = 1;
 
   // The new password replacing the current one.
-  bytes new_password = 2;
+  string new_password = 2;
 }
 message ChangePasswordResponse{}
 
@@ -74,7 +74,7 @@ message RestoreWalletRequest{
 
   // The password to decrypt HD wallet. After restoration, the wallet is locked and
   // the same password is required to unlock it.
-  bytes password = 3;
+  string password = 3;
 }
 message RestoreWalletResponse{}
 

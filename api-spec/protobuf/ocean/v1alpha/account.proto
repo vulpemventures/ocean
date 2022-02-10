@@ -101,7 +101,7 @@ message ListUtxosRequest{
 }
 message ListUtxosResponse{
   // List of spendable utxos.
-  repeated Utxos spendable_utxos = 1;
+  Utxos spendable_utxos = 1;
   // List of currently locked utxos.
-  repeated Utxos locked_utxos = 2;
+  Utxos locked_utxos = 2;
 }

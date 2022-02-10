@@ -31,13 +31,13 @@ message Input {
   // Previous output txid.
   string txid = 1;
   // Previous tx output index.
-  int64 index = 2;
+  uint32 index = 2;
 }
 message Output {
   // Asset hash.
   string asset = 1;
   // Sent amount.
-  int64 amount = 2;
+  uint64 amount = 2;
   // Address to send funds to.
   string address = 3;
 }
@@ -62,11 +62,11 @@ message Utxo {
   // Txid of the Uuxo
   string txid = 1;
   // Output index
-  int64 index = 2;
+  uint32 index = 2;
   // Asset
-  bytes asset = 3;
+  string asset = 3;
   // Value
-  bytes value = 4;
+  uint64 value = 4;
   // Script
   bytes script = 5;
   // Confirmation status
