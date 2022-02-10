@@ -33,14 +33,20 @@ service NotificationService {
   rpc ListWebhooks(ListWebhooksRequest) returns(ListWebhooksResponse){}
 }
 
-message TransactionNotificationsRequest{}
+message TransactionNotificationsRequest{
+  // The wallet account for which getting notified. If not specified, 
+  // notifications for all accounts' txs are sent.
+  AccountKey account_key = 1;
+}
 message TransactionNotificationsResponse{
+  // Account key.
+  AccountKey account_key = 1;
   // Txid of transaction.
-  string txid = 1;
+  string txid = 2;
   // Tx event type.
-  TxEventType event_type = 2;
+  TxEventType event_type = 3;
   // Block details of the block that includes tx.
-  BlockDetails block_details = 3;
+  BlockDetails block_details = 4;
 }
 message BlockDetails {
   // Hash of the block.
@@ -57,8 +63,12 @@ message UtxosNotificationsRequest{
   AccountKey account_key = 1;
 }
 message UtxosNotificationsResponse{
-  // A list of utxos with related event type.
-  repeated UtxoWithEvent utxos = 2;
+  // Account key.
+  AccountKey account_key = 1;
+  // The unspent output.
+  Utxo utxo = 2;
+  // The event regarding the utxo.
+  UtxoEventType event_type = 3;
 }
 
 message AddWebhookRequest {

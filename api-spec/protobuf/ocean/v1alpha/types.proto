@@ -49,15 +49,6 @@ message Utxos {
   repeated Utxo utxos = 2;
 }
 
-message UtxoWithEvent {
-  // Account key of the owner of the utxo.
-  AccountKey account_key = 1;
-  // The unspent output.
-  Utxo utxo = 2;
-  // The event regarding the utxo.
-  UtxoEventType event_type = 3;
-}
-
 message Utxo {
   // Txid of the Uuxo
   string txid = 1;
