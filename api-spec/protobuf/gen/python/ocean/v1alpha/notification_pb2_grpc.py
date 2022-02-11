@@ -11,6 +11,9 @@ class NotificationServiceStub(object):
     It offers 2 way of getting notified about events: with the help of grpc 
     server-side stream or by subscribing webhooks invoked whenever an event 
     occurs.
+    **************//
+    STREAMS    //
+    **************//
     """
 
     def __init__(self, channel):
@@ -52,6 +55,9 @@ class NotificationServiceServicer(object):
     It offers 2 way of getting notified about events: with the help of grpc 
     server-side stream or by subscribing webhooks invoked whenever an event 
     occurs.
+    **************//
+    STREAMS    //
+    **************//
     """
 
     def TransactionNotifications(self, request, context):
@@ -134,6 +140,9 @@ class NotificationService(object):
     It offers 2 way of getting notified about events: with the help of grpc 
     server-side stream or by subscribing webhooks invoked whenever an event 
     occurs.
+    **************//
+    STREAMS    //
+    **************//
     """
 
     @staticmethod
