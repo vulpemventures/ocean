@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package ocean.v1alpha;
+
+message AccountKey{
+  // Id of the account.
+  uint64 id = 1;
+  // Name of the account to be updated.
+  string name = 2;
+}
+
+message AccountInfo {
+  // Account key.
+  AccountKey account_key = 1;
+  // Derivation path.
+  string derivation_path = 2;
+  // XPub.
+  string xpub = 3;
+}
+
+message BalanceInfo {
+  // The balance of the wallet (excludes locked utxos)
+  uint64 total_balance = 1;
+  // The confirmed balance of a wallet (includes utxos with 1+ confirmations)
+  uint64 confirmed_balance = 2;
+  // The unconfirmed balance of a wallet (includes utxos with no confirmations)
+  uint64 unconfirmed_balance = 3;
+}
+
+message Input {
+  // Previous output txid.
+  string txid = 1;
+  // Previous tx output index.
+  uint32 index = 2;
+}
+message Output {
+  // Asset hash.
+  string asset = 1;
+  // Sent amount.
+  uint64 amount = 2;
+  // Address to send funds to.
+  string address = 3;
+}
+
+message Utxos {
+  // account key
+  AccountKey account_key = 1;
+  // list of utxos
+  repeated Utxo utxos = 2;
+}
+
+message Utxo {
+  // Txid of the Uuxo
+  string txid = 1;
+  // Output index
+  uint32 index = 2;
+  // Asset
+  string asset = 3;
+  // Value
+  uint64 value = 4;
+  // Script
+  bytes script = 5;
+  // Confirmation status
+  bool is_confirmed = 6;
+  // Whether locked by a coin selection
+  bool is_locked = 7;
+}
+
+message BlockDetails {
+  // Hash of the block.
+  bytes hash = 1;
+  // Heighth (index) of the block.
+  int32 height = 2;
+  // Timestamp of the block.
+  int64 timestamp = 3;
+}
+
+message Template {
+  enum Format {
+    FORMAT_UNSPECIFIED = 0;
+    FORMAT_DESCRIPTOR = 1;
+    FORMAT_MINISCRIPT = 2;
+    FORMAT_IONIO = 3;
+    FORMAT_RAW = 4;
+  }
+  Format format = 1;
+  string value = 2;
+}
+
+enum TxEventType {
+  TX_EVENT_TYPE_UNSPECIFIED = 0;
+  // Tx broadcasted.
+  TX_EVENT_TYPE_BROADCASTED = 1;
+  // Tx unconfirmed.
+  TX_EVENT_TYPE_UNCONFIRMED = 2;
+  // Tx confirmed.
+  TX_EVENT_TYPE_CONFIRMED = 3;
+}
+
+enum UtxoEventType {
+  UTXO_EVENT_TYPE_UNSPECIFIED = 0;
+  UTXO_EVENT_TYPE_LOCKED = 1;
+  UTXO_EVENT_TYPE_UNLOCKED = 2;
+  UTXO_EVENT_TYPE_SPENT = 3;
+  UTXO_EVENT_TYPE_NEW = 4;
+}
+
+enum WebhookEventType {
+  WEBHOOK_EVENT_TYPE_UNSPECIFIED = 0;
+  // Receive notification about transactions.
+  WEBHOOK_EVENT_TYPE_TRANSACTION = 1;
+  // Receive notifications about utxos.
+  WEBHOOK_EVENT_TYPE_UNSPENTS = 2;
+}

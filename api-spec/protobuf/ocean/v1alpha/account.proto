@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package ocean.v1alpha;
+
+import "ocean/v1alpha/types.proto";
+
+// AccountService is used to manage accounts in HD Wallet.
+// It supports generating addresses, listing utxos and balances for specific account or
+// list of addresses and selecting utxos.
+service AccountService {
+  // CreateAccount creates a new account.
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+
+  // SetAccountTemplate sets the template for the account used to generate new addresses.
+  rpc SetAccountTemplate(SetAccountTemplateRequest) returns (SetAccountTemplateResponse);
+
+  // DeriveAddress generates new address(es) for the account.
+  rpc DeriveAddress(DeriveAddressRequest) returns (DeriveAddressResponse);
+
+  // DeriveChangeAddress generates new change address(es) for the account.
+  rpc DeriveChangeAddress(DeriveChangeAddressRequest) returns (DeriveChangeAddressResponse);
+
+  // ListAddresses returns all derived addresses for the account.
+  rpc ListAddresses(ListAddressesRequest) returns (ListAddressesResponse);
+
+  // Balance returns the balance for the account, or for specific list of 
+  // account's addresses.
+  rpc Balance(BalanceRequest) returns (BalanceResponse);
+
+  // ListUtxos returns the utxos for the account, or specific list of 
+  // account's addresses.
+  rpc ListUtxos(ListUtxosRequest) returns (ListUtxosResponse);
+}
+
+message CreateAccountRequest{
+  // Name of the account.
+  string name = 1;
+}
+message CreateAccountResponse{
+  // Index assigned to the new account.
+  uint64 account_index = 1;
+  // Xpub of the new account.
+  string xpub = 2;
+}
+
+message SetAccountTemplateRequest {
+  // Account key.
+  AccountKey account_key = 1;
+  // Output descriptor template.
+  Template template = 2;
+}
+message SetAccountTemplateResponse {}
+
+message DeriveAddressRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // The number of addresses to generate.
+  uint64 num_of_addresses = 2;
+}
+message DeriveAddressResponse{
+  repeated string addresses = 1;
+}
+
+message DeriveChangeAddressRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // The number of addresses to generate.
+  uint64 num_of_addresses = 2;
+}
+message DeriveChangeAddressResponse{
+  repeated string addresses = 1;
+}
+
+message ListAddressesRequest {
+  // Account key.
+  AccountKey account_key = 1;
+}
+message ListAddressesResponse {
+  repeated string addresses = 1;
+}
+
+message BalanceRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // Addresses for which calculating balance. If not specified, the cumulative
+  // balance is returned.
+  repeated string addresses = 3;
+}
+
+message BalanceResponse{
+  // The balance (total, confirmed, unconfirmed) per each asset.
+  map<string, BalanceInfo> balance = 1;
+}
+
+message ListUtxosRequest{
+  // Account key.
+  AccountKey account_key = 1;
+  // List of account's addresses for which listing utxos. If not specified,
+  // the list of all utxos owned by the account is returned.
+  repeated string addresses = 3;
+}
+message ListUtxosResponse{
+  // List of spendable utxos.
+  Utxos spendable_utxos = 1;
+  // List of currently locked utxos.
+  Utxos locked_utxos = 2;
+}
