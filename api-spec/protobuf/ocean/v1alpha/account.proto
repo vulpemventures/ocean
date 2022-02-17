@@ -30,6 +30,10 @@ service AccountService {
   // ListUtxos returns the utxos for the account, or specific list of 
   // account's addresses.
   rpc ListUtxos(ListUtxosRequest) returns (ListUtxosResponse);
+
+  // DeleteAccount deletes an existing account. The operation is allowed only
+  // if the account has zero balance.
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
 }
 
 message CreateAccountRequest{
@@ -37,8 +41,8 @@ message CreateAccountRequest{
   string name = 1;
 }
 message CreateAccountResponse{
-  // Index assigned to the new account.
-  uint64 account_index = 1;
+  // The key of the new account with proivded name and assigned account index.
+  AccountKey account_key = 1;
   // Xpub of the new account.
   string xpub = 2;
 }
@@ -105,3 +109,8 @@ message ListUtxosResponse{
   // List of currently locked utxos.
   Utxos locked_utxos = 2;
 }
+
+message DeleteAccountRequest{
+  AccountKey account_key = 1;
+}
+message DeleteAccountResponse{}

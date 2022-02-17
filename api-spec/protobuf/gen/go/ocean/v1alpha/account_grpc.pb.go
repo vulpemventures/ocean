@@ -38,6 +38,9 @@ type AccountServiceClient interface {
 	// ListUtxos returns the utxos for the account, or specific list of
 	// account's addresses.
 	ListUtxos(ctx context.Context, in *ListUtxosRequest, opts ...grpc.CallOption) (*ListUtxosResponse, error)
+	// DeleteAccount deletes an existing account. The operation is allowed only
+	// if the account has zero balance.
+	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
 }
 
 type accountServiceClient struct {
@@ -111,6 +114,15 @@ func (c *accountServiceClient) ListUtxos(ctx context.Context, in *ListUtxosReque
 	return out, nil
 }
 
+func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
+	out := new(DeleteAccountResponse)
+	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/DeleteAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServiceServer is the server API for AccountService service.
 // All implementations should embed UnimplementedAccountServiceServer
 // for forward compatibility
@@ -131,6 +143,9 @@ type AccountServiceServer interface {
 	// ListUtxos returns the utxos for the account, or specific list of
 	// account's addresses.
 	ListUtxos(context.Context, *ListUtxosRequest) (*ListUtxosResponse, error)
+	// DeleteAccount deletes an existing account. The operation is allowed only
+	// if the account has zero balance.
+	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
 }
 
 // UnimplementedAccountServiceServer should be embedded to have forward compatible implementations.
@@ -157,6 +172,9 @@ func (UnimplementedAccountServiceServer) Balance(context.Context, *BalanceReques
 }
 func (UnimplementedAccountServiceServer) ListUtxos(context.Context, *ListUtxosRequest) (*ListUtxosResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUtxos not implemented")
+}
+func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
 }
 
 // UnsafeAccountServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -296,6 +314,24 @@ func _AccountService_ListUtxos_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).DeleteAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocean.v1alpha.AccountService/DeleteAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -330,6 +366,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListUtxos",
 			Handler:    _AccountService_ListUtxos_Handler,
+		},
+		{
+			MethodName: "DeleteAccount",
+			Handler:    _AccountService_DeleteAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

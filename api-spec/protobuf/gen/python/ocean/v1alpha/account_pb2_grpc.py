@@ -52,6 +52,11 @@ class AccountServiceStub(object):
                 request_serializer=ocean_dot_v1alpha_dot_account__pb2.ListUtxosRequest.SerializeToString,
                 response_deserializer=ocean_dot_v1alpha_dot_account__pb2.ListUtxosResponse.FromString,
                 )
+        self.DeleteAccount = channel.unary_unary(
+                '/ocean.v1alpha.AccountService/DeleteAccount',
+                request_serializer=ocean_dot_v1alpha_dot_account__pb2.DeleteAccountRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.DeleteAccountResponse.FromString,
+                )
 
 
 class AccountServiceServicer(object):
@@ -111,6 +116,14 @@ class AccountServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def DeleteAccount(self, request, context):
+        """DeleteAccount deletes an existing account. The operation is allowed only
+        if the account has zero balance.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AccountServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -148,6 +161,11 @@ def add_AccountServiceServicer_to_server(servicer, server):
                     servicer.ListUtxos,
                     request_deserializer=ocean_dot_v1alpha_dot_account__pb2.ListUtxosRequest.FromString,
                     response_serializer=ocean_dot_v1alpha_dot_account__pb2.ListUtxosResponse.SerializeToString,
+            ),
+            'DeleteAccount': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteAccount,
+                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.DeleteAccountRequest.FromString,
+                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.DeleteAccountResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -278,5 +296,22 @@ class AccountService(object):
         return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/ListUtxos',
             ocean_dot_v1alpha_dot_account__pb2.ListUtxosRequest.SerializeToString,
             ocean_dot_v1alpha_dot_account__pb2.ListUtxosResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def DeleteAccount(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/DeleteAccount',
+            ocean_dot_v1alpha_dot_account__pb2.DeleteAccountRequest.SerializeToString,
+            ocean_dot_v1alpha_dot_account__pb2.DeleteAccountResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
