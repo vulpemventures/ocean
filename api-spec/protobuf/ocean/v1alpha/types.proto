@@ -2,20 +2,15 @@ syntax = "proto3";
 
 package ocean.v1alpha;
 
-message AccountKey{
-  // Id of the account.
-  uint64 id = 1;
-  // Name of the account to be updated.
-  string name = 2;
-}
-
 message AccountInfo {
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string name = 1;
+  // Account index.
+  uint64 index = 2;
   // Derivation path.
-  string derivation_path = 2;
+  string derivation_path = 3;
   // XPub.
-  string xpub = 3;
+  string xpub = 4;
 }
 
 message BalanceInfo {
@@ -43,26 +38,26 @@ message Output {
 }
 
 message Utxos {
-  // account key
-  AccountKey account_key = 1;
-  // list of utxos
+  // Account name.
+  string account_name = 1;
+  // List of utxos.
   repeated Utxo utxos = 2;
 }
 
 message Utxo {
-  // Txid of the Uuxo
+  // Txid of the Uuxo.
   string txid = 1;
-  // Output index
+  // Output index.
   uint32 index = 2;
-  // Asset
+  // Asset.
   string asset = 3;
-  // Value
+  // Value.
   uint64 value = 4;
-  // Script
+  // Script.
   bytes script = 5;
-  // Confirmation status
+  // Confirmation status.
   bool is_confirmed = 6;
-  // Whether locked by a coin selection
+  // Whether locked by a coin selection.
   bool is_locked = 7;
 }
 

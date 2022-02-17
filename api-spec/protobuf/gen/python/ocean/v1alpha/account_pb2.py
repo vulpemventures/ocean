@@ -15,7 +15,7 @@ _sym_db = _symbol_database.Default()
 from ocean.v1alpha import types_pb2 as ocean_dot_v1alpha_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bocean/v1alpha/account.proto\x12\rocean.v1alpha\x1a\x19ocean/v1alpha/types.proto\"*\n\x14\x43reateAccountRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\"g\n\x15\x43reateAccountResponse\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x12\n\x04xpub\x18\x02 \x01(\tR\x04xpub\"\x8c\x01\n\x19SetAccountTemplateRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x33\n\x08template\x18\x02 \x01(\x0b\x32\x17.ocean.v1alpha.TemplateR\x08template\"\x1c\n\x1aSetAccountTemplateResponse\"|\n\x14\x44\x65riveAddressRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12(\n\x10num_of_addresses\x18\x02 \x01(\x04R\x0enumOfAddresses\"5\n\x15\x44\x65riveAddressResponse\x12\x1c\n\taddresses\x18\x01 \x03(\tR\taddresses\"\x82\x01\n\x1a\x44\x65riveChangeAddressRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12(\n\x10num_of_addresses\x18\x02 \x01(\x04R\x0enumOfAddresses\";\n\x1b\x44\x65riveChangeAddressResponse\x12\x1c\n\taddresses\x18\x01 \x03(\tR\taddresses\"R\n\x14ListAddressesRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\"5\n\x15ListAddressesResponse\x12\x1c\n\taddresses\x18\x01 \x03(\tR\taddresses\"j\n\x0e\x42\x61lanceRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x1c\n\taddresses\x18\x03 \x03(\tR\taddresses\"\xb0\x01\n\x0f\x42\x61lanceResponse\x12\x45\n\x07\x62\x61lance\x18\x01 \x03(\x0b\x32+.ocean.v1alpha.BalanceResponse.BalanceEntryR\x07\x62\x61lance\x1aV\n\x0c\x42\x61lanceEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x30\n\x05value\x18\x02 \x01(\x0b\x32\x1a.ocean.v1alpha.BalanceInfoR\x05value:\x02\x38\x01\"l\n\x10ListUtxosRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\x12\x1c\n\taddresses\x18\x03 \x03(\tR\taddresses\"\x8b\x01\n\x11ListUtxosResponse\x12=\n\x0fspendable_utxos\x18\x01 \x01(\x0b\x32\x14.ocean.v1alpha.UtxosR\x0espendableUtxos\x12\x37\n\x0clocked_utxos\x18\x02 \x01(\x0b\x32\x14.ocean.v1alpha.UtxosR\x0blockedUtxos\"R\n\x14\x44\x65leteAccountRequest\x12:\n\x0b\x61\x63\x63ount_key\x18\x01 \x01(\x0b\x32\x19.ocean.v1alpha.AccountKeyR\naccountKey\"\x17\n\x15\x44\x65leteAccountResponse2\xf3\x05\n\x0e\x41\x63\x63ountService\x12Z\n\rCreateAccount\x12#.ocean.v1alpha.CreateAccountRequest\x1a$.ocean.v1alpha.CreateAccountResponse\x12i\n\x12SetAccountTemplate\x12(.ocean.v1alpha.SetAccountTemplateRequest\x1a).ocean.v1alpha.SetAccountTemplateResponse\x12Z\n\rDeriveAddress\x12#.ocean.v1alpha.DeriveAddressRequest\x1a$.ocean.v1alpha.DeriveAddressResponse\x12l\n\x13\x44\x65riveChangeAddress\x12).ocean.v1alpha.DeriveChangeAddressRequest\x1a*.ocean.v1alpha.DeriveChangeAddressResponse\x12Z\n\rListAddresses\x12#.ocean.v1alpha.ListAddressesRequest\x1a$.ocean.v1alpha.ListAddressesResponse\x12H\n\x07\x42\x61lance\x12\x1d.ocean.v1alpha.BalanceRequest\x1a\x1e.ocean.v1alpha.BalanceResponse\x12N\n\tListUtxos\x12\x1f.ocean.v1alpha.ListUtxosRequest\x1a .ocean.v1alpha.ListUtxosResponse\x12Z\n\rDeleteAccount\x12#.ocean.v1alpha.DeleteAccountRequest\x1a$.ocean.v1alpha.DeleteAccountResponseB\xd9\x01\n\x11\x63om.ocean.v1alphaB\x0c\x41\x63\x63ountProtoP\x01Zagithub.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bocean/v1alpha/account.proto\x12\rocean.v1alpha\x1a\x19ocean/v1alpha/types.proto\"*\n\x14\x43reateAccountRequest\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\"s\n\x15\x43reateAccountResponse\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12#\n\raccount_index\x18\x02 \x01(\rR\x0c\x61\x63\x63ountIndex\x12\x12\n\x04xpub\x18\x03 \x01(\tR\x04xpub\"s\n\x19SetAccountTemplateRequest\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12\x33\n\x08template\x18\x02 \x01(\x0b\x32\x17.ocean.v1alpha.TemplateR\x08template\"\x1c\n\x1aSetAccountTemplateResponse\"c\n\x14\x44\x65riveAddressRequest\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12(\n\x10num_of_addresses\x18\x02 \x01(\x04R\x0enumOfAddresses\"5\n\x15\x44\x65riveAddressResponse\x12\x1c\n\taddresses\x18\x01 \x03(\tR\taddresses\"i\n\x1a\x44\x65riveChangeAddressRequest\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12(\n\x10num_of_addresses\x18\x02 \x01(\x04R\x0enumOfAddresses\";\n\x1b\x44\x65riveChangeAddressResponse\x12\x1c\n\taddresses\x18\x01 \x03(\tR\taddresses\"9\n\x14ListAddressesRequest\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\"5\n\x15ListAddressesResponse\x12\x1c\n\taddresses\x18\x01 \x03(\tR\taddresses\"Q\n\x0e\x42\x61lanceRequest\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12\x1c\n\taddresses\x18\x03 \x03(\tR\taddresses\"\xb0\x01\n\x0f\x42\x61lanceResponse\x12\x45\n\x07\x62\x61lance\x18\x01 \x03(\x0b\x32+.ocean.v1alpha.BalanceResponse.BalanceEntryR\x07\x62\x61lance\x1aV\n\x0c\x42\x61lanceEntry\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x30\n\x05value\x18\x02 \x01(\x0b\x32\x1a.ocean.v1alpha.BalanceInfoR\x05value:\x02\x38\x01\"S\n\x10ListUtxosRequest\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12\x1c\n\taddresses\x18\x03 \x03(\tR\taddresses\"\x8b\x01\n\x11ListUtxosResponse\x12=\n\x0fspendable_utxos\x18\x01 \x01(\x0b\x32\x14.ocean.v1alpha.UtxosR\x0espendableUtxos\x12\x37\n\x0clocked_utxos\x18\x02 \x01(\x0b\x32\x14.ocean.v1alpha.UtxosR\x0blockedUtxos\"9\n\x14\x44\x65leteAccountRequest\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\"\x17\n\x15\x44\x65leteAccountResponse2\xf3\x05\n\x0e\x41\x63\x63ountService\x12Z\n\rCreateAccount\x12#.ocean.v1alpha.CreateAccountRequest\x1a$.ocean.v1alpha.CreateAccountResponse\x12i\n\x12SetAccountTemplate\x12(.ocean.v1alpha.SetAccountTemplateRequest\x1a).ocean.v1alpha.SetAccountTemplateResponse\x12Z\n\rDeriveAddress\x12#.ocean.v1alpha.DeriveAddressRequest\x1a$.ocean.v1alpha.DeriveAddressResponse\x12l\n\x13\x44\x65riveChangeAddress\x12).ocean.v1alpha.DeriveChangeAddressRequest\x1a*.ocean.v1alpha.DeriveChangeAddressResponse\x12Z\n\rListAddresses\x12#.ocean.v1alpha.ListAddressesRequest\x1a$.ocean.v1alpha.ListAddressesResponse\x12H\n\x07\x42\x61lance\x12\x1d.ocean.v1alpha.BalanceRequest\x1a\x1e.ocean.v1alpha.BalanceResponse\x12N\n\tListUtxos\x12\x1f.ocean.v1alpha.ListUtxosRequest\x1a .ocean.v1alpha.ListUtxosResponse\x12Z\n\rDeleteAccount\x12#.ocean.v1alpha.DeleteAccountRequest\x1a$.ocean.v1alpha.DeleteAccountResponseB\xd9\x01\n\x11\x63om.ocean.v1alphaB\x0c\x41\x63\x63ountProtoP\x01Zagithub.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
 
 
 
@@ -166,37 +166,37 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _CREATEACCOUNTREQUEST._serialized_start=73
   _CREATEACCOUNTREQUEST._serialized_end=115
   _CREATEACCOUNTRESPONSE._serialized_start=117
-  _CREATEACCOUNTRESPONSE._serialized_end=220
-  _SETACCOUNTTEMPLATEREQUEST._serialized_start=223
-  _SETACCOUNTTEMPLATEREQUEST._serialized_end=363
-  _SETACCOUNTTEMPLATERESPONSE._serialized_start=365
-  _SETACCOUNTTEMPLATERESPONSE._serialized_end=393
-  _DERIVEADDRESSREQUEST._serialized_start=395
-  _DERIVEADDRESSREQUEST._serialized_end=519
-  _DERIVEADDRESSRESPONSE._serialized_start=521
-  _DERIVEADDRESSRESPONSE._serialized_end=574
-  _DERIVECHANGEADDRESSREQUEST._serialized_start=577
-  _DERIVECHANGEADDRESSREQUEST._serialized_end=707
-  _DERIVECHANGEADDRESSRESPONSE._serialized_start=709
-  _DERIVECHANGEADDRESSRESPONSE._serialized_end=768
-  _LISTADDRESSESREQUEST._serialized_start=770
-  _LISTADDRESSESREQUEST._serialized_end=852
-  _LISTADDRESSESRESPONSE._serialized_start=854
-  _LISTADDRESSESRESPONSE._serialized_end=907
-  _BALANCEREQUEST._serialized_start=909
-  _BALANCEREQUEST._serialized_end=1015
-  _BALANCERESPONSE._serialized_start=1018
-  _BALANCERESPONSE._serialized_end=1194
-  _BALANCERESPONSE_BALANCEENTRY._serialized_start=1108
-  _BALANCERESPONSE_BALANCEENTRY._serialized_end=1194
-  _LISTUTXOSREQUEST._serialized_start=1196
-  _LISTUTXOSREQUEST._serialized_end=1304
-  _LISTUTXOSRESPONSE._serialized_start=1307
-  _LISTUTXOSRESPONSE._serialized_end=1446
-  _DELETEACCOUNTREQUEST._serialized_start=1448
-  _DELETEACCOUNTREQUEST._serialized_end=1530
-  _DELETEACCOUNTRESPONSE._serialized_start=1532
-  _DELETEACCOUNTRESPONSE._serialized_end=1555
-  _ACCOUNTSERVICE._serialized_start=1558
-  _ACCOUNTSERVICE._serialized_end=2313
+  _CREATEACCOUNTRESPONSE._serialized_end=232
+  _SETACCOUNTTEMPLATEREQUEST._serialized_start=234
+  _SETACCOUNTTEMPLATEREQUEST._serialized_end=349
+  _SETACCOUNTTEMPLATERESPONSE._serialized_start=351
+  _SETACCOUNTTEMPLATERESPONSE._serialized_end=379
+  _DERIVEADDRESSREQUEST._serialized_start=381
+  _DERIVEADDRESSREQUEST._serialized_end=480
+  _DERIVEADDRESSRESPONSE._serialized_start=482
+  _DERIVEADDRESSRESPONSE._serialized_end=535
+  _DERIVECHANGEADDRESSREQUEST._serialized_start=537
+  _DERIVECHANGEADDRESSREQUEST._serialized_end=642
+  _DERIVECHANGEADDRESSRESPONSE._serialized_start=644
+  _DERIVECHANGEADDRESSRESPONSE._serialized_end=703
+  _LISTADDRESSESREQUEST._serialized_start=705
+  _LISTADDRESSESREQUEST._serialized_end=762
+  _LISTADDRESSESRESPONSE._serialized_start=764
+  _LISTADDRESSESRESPONSE._serialized_end=817
+  _BALANCEREQUEST._serialized_start=819
+  _BALANCEREQUEST._serialized_end=900
+  _BALANCERESPONSE._serialized_start=903
+  _BALANCERESPONSE._serialized_end=1079
+  _BALANCERESPONSE_BALANCEENTRY._serialized_start=993
+  _BALANCERESPONSE_BALANCEENTRY._serialized_end=1079
+  _LISTUTXOSREQUEST._serialized_start=1081
+  _LISTUTXOSREQUEST._serialized_end=1164
+  _LISTUTXOSRESPONSE._serialized_start=1167
+  _LISTUTXOSRESPONSE._serialized_end=1306
+  _DELETEACCOUNTREQUEST._serialized_start=1308
+  _DELETEACCOUNTREQUEST._serialized_end=1365
+  _DELETEACCOUNTRESPONSE._serialized_start=1367
+  _DELETEACCOUNTRESPONSE._serialized_end=1390
+  _ACCOUNTSERVICE._serialized_start=1393
+  _ACCOUNTSERVICE._serialized_end=2148
 # @@protoc_insertion_point(module_scope)

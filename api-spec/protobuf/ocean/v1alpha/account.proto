@@ -41,23 +41,25 @@ message CreateAccountRequest{
   string name = 1;
 }
 message CreateAccountResponse{
-  // The key of the new account with proivded name and assigned account index.
-  AccountKey account_key = 1;
-  // Xpub of the new account.
-  string xpub = 2;
+  // Account name.
+  string account_name = 1;
+  // Account index.
+  uint32 account_index = 2;
+  // Xpub.
+  string xpub = 3;
 }
 
 message SetAccountTemplateRequest {
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // Output descriptor template.
   Template template = 2;
 }
 message SetAccountTemplateResponse {}
 
 message DeriveAddressRequest{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // The number of addresses to generate.
   uint64 num_of_addresses = 2;
 }
@@ -66,8 +68,8 @@ message DeriveAddressResponse{
 }
 
 message DeriveChangeAddressRequest{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // The number of addresses to generate.
   uint64 num_of_addresses = 2;
 }
@@ -76,16 +78,16 @@ message DeriveChangeAddressResponse{
 }
 
 message ListAddressesRequest {
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
 }
 message ListAddressesResponse {
   repeated string addresses = 1;
 }
 
 message BalanceRequest{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // Addresses for which calculating balance. If not specified, the cumulative
   // balance is returned.
   repeated string addresses = 3;
@@ -97,8 +99,8 @@ message BalanceResponse{
 }
 
 message ListUtxosRequest{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // List of account's addresses for which listing utxos. If not specified,
   // the list of all utxos owned by the account is returned.
   repeated string addresses = 3;
@@ -111,6 +113,7 @@ message ListUtxosResponse{
 }
 
 message DeleteAccountRequest{
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
 }
 message DeleteAccountResponse{}

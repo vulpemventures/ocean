@@ -74,8 +74,8 @@ message GetTransactionResponse{
 }
 
 message SelectUtxosRequest{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // Asset hash of the utxos to select.
   string target_asset = 2;
   // Target amount to cover.
@@ -164,8 +164,8 @@ message SignPsetResponse{
 }
 
 message MintRequest{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // Asset amount to mint.
   uint64 asset_amount = 2;
   // Token amount to mint.
@@ -183,8 +183,8 @@ message MintResponse{
 }
 
 message RemintRequest{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // Hash of the asset to remint.
   string asset = 2;
   // Amount to remint.
@@ -196,8 +196,8 @@ message RemintResponse{
 }
 
 message BurnRequest{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // Receivers contains a list of asset-amount to burn and their addresses are 
   // ignored and replaced with OP_RETURN output scripts.
   repeated Output receivers = 2;
@@ -208,8 +208,8 @@ message BurnResponse{
 }
 
 message TransferRequest{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // Receivers are the receivers of the funds.
   repeated Output receivers = 2;
 }
@@ -220,8 +220,8 @@ message TransferResponse{
 
 message PegInAddressRequest{}
 message PegInAddressResponse{
-  // Account key.
-  AccountKey account_key = 1;
+  // Account name.
+  string account_name = 1;
   // Main-chain deposit address to send bitcoin to.
   string main_chain_address = 2;
   // Claim script committed to by the main-chain address.
