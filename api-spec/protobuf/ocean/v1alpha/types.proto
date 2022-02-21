@@ -14,12 +14,14 @@ message AccountInfo {
 }
 
 message BalanceInfo {
-  // The balance of the wallet (excludes locked utxos)
-  uint64 total_balance = 1;
-  // The confirmed balance of a wallet (includes utxos with 1+ confirmations)
-  uint64 confirmed_balance = 2;
-  // The unconfirmed balance of a wallet (includes utxos with no confirmations)
-  uint64 unconfirmed_balance = 3;
+  // Balance of utxos with 1+ confirmations.
+  uint64 confirmed_balance = 1;
+  // Balance of utxos with no confirmations.
+  uint64 unconfirmed_balance = 2;
+  // Balance of locked utxos.
+  uint64 locked_balance = 3;
+  // Total balance.
+  uint64 total_balance = 4;
 }
 
 message Input {
