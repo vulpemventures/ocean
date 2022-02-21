@@ -6,7 +6,7 @@ message AccountInfo {
   // Account name.
   string name = 1;
   // Account index.
-  uint64 index = 2;
+  uint32 index = 2;
   // Derivation path.
   string derivation_path = 3;
   // XPub.
