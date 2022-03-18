@@ -15,7 +15,7 @@ _sym_db = _symbol_database.Default()
 from ocean.v1alpha import types_pb2 as ocean_dot_v1alpha_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n ocean/v1alpha/notification.proto\x12\rocean.v1alpha\x1a\x19ocean/v1alpha/types.proto\"D\n\x1fTransactionNotificationsRequest\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\"\xd6\x01\n TransactionNotificationsResponse\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12\x12\n\x04txid\x18\x02 \x01(\tR\x04txid\x12\x39\n\nevent_type\x18\x03 \x01(\x0e\x32\x1a.ocean.v1alpha.TxEventTypeR\teventType\x12@\n\rblock_details\x18\x04 \x01(\x0b\x32\x1b.ocean.v1alpha.BlockDetailsR\x0c\x62lockDetails\">\n\x19UtxosNotificationsRequest\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\"\xa5\x01\n\x1aUtxosNotificationsResponse\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12\'\n\x04utxo\x18\x02 \x01(\x0b\x32\x13.ocean.v1alpha.UtxoR\x04utxo\x12;\n\nevent_type\x18\x03 \x01(\x0e\x32\x1c.ocean.v1alpha.UtxoEventTypeR\teventType\"\x87\x01\n\x11\x41\x64\x64WebhookRequest\x12\x1a\n\x08\x65ndpoint\x18\x01 \x01(\tR\x08\x65ndpoint\x12>\n\nevent_type\x18\x02 \x01(\x0e\x32\x1f.ocean.v1alpha.WebhookEventTypeR\teventType\x12\x16\n\x06secret\x18\x03 \x01(\tR\x06secret\"$\n\x12\x41\x64\x64WebhookResponse\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"&\n\x14RemoveWebhookRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"\x17\n\x15RemoveWebhookResponse\"U\n\x13ListWebhooksRequest\x12>\n\nevent_type\x18\x01 \x01(\x0e\x32\x1f.ocean.v1alpha.WebhookEventTypeR\teventType\"U\n\x14ListWebhooksResponse\x12=\n\x0cwebhook_info\x18\x01 \x03(\x0b\x32\x1a.ocean.v1alpha.WebhookInfoR\x0bwebhookInfo\"X\n\x0bWebhookInfo\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n\x08\x65ndpoint\x18\x02 \x01(\tR\x08\x65ndpoint\x12\x1d\n\nis_secured\x18\x03 \x01(\x08R\tisSecured2\x8f\x04\n\x13NotificationService\x12}\n\x18TransactionNotifications\x12..ocean.v1alpha.TransactionNotificationsRequest\x1a/.ocean.v1alpha.TransactionNotificationsResponse0\x01\x12k\n\x12UtxosNotifications\x12(.ocean.v1alpha.UtxosNotificationsRequest\x1a).ocean.v1alpha.UtxosNotificationsResponse0\x01\x12S\n\nAddWebhook\x12 .ocean.v1alpha.AddWebhookRequest\x1a!.ocean.v1alpha.AddWebhookResponse\"\x00\x12\\\n\rRemoveWebhook\x12#.ocean.v1alpha.RemoveWebhookRequest\x1a$.ocean.v1alpha.RemoveWebhookResponse\"\x00\x12Y\n\x0cListWebhooks\x12\".ocean.v1alpha.ListWebhooksRequest\x1a#.ocean.v1alpha.ListWebhooksResponse\"\x00\x42\xde\x01\n\x11\x63om.ocean.v1alphaB\x11NotificationProtoP\x01Zagithub.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n ocean/v1alpha/notification.proto\x12\rocean.v1alpha\x1a\x19ocean/v1alpha/types.proto\"!\n\x1fTransactionNotificationsRequest\"\xd8\x01\n TransactionNotificationsResponse\x12#\n\raccount_names\x18\x01 \x03(\tR\x0c\x61\x63\x63ountNames\x12\x12\n\x04txid\x18\x02 \x01(\tR\x04txid\x12\x39\n\nevent_type\x18\x03 \x01(\x0e\x32\x1a.ocean.v1alpha.TxEventTypeR\teventType\x12@\n\rblock_details\x18\x04 \x01(\x0b\x32\x1b.ocean.v1alpha.BlockDetailsR\x0c\x62lockDetails\"\x1b\n\x19UtxosNotificationsRequest\"\x84\x01\n\x1aUtxosNotificationsResponse\x12)\n\x05utxos\x18\x01 \x03(\x0b\x32\x13.ocean.v1alpha.UtxoR\x05utxos\x12;\n\nevent_type\x18\x02 \x01(\x0e\x32\x1c.ocean.v1alpha.UtxoEventTypeR\teventType\"\x87\x01\n\x11\x41\x64\x64WebhookRequest\x12\x1a\n\x08\x65ndpoint\x18\x01 \x01(\tR\x08\x65ndpoint\x12>\n\nevent_type\x18\x02 \x01(\x0e\x32\x1f.ocean.v1alpha.WebhookEventTypeR\teventType\x12\x16\n\x06secret\x18\x03 \x01(\tR\x06secret\"$\n\x12\x41\x64\x64WebhookResponse\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"&\n\x14RemoveWebhookRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"\x17\n\x15RemoveWebhookResponse\"U\n\x13ListWebhooksRequest\x12>\n\nevent_type\x18\x01 \x01(\x0e\x32\x1f.ocean.v1alpha.WebhookEventTypeR\teventType\"U\n\x14ListWebhooksResponse\x12=\n\x0cwebhook_info\x18\x01 \x03(\x0b\x32\x1a.ocean.v1alpha.WebhookInfoR\x0bwebhookInfo\"X\n\x0bWebhookInfo\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n\x08\x65ndpoint\x18\x02 \x01(\tR\x08\x65ndpoint\x12\x1d\n\nis_secured\x18\x03 \x01(\x08R\tisSecured2\x8f\x04\n\x13NotificationService\x12}\n\x18TransactionNotifications\x12..ocean.v1alpha.TransactionNotificationsRequest\x1a/.ocean.v1alpha.TransactionNotificationsResponse0\x01\x12k\n\x12UtxosNotifications\x12(.ocean.v1alpha.UtxosNotificationsRequest\x1a).ocean.v1alpha.UtxosNotificationsResponse0\x01\x12S\n\nAddWebhook\x12 .ocean.v1alpha.AddWebhookRequest\x1a!.ocean.v1alpha.AddWebhookResponse\"\x00\x12\\\n\rRemoveWebhook\x12#.ocean.v1alpha.RemoveWebhookRequest\x1a$.ocean.v1alpha.RemoveWebhookResponse\"\x00\x12Y\n\x0cListWebhooks\x12\".ocean.v1alpha.ListWebhooksRequest\x1a#.ocean.v1alpha.ListWebhooksResponse\"\x00\x42\xde\x01\n\x11\x63om.ocean.v1alphaB\x11NotificationProtoP\x01Zagithub.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
 
 
 
@@ -113,27 +113,27 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'\n\021com.ocean.v1alphaB\021NotificationProtoP\001Zagithub.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go/ocean/v1alpha;oceanv1alpha\242\002\003OXX\252\002\rOcean.V1alpha\312\002\rOcean\\V1alpha\342\002\031Ocean\\V1alpha\\GPBMetadata\352\002\016Ocean::V1alpha'
   _TRANSACTIONNOTIFICATIONSREQUEST._serialized_start=78
-  _TRANSACTIONNOTIFICATIONSREQUEST._serialized_end=146
-  _TRANSACTIONNOTIFICATIONSRESPONSE._serialized_start=149
-  _TRANSACTIONNOTIFICATIONSRESPONSE._serialized_end=363
-  _UTXOSNOTIFICATIONSREQUEST._serialized_start=365
-  _UTXOSNOTIFICATIONSREQUEST._serialized_end=427
-  _UTXOSNOTIFICATIONSRESPONSE._serialized_start=430
-  _UTXOSNOTIFICATIONSRESPONSE._serialized_end=595
-  _ADDWEBHOOKREQUEST._serialized_start=598
-  _ADDWEBHOOKREQUEST._serialized_end=733
-  _ADDWEBHOOKRESPONSE._serialized_start=735
-  _ADDWEBHOOKRESPONSE._serialized_end=771
-  _REMOVEWEBHOOKREQUEST._serialized_start=773
-  _REMOVEWEBHOOKREQUEST._serialized_end=811
-  _REMOVEWEBHOOKRESPONSE._serialized_start=813
-  _REMOVEWEBHOOKRESPONSE._serialized_end=836
-  _LISTWEBHOOKSREQUEST._serialized_start=838
-  _LISTWEBHOOKSREQUEST._serialized_end=923
-  _LISTWEBHOOKSRESPONSE._serialized_start=925
-  _LISTWEBHOOKSRESPONSE._serialized_end=1010
-  _WEBHOOKINFO._serialized_start=1012
-  _WEBHOOKINFO._serialized_end=1100
-  _NOTIFICATIONSERVICE._serialized_start=1103
-  _NOTIFICATIONSERVICE._serialized_end=1630
+  _TRANSACTIONNOTIFICATIONSREQUEST._serialized_end=111
+  _TRANSACTIONNOTIFICATIONSRESPONSE._serialized_start=114
+  _TRANSACTIONNOTIFICATIONSRESPONSE._serialized_end=330
+  _UTXOSNOTIFICATIONSREQUEST._serialized_start=332
+  _UTXOSNOTIFICATIONSREQUEST._serialized_end=359
+  _UTXOSNOTIFICATIONSRESPONSE._serialized_start=362
+  _UTXOSNOTIFICATIONSRESPONSE._serialized_end=494
+  _ADDWEBHOOKREQUEST._serialized_start=497
+  _ADDWEBHOOKREQUEST._serialized_end=632
+  _ADDWEBHOOKRESPONSE._serialized_start=634
+  _ADDWEBHOOKRESPONSE._serialized_end=670
+  _REMOVEWEBHOOKREQUEST._serialized_start=672
+  _REMOVEWEBHOOKREQUEST._serialized_end=710
+  _REMOVEWEBHOOKRESPONSE._serialized_start=712
+  _REMOVEWEBHOOKRESPONSE._serialized_end=735
+  _LISTWEBHOOKSREQUEST._serialized_start=737
+  _LISTWEBHOOKSREQUEST._serialized_end=822
+  _LISTWEBHOOKSRESPONSE._serialized_start=824
+  _LISTWEBHOOKSRESPONSE._serialized_end=909
+  _WEBHOOKINFO._serialized_start=911
+  _WEBHOOKINFO._serialized_end=999
+  _NOTIFICATIONSERVICE._serialized_start=1002
+  _NOTIFICATIONSERVICE._serialized_end=1529
 # @@protoc_insertion_point(module_scope)

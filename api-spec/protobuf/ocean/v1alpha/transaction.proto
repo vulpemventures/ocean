@@ -97,6 +97,7 @@ message SelectUtxosResponse{
 message EstimateFeesRequest{
   repeated Input inputs = 1;
   repeated Output outputs = 2;
+  uint64 millisats_per_byte = 3;
 }
 message EstimateFeesResponse{
   uint64 fee_amount = 1;
@@ -176,6 +177,8 @@ message MintRequest{
   string asset_ticker = 5;
   // Domain of the asset.
   string asset_domain = 6;
+  // mSats/byte fee ratio.
+  uint64 millisats_per_byte = 7;
 }
 message MintResponse{
   // Signed tx in hex format.
@@ -189,6 +192,8 @@ message RemintRequest{
   string asset = 2;
   // Amount to remint.
   uint64 amount = 3;
+  // mSats/byte fee ratio.
+  uint64 millisats_per_byte = 4;
 }
 message RemintResponse{
   // Signed tx in hex format.
@@ -201,6 +206,8 @@ message BurnRequest{
   // Receivers contains a list of asset-amount to burn and their addresses are 
   // ignored and replaced with OP_RETURN output scripts.
   repeated Output receivers = 2;
+  // mSats/byte fee ratio.
+  uint64 millisats_per_byte = 3;
 }
 message BurnResponse{
   // Signed tx in hex format.
@@ -212,6 +219,8 @@ message TransferRequest{
   string account_name = 1;
   // Receivers are the receivers of the funds.
   repeated Output receivers = 2;
+  // mSats/byte fee ratio.
+  uint64 millisats_per_byte = 3;
 }
 message TransferResponse{
   // Signed tx in hex format.

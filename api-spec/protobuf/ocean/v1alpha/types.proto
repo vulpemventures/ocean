@@ -47,7 +47,7 @@ message Utxos {
 }
 
 message Utxo {
-  // Txid of the Uuxo.
+  // Txid of the uxo.
   string txid = 1;
   // Output index.
   uint32 index = 2;
@@ -57,10 +57,8 @@ message Utxo {
   uint64 value = 4;
   // Script.
   bytes script = 5;
-  // Confirmation status.
-  bool is_confirmed = 6;
-  // Whether locked by a coin selection.
-  bool is_locked = 7;
+  // Name of the account owning the utxo.
+  string account_name = 6;
 }
 
 message BlockDetails {
@@ -96,10 +94,11 @@ enum TxEventType {
 
 enum UtxoEventType {
   UTXO_EVENT_TYPE_UNSPECIFIED = 0;
-  UTXO_EVENT_TYPE_LOCKED = 1;
-  UTXO_EVENT_TYPE_UNLOCKED = 2;
-  UTXO_EVENT_TYPE_SPENT = 3;
-  UTXO_EVENT_TYPE_NEW = 4;
+  UTXO_EVENT_TYPE_NEW = 1;
+  UTXO_EVENT_TYPE_CONFIRMED = 2;
+  UTXO_EVENT_TYPE_LOCKED = 3;
+  UTXO_EVENT_TYPE_UNLOCKED = 4;
+  UTXO_EVENT_TYPE_SPENT = 5;
 }
 
 enum WebhookEventType {
@@ -107,5 +106,5 @@ enum WebhookEventType {
   // Receive notification about transactions.
   WEBHOOK_EVENT_TYPE_TRANSACTION = 1;
   // Receive notifications about utxos.
-  WEBHOOK_EVENT_TYPE_UNSPENTS = 2;
+  WEBHOOK_EVENT_TYPE_UTXO = 2;
 }
