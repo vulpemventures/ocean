@@ -53,10 +53,12 @@ func (c ServiceConfig) tlsConfig() *tls.Config {
 	}
 	cert, _ := tls.LoadX509KeyPair(c.tlsCertPath(), c.tlsKeyPath())
 	return &tls.Config{
+		MinVersion:   tls.VersionTLS12,
 		NextProtos:   []string{"http/1.1", http2.NextProtoTLS, "h2-14"}, // h2-14 is just for compatibility. will be eventually removed.
 		Certificates: []tls.Certificate{cert},
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		},
 		Rand: rand.Reader,
 	}
