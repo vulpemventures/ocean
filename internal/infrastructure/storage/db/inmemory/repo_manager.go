@@ -12,10 +12,9 @@ type repoManager struct {
 	walletRepository *walletRepository
 	txRepository     *txRepository
 
-	walletEventHandlers map[domain.WalletEventType]ports.WalletEventHandler
-	utxoEventHandlers   map[domain.UtxoEventType]ports.UtxoEventHandler
-	txEventHandlers     map[domain.TransactionEventType]ports.TxEventHandler
-	lock                *sync.Mutex
+	walletEventHandlers *handlerMap
+	utxoEventHandlers   *handlerMap
+	txEventHandlers     *handlerMap
 }
 
 func NewRepoManager() ports.RepoManager {
@@ -27,10 +26,9 @@ func NewRepoManager() ports.RepoManager {
 		utxoRepository:      utxoRepo,
 		walletRepository:    walletRepo,
 		txRepository:        txRepo,
-		lock:                &sync.Mutex{},
-		walletEventHandlers: make(map[domain.WalletEventType]ports.WalletEventHandler),
-		utxoEventHandlers:   make(map[domain.UtxoEventType]ports.UtxoEventHandler),
-		txEventHandlers:     make(map[domain.TransactionEventType]ports.TxEventHandler),
+		walletEventHandlers: newHandlerMap(),
+		utxoEventHandlers:   newHandlerMap(),
+		txEventHandlers:     newHandlerMap(),
 	}
 
 	go rm.listenToWalletEvents()
@@ -55,59 +53,41 @@ func (rm *repoManager) TransactionRepository() domain.TransactionRepository {
 func (rm *repoManager) RegisterHandlerForWalletEvent(
 	eventType domain.WalletEventType, handler ports.WalletEventHandler,
 ) {
-	rm.lock.Lock()
-	defer rm.lock.Unlock()
-
-	if _, ok := rm.walletEventHandlers[eventType]; ok {
-		return
-	}
-	rm.walletEventHandlers[eventType] = handler
+	rm.walletEventHandlers.set(int(eventType), handler)
 }
 
 func (rm *repoManager) RegisterHandlerForUtxoEvent(
 	eventType domain.UtxoEventType, handler ports.UtxoEventHandler,
 ) {
-	rm.lock.Lock()
-	defer rm.lock.Unlock()
-
-	if _, ok := rm.utxoEventHandlers[eventType]; ok {
-		return
-	}
-	rm.utxoEventHandlers[eventType] = handler
+	rm.utxoEventHandlers.set(int(eventType), handler)
 }
 
 func (rm *repoManager) RegisterHandlerForTxEvent(
 	eventType domain.TransactionEventType, handler ports.TxEventHandler,
 ) {
-	rm.lock.Lock()
-	defer rm.lock.Unlock()
-
-	if _, ok := rm.txEventHandlers[eventType]; ok {
-		return
-	}
-	rm.txEventHandlers[eventType] = handler
+	rm.txEventHandlers.set(int(eventType), handler)
 }
 
 func (rm *repoManager) listenToWalletEvents() {
 	for event := range rm.walletRepository.chEvents {
-		if handler, ok := rm.walletEventHandlers[event.EventType]; ok {
-			handler(event)
+		if handler, ok := rm.walletEventHandlers.get(int(event.EventType)); ok {
+			handler.(ports.WalletEventHandler)(event)
 		}
 	}
 }
 
 func (rm *repoManager) listenToUtxoEvents() {
 	for event := range rm.utxoRepository.chEvents {
-		if handler, ok := rm.utxoEventHandlers[event.EventType]; ok {
-			handler(event)
+		if handler, ok := rm.utxoEventHandlers.get(int(event.EventType)); ok {
+			handler.(ports.UtxoEventHandler)(event)
 		}
 	}
 }
 
 func (rm *repoManager) listenToTxEvents() {
 	for event := range rm.txRepository.chEvents {
-		if handler, ok := rm.txEventHandlers[event.EventType]; ok {
-			handler(event)
+		if handler, ok := rm.txEventHandlers.get(int(event.EventType)); ok {
+			handler.(ports.TxEventHandler)(event)
 		}
 	}
 }
@@ -116,4 +96,33 @@ func (rm *repoManager) Close() {
 	rm.walletRepository.close()
 	rm.utxoRepository.close()
 	rm.txRepository.close()
+}
+
+// handlerMap is a util type to prevent race conditions when registering
+// or retrieving handlers for events.
+type handlerMap struct {
+	handlersByEventType map[int]interface{}
+	lock                *sync.RWMutex
+}
+
+func newHandlerMap() *handlerMap {
+	return &handlerMap{
+		handlersByEventType: make(map[int]interface{}),
+		lock:                &sync.RWMutex{},
+	}
+}
+
+func (m *handlerMap) set(key int, val interface{}) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	if _, ok := m.handlersByEventType[key]; !ok {
+		m.handlersByEventType[key] = val
+	}
+}
+
+func (m *handlerMap) get(key int) (interface{}, bool) {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+	val, ok := m.handlersByEventType[key]
+	return val, ok
 }

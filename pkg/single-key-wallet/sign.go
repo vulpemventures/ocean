@@ -103,7 +103,7 @@ func (a SignPsetArgs) validate() error {
 	}
 
 	for i, in := range ptx.Inputs {
-		script := in.WitnessUtxo.Script
+		script := in.GetUtxo().Script
 		_, ok := a.DerivationPathMap[hex.EncodeToString(script)]
 		if !ok {
 			return fmt.Errorf(

@@ -152,6 +152,7 @@ func randomUtxos(accountName string, addresses []string) []*domain.Utxo {
 
 func randomUtxo(accountName, addr string) *domain.Utxo {
 	script, _ := address.ToOutputScript(addr)
+	nonce := append([]byte{3}, randomBytes(32)...)
 	return &domain.Utxo{
 		UtxoKey: domain.UtxoKey{
 			TxID: randomHex(32),
@@ -164,7 +165,7 @@ func randomUtxo(accountName, addr string) *domain.Utxo {
 		ValueBlinder:    randomBytes(32),
 		AssetBlinder:    randomBytes(32),
 		Script:          script,
-		Nonce:           randomBytes(33),
+		Nonce:           nonce,
 		AccountName:     accountName,
 		Confirmed:       true,
 	}
