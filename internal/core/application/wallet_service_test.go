@@ -150,6 +150,8 @@ func testInitWalletFromRestart(t *testing.T) {
 	})
 }
 
+// TODO: uncomment this test once supporting restring a wallet.
+// (Changes might be required)
 // func testInitWalletFromRestore(t *testing.T) {
 // 	t.Run("init_wallet_from_restore", func(t *testing.T) {
 // 		repoManager, err := newRepoManagerForRestoredWallet()
