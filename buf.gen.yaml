@@ -2,7 +2,7 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: github.com/vulpemventures/ocean/api-spec/protobuf/ocean/v1alpha/gen/go
+    default: github.com/vulpemventures/ocean/api-spec/protobuf/gen
 plugins:
   # Golang
   - remote: buf.build/protocolbuffers/plugins/go

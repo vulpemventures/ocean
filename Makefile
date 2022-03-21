@@ -22,7 +22,7 @@ docker-proto-lint:
 docker-proto: docker-proto-lint
 	@docker run --rm --volume "$(shell pwd):/workspace" --workdir /workspace bufbuild/buf generate
 
-proto: lint
+proto: proto-lint
 	@buf generate
 
 proto-lint:
