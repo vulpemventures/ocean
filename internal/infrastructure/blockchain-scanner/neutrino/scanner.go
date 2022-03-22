@@ -85,20 +85,30 @@ func (s *scannerService) watchAddresses(addressesInfo []domain.AddressInfo) {
 func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 	s.log("start listening to incoming reports from node")
 	for r := range chReports {
+		if r.Transaction == nil {
+			continue
+		}
+
 		tx := r.Transaction
 		txid := tx.TxHash().String()
 		txHex, _ := tx.ToHex()
 
 		s.log("received report for tx %s", txid)
 
+		var blockHash string
+		var blockHeight uint32
+		if r.BlockHash != nil {
+			blockHash = r.BlockHash.String()
+			blockHeight = r.BlockHeight
+		}
 		s.chTxs <- &domain.Transaction{
 			TxID:  txid,
 			TxHex: txHex,
 			Accounts: map[string]struct{}{
 				s.accountName: {},
 			},
-			BlockHash:   r.BlockHash.String(),
-			BlockHeight: r.BlockHeight,
+			BlockHash:   blockHash,
+			BlockHeight: blockHeight,
 		}
 
 		spentUtxos := make([]*domain.Utxo, 0, len(tx.Inputs))

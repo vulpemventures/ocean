@@ -186,26 +186,16 @@ func esploraUrlFromNetwork(net string) string {
 		return "http://localhost:3001"
 	}
 	if net == "testnet" {
-		return "http://blockstream.info/liquidtestnet/api"
+		return "https://blockstream.info/liquidtestnet/api"
 	}
-	return "http://blockstream.info/liquid/api"
+	return "https://blockstream.info/liquid/api"
 }
 
 func genesisBlockHashForNetwork(net string) *chainhash.Hash {
-	magic := magicFromNetwork(net)
+	magic := protocol.Networks[net]
 	genesis := protocol.GetCheckpoints(magic)[0]
 	h, _ := chainhash.NewHashFromStr(genesis)
 	return h
-}
-
-func magicFromNetwork(net string) protocol.Magic {
-	if net == "nigiri" {
-		return protocol.MagicNigiri
-	}
-	if net == "testnet" {
-		return protocol.MagicLiquidTestnet
-	}
-	return protocol.MagicLiquid
 }
 
 type esploraTx struct {
