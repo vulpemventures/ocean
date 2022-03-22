@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/vulpemventures/go-elements/block"
+	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
@@ -75,14 +74,14 @@ func (ws *WalletService) CreateWallet(
 		return fmt.Errorf("wallet is already initialized")
 	}
 
-	birthdayBlock, err := ws.bcScanner.GetLatestBlock()
+	_, birthdayBlockHeight, err := ws.bcScanner.GetLatestBlock()
 	if err != nil {
 		return
 	}
 
 	newWallet, err := domain.NewWallet(
 		mnemonic, passpharse, ws.rootPath, ws.network.Name,
-		birthdayBlock.Height, nil,
+		birthdayBlockHeight, nil,
 	)
 	if err != nil {
 		return
@@ -130,7 +129,7 @@ func (ws *WalletService) RestoreWallet(
 		}
 	}()
 
-	birthdayBlock, err := ws.getBlockByHash(birthdayBlockHash)
+	birthdayBlockHeight, err := ws.bcScanner.GetBlockHeight(birthdayBlockHash)
 	if err != nil {
 		return
 	}
@@ -138,7 +137,7 @@ func (ws *WalletService) RestoreWallet(
 
 	newWallet, err := domain.NewWallet(
 		mnemonic, passpharse, ws.rootPath, ws.network.Name,
-		birthdayBlock.Height, nil,
+		birthdayBlockHeight, nil,
 	)
 	if err != nil {
 		return
@@ -167,15 +166,7 @@ func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
 		}, nil
 	}
 
-	birthdayBlock, _ := ws.getBlockByHeight(w.BirthdayBlockHeight)
-	var birthdayBlockHash string
-	var birthdayBlockHeight uint32
-	if birthdayBlock != nil {
-		if hash, err := birthdayBlock.Hash(); err == nil {
-			birthdayBlockHash = hash.String()
-		}
-		birthdayBlockHeight = birthdayBlock.Height
-	}
+	birthdayBlock, _ := ws.bcScanner.GetBlockHash(w.BirthdayBlockHeight)
 	masterBlingingKey, _ := w.GetMasterBlindingKey()
 	accounts := make([]AccountInfo, 0, len(w.AccountsByKey))
 	for _, a := range w.AccountsByKey {
@@ -186,8 +177,8 @@ func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
 		NativeAsset:         ws.network.AssetID,
 		RootPath:            w.RootPath,
 		MasterBlindingKey:   masterBlingingKey,
-		BirthdayBlockHash:   birthdayBlockHash,
-		BirthdayBlockHeight: birthdayBlockHeight,
+		BirthdayBlockHash:   elementsutil.TxIDFromBytes(birthdayBlock),
+		BirthdayBlockHeight: w.BirthdayBlockHeight,
 		Accounts:            accounts,
 	}, nil
 }
@@ -238,20 +229,4 @@ func (ws *WalletService) isSynced() bool {
 	defer ws.lock.RUnlock()
 
 	return ws.synced
-}
-
-func (ws *WalletService) getBlockByHash(blockHash []byte) (*block.Header, error) {
-	hash, err := chainhash.NewHash(blockHash)
-	if err != nil {
-		return nil, err
-	}
-	return ws.bcScanner.GetBlockHeader(*hash)
-}
-
-func (ws *WalletService) getBlockByHeight(blockHeight uint32) (*block.Header, error) {
-	hash, err := ws.bcScanner.GetBlockHash(blockHeight)
-	if err != nil {
-		return nil, err
-	}
-	return ws.bcScanner.GetBlockHeader(*hash)
 }

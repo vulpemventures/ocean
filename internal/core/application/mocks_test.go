@@ -7,10 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/mock"
 	"github.com/vulpemventures/go-elements/address"
-	"github.com/vulpemventures/go-elements/block"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 )
@@ -59,29 +57,33 @@ func (m *mockBcScanner) GetTxChannel(accountName string) chan *domain.Transactio
 	return m.chTxs
 }
 
-func (m *mockBcScanner) GetLatestBlock() (*block.Header, error) {
+func (m *mockBcScanner) GetLatestBlock() ([]byte, uint32, error) {
 	args := m.Called()
-	var res *block.Header
+	var res []byte
 	if a := args.Get(0); a != nil {
-		res = a.(*block.Header)
+		res = a.([]byte)
 	}
-	return res, args.Error(1)
+	var res1 uint32
+	if a := args.Get(1); a != nil {
+		res1 = a.(uint32)
+	}
+	return res, res1, args.Error(2)
 }
 
-func (m *mockBcScanner) GetBlockHeader(hash chainhash.Hash) (*block.Header, error) {
-	args := m.Called(hash)
-	var res *block.Header
-	if a := args.Get(0); a != nil {
-		res = a.(*block.Header)
-	}
-	return res, args.Error(1)
-}
-
-func (m *mockBcScanner) GetBlockHash(height uint32) (*chainhash.Hash, error) {
+func (m *mockBcScanner) GetBlockHash(height uint32) ([]byte, error) {
 	args := m.Called(height)
-	var res *chainhash.Hash
+	var res []byte
 	if a := args.Get(0); a != nil {
-		res = a.(*chainhash.Hash)
+		res = a.([]byte)
+	}
+	return res, args.Error(1)
+}
+
+func (m *mockBcScanner) GetBlockHeight(hash []byte) (uint32, error) {
+	args := m.Called(hash)
+	var res uint32
+	if a := args.Get(0); a != nil {
+		res = a.(uint32)
 	}
 	return res, args.Error(1)
 }

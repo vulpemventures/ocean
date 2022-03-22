@@ -130,7 +130,7 @@ func newRepoManagerForTxService() (ports.RepoManager, error) {
 	}
 
 	wallet, err := domain.NewWallet(
-		mnemonic, password, rootPath, regtest.Name, birthdayBlock, nil,
+		mnemonic, password, rootPath, regtest.Name, birthdayBlockHeight, nil,
 	)
 	if err != nil {
 		return nil, err

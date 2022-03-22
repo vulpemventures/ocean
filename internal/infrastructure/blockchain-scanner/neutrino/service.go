@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/vulpemventures/go-elements/block"
 	"github.com/vulpemventures/neutrino-elements/pkg/blockservice"
 	"github.com/vulpemventures/neutrino-elements/pkg/node"
 	"github.com/vulpemventures/neutrino-elements/pkg/protocol"
@@ -159,16 +158,33 @@ func (s *service) BroadcastTransaction(txHex string) (string, error) {
 	return string(txid), nil
 }
 
-func (s *service) GetLatestBlock() (*block.Header, error) {
-	return s.headersRepo.ChainTip()
+func (s *service) GetLatestBlock() ([]byte, uint32, error) {
+	block, err := s.headersRepo.ChainTip()
+	if err != nil {
+		return nil, 0, err
+	}
+	hash, _ := block.Hash()
+	return hash.CloneBytes(), block.Height, nil
 }
 
-func (s *service) GetBlockHeader(hash chainhash.Hash) (*block.Header, error) {
-	return s.headersRepo.GetBlockHeader(hash)
+func (s *service) GetBlockHeight(blockHash []byte) (uint32, error) {
+	hash, err := chainhash.NewHash(blockHash)
+	if err != nil {
+		return 0, err
+	}
+	block, err := s.headersRepo.GetBlockHeader(*hash)
+	if err != nil {
+		return 0, err
+	}
+	return block.Height, nil
 }
 
-func (s *service) GetBlockHash(height uint32) (*chainhash.Hash, error) {
-	return s.headersRepo.GetBlockHashByHeight(height)
+func (s *service) GetBlockHash(height uint32) ([]byte, error) {
+	hash, err := s.headersRepo.GetBlockHashByHeight(height)
+	if err != nil {
+		return nil, err
+	}
+	return hash.CloneBytes(), nil
 }
 
 func (s *service) getOrCreateScanner(accountName string, startingBlock uint32) *scannerService {

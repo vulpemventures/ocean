@@ -1,8 +1,6 @@
 package ports
 
 import (
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/vulpemventures/go-elements/block"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 )
 
@@ -34,11 +32,11 @@ type BlockchainScanner interface {
 	GetTxChannel(accountName string) chan *domain.Transaction
 
 	// GetLatestBlock returns the header of the latest block of the blockchain.
-	GetLatestBlock() (*block.Header, error)
-	// GetBlockHeader returns the header of the block identified by its hash.
-	GetBlockHeader(hash chainhash.Hash) (*block.Header, error)
+	GetLatestBlock() ([]byte, uint32, error)
+	// GetBlockHeight returns the height of the block identified by its hash.
+	GetBlockHeight(hash []byte) (uint32, error)
 	// GetBlockHash returns the hash of the block identified by its height.
-	GetBlockHash(height uint32) (*chainhash.Hash, error)
+	GetBlockHash(height uint32) ([]byte, error)
 	// GetUtxos is a sync function to get info about the utxos represented by
 	// given outpoints (UtxoKeys).
 	GetUtxos(utxoKeys []domain.UtxoKey) ([]*domain.Utxo, error)

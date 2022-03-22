@@ -12,6 +12,7 @@ import (
 
 func TestAccountService(t *testing.T) {
 	mockedBcScanner := newMockedBcScanner()
+	mockedBcScanner.On("GetLatestBlock").Return(birthdayBlockHash, birthdayBlockHeight, nil)
 	repoManager, err := newRepoManagerForAccountService()
 	require.NoError(t, err)
 	require.NotNil(t, repoManager)
@@ -76,7 +77,7 @@ func newRepoManagerForAccountService() (ports.RepoManager, error) {
 	}
 
 	wallet, err := domain.NewWallet(
-		mnemonic, password, rootPath, regtest.Name, birthdayBlock, nil,
+		mnemonic, password, rootPath, regtest.Name, birthdayBlockHeight, nil,
 	)
 	if err != nil {
 		return nil, err
