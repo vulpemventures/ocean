@@ -187,3 +187,17 @@ func parseUtxoEventType(eventType domain.UtxoEventType) pb.UtxoEventType {
 		return pb.UtxoEventType_UTXO_EVENT_TYPE_UNSPECIFIED
 	}
 }
+
+func parseBlockHash(hash string) ([]byte, error) {
+	if len(hash) == 0 {
+		return nil, fmt.Errorf("missing block hash")
+	}
+	buf, err := hex.DecodeString(hash)
+	if err != nil {
+		return nil, fmt.Errorf("invalid block hash format")
+	}
+	if len(buf) != 32 {
+		return nil, fmt.Errorf("invalid block hash length")
+	}
+	return buf, nil
+}

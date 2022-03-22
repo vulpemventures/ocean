@@ -102,9 +102,13 @@ func (w *wallet) RestoreWallet(
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	birthdayBlock, err := parseBlockHash(req.GetBirthdayBlockHash())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	if err := w.appSvc.RestoreWallet(
-		ctx, strings.Split(mnemonic, " "), password,
+		ctx, strings.Split(mnemonic, " "), password, birthdayBlock,
 	); err != nil {
 		return nil, err
 	}
@@ -129,10 +133,12 @@ func (w *wallet) GetInfo(ctx context.Context, _ *pb.GetInfoRequest) (*pb.GetInfo
 	network := parseNetwork(info.Network)
 	accounts := parseAccounts(info.Accounts)
 	return &pb.GetInfoResponse{
-		Network:           network,
-		NativeAsset:       info.NativeAsset,
-		RootPath:          info.RootPath,
-		MasterBlindingKey: info.MasterBlindingKey,
-		Accounts:          accounts,
+		Network:             network,
+		NativeAsset:         info.NativeAsset,
+		RootPath:            info.RootPath,
+		MasterBlindingKey:   info.MasterBlindingKey,
+		BirthdayBlockHash:   info.BirthdayBlockHash,
+		BirthdayBlockHeight: info.BirthdayBlockHeight,
+		Accounts:            accounts,
 	}, nil
 }
