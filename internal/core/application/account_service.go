@@ -56,13 +56,15 @@ func NewAccountService(
 	}
 
 	for accountName := range w.AccountKeysByName {
+		accountKey := w.AccountKeysByName[accountName]
+		account := w.AccountsByKey[accountKey]
 		addressesInfo, _ := w.AllDerivedAddressesForAccount(accountName)
 		if len(addressesInfo) > 0 {
 			svc.log(
 				"account service: start watching addresses for account %s",
 				accountName,
 			)
-			bcScanner.WatchForAccount(accountName, addressesInfo)
+			bcScanner.WatchForAccount(accountName, account.BirthdayBlock, addressesInfo)
 		}
 	}
 
@@ -72,8 +74,12 @@ func NewAccountService(
 func (as *AccountService) CreateAccountBIP44(
 	ctx context.Context, accountName string,
 ) (*AccountInfo, error) {
+	birthdayBlock, err := as.bcScanner.GetLatestBlock()
+	if err != nil {
+		return nil, err
+	}
 	accountInfo, err := as.repoManager.WalletRepository().CreateAccount(
-		ctx, accountName,
+		ctx, accountName, birthdayBlock.Height,
 	)
 	if err != nil {
 		return nil, err
@@ -208,7 +214,9 @@ func (as *AccountService) DeleteAccount(
 func (as *AccountService) registerHandlerForWalletEvents() {
 	as.repoManager.RegisterHandlerForWalletEvent(
 		domain.WalletAccountCreated, func(event domain.WalletEvent) {
-			as.bcScanner.WatchForAccount(event.AccountName, event.AccountAddresses)
+			as.bcScanner.WatchForAccount(
+				event.AccountName, event.AccountBirthdayBlock, event.AccountAddresses,
+			)
 			chUtxos := as.bcScanner.GetUtxoChannel(event.AccountName)
 			chTxs := as.bcScanner.GetTxChannel(event.AccountName)
 			go as.listenToUtxoChannel(event.AccountName, chUtxos)
@@ -217,7 +225,9 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 	)
 	as.repoManager.RegisterHandlerForWalletEvent(
 		domain.WalletAccountAddressesDerived, func(event domain.WalletEvent) {
-			as.bcScanner.WatchForAccount(event.AccountName, event.AccountAddresses)
+			as.bcScanner.WatchForAccount(
+				event.AccountName, event.AccountBirthdayBlock, event.AccountAddresses,
+			)
 		},
 	)
 	as.repoManager.RegisterHandlerForWalletEvent(

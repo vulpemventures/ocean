@@ -115,7 +115,9 @@ func newRepoManagerForNotificationService() (ports.RepoManager, error) {
 		return nil, err
 	}
 
-	wallet, err := domain.NewWallet(mnemonic, password, rootPath, regtest.Name, nil)
+	wallet, err := domain.NewWallet(
+		mnemonic, password, rootPath, regtest.Name, birthdayBlock, nil,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +129,7 @@ func newRepoManagerForNotificationService() (ports.RepoManager, error) {
 	if err := rm.WalletRepository().UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
 			w.Unlock(password)
-			w.CreateAccount(accountName)
+			w.CreateAccount(accountName, 0)
 			return w, nil
 		},
 	); err != nil {
