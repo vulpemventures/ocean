@@ -16,12 +16,13 @@ import (
 )
 
 type scannerService struct {
-	accountName  string
-	svc          scanner.ScannerService
-	blindingKeys map[string][]byte
-	chTxs        chan *domain.Transaction
-	chUtxos      chan []*domain.Utxo
-	lock         *sync.RWMutex
+	accountName         string
+	svc                 scanner.ScannerService
+	blindingKeys        map[string][]byte
+	startingBlockHeight uint32
+	chTxs               chan *domain.Transaction
+	chUtxos             chan []*domain.Utxo
+	lock                *sync.RWMutex
 
 	log  func(format string, a ...interface{})
 	warn func(err error, format string, a ...interface{})
@@ -29,6 +30,7 @@ type scannerService struct {
 
 func newScannerSvc(
 	accountName string,
+	startingBlockHeight uint32,
 	filtersDb repository.FilterRepository,
 	headersDb repository.BlockHeaderRepository,
 	blockSvc blockservice.BlockService, genesisHash *chainhash.Hash,
@@ -42,14 +44,15 @@ func newScannerSvc(
 		log.WithError(err).Warnf(format, a...)
 	}
 	scannerSvc := &scannerService{
-		accountName:  accountName,
-		svc:          scanner.New(filtersDb, headersDb, blockSvc, genesisHash),
-		blindingKeys: make(map[string][]byte),
-		chTxs:        make(chan *domain.Transaction, 10),
-		chUtxos:      make(chan []*domain.Utxo, 10),
-		lock:         &sync.RWMutex{},
-		log:          logFn,
-		warn:         warnFn,
+		accountName:         accountName,
+		svc:                 scanner.New(filtersDb, headersDb, blockSvc, genesisHash),
+		blindingKeys:        make(map[string][]byte),
+		startingBlockHeight: startingBlockHeight,
+		chTxs:               make(chan *domain.Transaction, 10),
+		chUtxos:             make(chan []*domain.Utxo, 10),
+		lock:                &sync.RWMutex{},
+		log:                 logFn,
+		warn:                warnFn,
 	}
 	chReports, _ := scannerSvc.svc.Start()
 	go scannerSvc.listenToReports(chReports)
@@ -74,7 +77,10 @@ func (s *scannerService) watchAddresses(addressesInfo []domain.AddressInfo) {
 
 		s.blindingKeys[info.Script] = info.BlindingKey
 		item, _ := scanner.NewScriptWatchItemFromAddress(info.Address)
-		s.svc.Watch(scanner.WithWatchItem(item))
+		// TODO: add WithPersistentWatch option when available.
+		s.svc.Watch(
+			scanner.WithWatchItem(item), scanner.WithStartBlock(s.startingBlockHeight),
+		)
 		s.log(
 			"start watching address %s for account %s",
 			info.DerivationPath, s.accountName,

@@ -7,8 +7,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/mock"
 	"github.com/vulpemventures/go-elements/address"
+	"github.com/vulpemventures/go-elements/block"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 )
@@ -29,7 +31,9 @@ func newMockedBcScanner() *mockBcScanner {
 
 func (m *mockBcScanner) Start() {}
 func (m *mockBcScanner) Stop()  {}
-func (m *mockBcScanner) WatchForAccount(accountName string, addrInfo []domain.AddressInfo) {
+func (m *mockBcScanner) WatchForAccount(
+	accountName string, staringBlock uint32, addrInfo []domain.AddressInfo,
+) {
 	addresses := application.AddressesInfo(addrInfo).Addresses()
 	if len(addresses) > 0 {
 		utxos := randomUtxos(accountName, addresses)
@@ -53,6 +57,33 @@ func (m *mockBcScanner) GetUtxoChannel(accountName string) chan []*domain.Utxo {
 
 func (m *mockBcScanner) GetTxChannel(accountName string) chan *domain.Transaction {
 	return m.chTxs
+}
+
+func (m *mockBcScanner) GetLatestBlock() (*block.Header, error) {
+	args := m.Called()
+	var res *block.Header
+	if a := args.Get(0); a != nil {
+		res = a.(*block.Header)
+	}
+	return res, args.Error(1)
+}
+
+func (m *mockBcScanner) GetBlockHeader(hash chainhash.Hash) (*block.Header, error) {
+	args := m.Called(hash)
+	var res *block.Header
+	if a := args.Get(0); a != nil {
+		res = a.(*block.Header)
+	}
+	return res, args.Error(1)
+}
+
+func (m *mockBcScanner) GetBlockHash(height uint32) (*chainhash.Hash, error) {
+	args := m.Called(height)
+	var res *chainhash.Hash
+	if a := args.Get(0); a != nil {
+		res = a.(*chainhash.Hash)
+	}
+	return res, args.Error(1)
 }
 
 func (m *mockBcScanner) GetUtxos(utxoKeys []domain.UtxoKey) ([]*domain.Utxo, error) {

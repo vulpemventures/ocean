@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/vulpemventures/go-elements/block"
 	"github.com/vulpemventures/neutrino-elements/pkg/blockservice"
 	"github.com/vulpemventures/neutrino-elements/pkg/node"
 	"github.com/vulpemventures/neutrino-elements/pkg/protocol"
@@ -94,24 +95,24 @@ func (s *service) Stop() {
 }
 
 func (s *service) GetUtxoChannel(accountName string) chan []*domain.Utxo {
-	scannerSvc := s.getOrCreateScanner(accountName)
+	scannerSvc := s.getOrCreateScanner(accountName, 0)
 	return scannerSvc.chUtxos
 }
 
 func (s *service) GetTxChannel(accountName string) chan *domain.Transaction {
-	scannerSvc := s.getOrCreateScanner(accountName)
+	scannerSvc := s.getOrCreateScanner(accountName, 0)
 	return scannerSvc.chTxs
 }
 
 func (s *service) WatchForAccount(
-	accountName string, addressesInfo []domain.AddressInfo,
+	accountName string, startingBlock uint32, addressesInfo []domain.AddressInfo,
 ) {
-	scannerSvc := s.getOrCreateScanner(accountName)
+	scannerSvc := s.getOrCreateScanner(accountName, startingBlock)
 	scannerSvc.watchAddresses(addressesInfo)
 }
 
 func (s *service) StopWatchForAccount(accountName string) {
-	scannerSvc := s.getOrCreateScanner(accountName)
+	scannerSvc := s.getOrCreateScanner(accountName, 0)
 	scannerSvc.stop()
 	s.removeScanner(accountName)
 }
@@ -158,7 +159,19 @@ func (s *service) BroadcastTransaction(txHex string) (string, error) {
 	return string(txid), nil
 }
 
-func (s *service) getOrCreateScanner(accountName string) *scannerService {
+func (s *service) GetLatestBlock() (*block.Header, error) {
+	return s.headersRepo.ChainTip()
+}
+
+func (s *service) GetBlockHeader(hash chainhash.Hash) (*block.Header, error) {
+	return s.headersRepo.GetBlockHeader(hash)
+}
+
+func (s *service) GetBlockHash(height uint32) (*chainhash.Hash, error) {
+	return s.headersRepo.GetBlockHashByHeight(height)
+}
+
+func (s *service) getOrCreateScanner(accountName string, startingBlock uint32) *scannerService {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -168,7 +181,8 @@ func (s *service) getOrCreateScanner(accountName string) *scannerService {
 
 	genesisHash := genesisBlockHashForNetwork(s.nodeConfig.Network)
 	scannerSvc := newScannerSvc(
-		accountName, s.filtersRepo, s.headersRepo, s.blockSvc, genesisHash,
+		accountName, startingBlock, s.filtersRepo, s.headersRepo, s.blockSvc,
+		genesisHash,
 	)
 	s.scanners[accountName] = scannerSvc
 	return scannerSvc
