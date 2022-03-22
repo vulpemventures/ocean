@@ -22,8 +22,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountServiceClient interface {
-	// CreateAccount creates a new account.
-	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
+	// CreateAccountBIP44 creates a new BIP44 account.
+	CreateAccountBIP44(ctx context.Context, in *CreateAccountBIP44Request, opts ...grpc.CallOption) (*CreateAccountBIP44Response, error)
+	// CreateAccountCustom creates a new custom account for which loading a template.
+	CreateAccountCustom(ctx context.Context, in *CreateAccountCustomRequest, opts ...grpc.CallOption) (*CreateAccountCustomResponse, error)
 	// SetAccountTemplate sets the template for the account used to generate new addresses.
 	SetAccountTemplate(ctx context.Context, in *SetAccountTemplateRequest, opts ...grpc.CallOption) (*SetAccountTemplateResponse, error)
 	// DeriveAddress generates new address(es) for the account.
@@ -51,9 +53,18 @@ func NewAccountServiceClient(cc grpc.ClientConnInterface) AccountServiceClient {
 	return &accountServiceClient{cc}
 }
 
-func (c *accountServiceClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error) {
-	out := new(CreateAccountResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/CreateAccount", in, out, opts...)
+func (c *accountServiceClient) CreateAccountBIP44(ctx context.Context, in *CreateAccountBIP44Request, opts ...grpc.CallOption) (*CreateAccountBIP44Response, error) {
+	out := new(CreateAccountBIP44Response)
+	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/CreateAccountBIP44", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) CreateAccountCustom(ctx context.Context, in *CreateAccountCustomRequest, opts ...grpc.CallOption) (*CreateAccountCustomResponse, error) {
+	out := new(CreateAccountCustomResponse)
+	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/CreateAccountCustom", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +138,10 @@ func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteAcco
 // All implementations should embed UnimplementedAccountServiceServer
 // for forward compatibility
 type AccountServiceServer interface {
-	// CreateAccount creates a new account.
-	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
+	// CreateAccountBIP44 creates a new BIP44 account.
+	CreateAccountBIP44(context.Context, *CreateAccountBIP44Request) (*CreateAccountBIP44Response, error)
+	// CreateAccountCustom creates a new custom account for which loading a template.
+	CreateAccountCustom(context.Context, *CreateAccountCustomRequest) (*CreateAccountCustomResponse, error)
 	// SetAccountTemplate sets the template for the account used to generate new addresses.
 	SetAccountTemplate(context.Context, *SetAccountTemplateRequest) (*SetAccountTemplateResponse, error)
 	// DeriveAddress generates new address(es) for the account.
@@ -152,8 +165,11 @@ type AccountServiceServer interface {
 type UnimplementedAccountServiceServer struct {
 }
 
-func (UnimplementedAccountServiceServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateAccount not implemented")
+func (UnimplementedAccountServiceServer) CreateAccountBIP44(context.Context, *CreateAccountBIP44Request) (*CreateAccountBIP44Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAccountBIP44 not implemented")
+}
+func (UnimplementedAccountServiceServer) CreateAccountCustom(context.Context, *CreateAccountCustomRequest) (*CreateAccountCustomResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAccountCustom not implemented")
 }
 func (UnimplementedAccountServiceServer) SetAccountTemplate(context.Context, *SetAccountTemplateRequest) (*SetAccountTemplateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetAccountTemplate not implemented")
@@ -188,20 +204,38 @@ func RegisterAccountServiceServer(s grpc.ServiceRegistrar, srv AccountServiceSer
 	s.RegisterService(&AccountService_ServiceDesc, srv)
 }
 
-func _AccountService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateAccountRequest)
+func _AccountService_CreateAccountBIP44_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAccountBIP44Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).CreateAccount(ctx, in)
+		return srv.(AccountServiceServer).CreateAccountBIP44(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/CreateAccount",
+		FullMethod: "/ocean.v1alpha.AccountService/CreateAccountBIP44",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).CreateAccount(ctx, req.(*CreateAccountRequest))
+		return srv.(AccountServiceServer).CreateAccountBIP44(ctx, req.(*CreateAccountBIP44Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountService_CreateAccountCustom_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAccountCustomRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).CreateAccountCustom(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocean.v1alpha.AccountService/CreateAccountCustom",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).CreateAccountCustom(ctx, req.(*CreateAccountCustomRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -340,8 +374,12 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AccountServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateAccount",
-			Handler:    _AccountService_CreateAccount_Handler,
+			MethodName: "CreateAccountBIP44",
+			Handler:    _AccountService_CreateAccountBIP44_Handler,
+		},
+		{
+			MethodName: "CreateAccountCustom",
+			Handler:    _AccountService_CreateAccountCustom_Handler,
 		},
 		{
 			MethodName: "SetAccountTemplate",

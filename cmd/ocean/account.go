@@ -90,8 +90,8 @@ func accountCreate(cmd *cobra.Command, _ []string) error {
 	}
 	defer cleanup()
 
-	reply, err := client.CreateAccount(
-		context.Background(), &pb.CreateAccountRequest{
+	reply, err := client.CreateAccountBIP44(
+		context.Background(), &pb.CreateAccountBIP44Request{
 			Name: accountName,
 		},
 	)

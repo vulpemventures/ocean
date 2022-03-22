@@ -17,10 +17,15 @@ class AccountServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.CreateAccount = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/CreateAccount',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountResponse.FromString,
+        self.CreateAccountBIP44 = channel.unary_unary(
+                '/ocean.v1alpha.AccountService/CreateAccountBIP44',
+                request_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Request.SerializeToString,
+                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Response.FromString,
+                )
+        self.CreateAccountCustom = channel.unary_unary(
+                '/ocean.v1alpha.AccountService/CreateAccountCustom',
+                request_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomResponse.FromString,
                 )
         self.SetAccountTemplate = channel.unary_unary(
                 '/ocean.v1alpha.AccountService/SetAccountTemplate',
@@ -65,8 +70,15 @@ class AccountServiceServicer(object):
     list of addresses and selecting utxos.
     """
 
-    def CreateAccount(self, request, context):
-        """CreateAccount creates a new account.
+    def CreateAccountBIP44(self, request, context):
+        """CreateAccountBIP44 creates a new BIP44 account.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CreateAccountCustom(self, request, context):
+        """CreateAccountCustom creates a new custom account for which loading a template.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -127,10 +139,15 @@ class AccountServiceServicer(object):
 
 def add_AccountServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'CreateAccount': grpc.unary_unary_rpc_method_handler(
-                    servicer.CreateAccount,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountResponse.SerializeToString,
+            'CreateAccountBIP44': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateAccountBIP44,
+                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Request.FromString,
+                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Response.SerializeToString,
+            ),
+            'CreateAccountCustom': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateAccountCustom,
+                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomRequest.FromString,
+                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomResponse.SerializeToString,
             ),
             'SetAccountTemplate': grpc.unary_unary_rpc_method_handler(
                     servicer.SetAccountTemplate,
@@ -181,7 +198,7 @@ class AccountService(object):
     """
 
     @staticmethod
-    def CreateAccount(request,
+    def CreateAccountBIP44(request,
             target,
             options=(),
             channel_credentials=None,
@@ -191,9 +208,26 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/CreateAccount',
-            ocean_dot_v1alpha_dot_account__pb2.CreateAccountRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.CreateAccountResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/CreateAccountBIP44',
+            ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Request.SerializeToString,
+            ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Response.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def CreateAccountCustom(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/CreateAccountCustom',
+            ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomRequest.SerializeToString,
+            ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

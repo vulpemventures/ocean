@@ -19,23 +19,29 @@ func NewAccountHandler(appSvc *application.AccountService) pb.AccountServiceServ
 	}
 }
 
-func (a *account) CreateAccount(
-	ctx context.Context, req *pb.CreateAccountRequest,
-) (*pb.CreateAccountResponse, error) {
+func (a *account) CreateAccountBIP44(
+	ctx context.Context, req *pb.CreateAccountBIP44Request,
+) (*pb.CreateAccountBIP44Response, error) {
 	name, err := parseAccountName(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	accountInfo, err := a.appSvc.CreateAccount(ctx, name)
+	accountInfo, err := a.appSvc.CreateAccountBIP44(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.CreateAccountResponse{
+	return &pb.CreateAccountBIP44Response{
 		AccountName:  accountInfo.Key.Name,
 		AccountIndex: accountInfo.Key.Index,
 		Xpub:         accountInfo.Xpub,
 	}, nil
+}
+
+func (a *account) CreateAccountCustom(
+	ctx context.Context, req *pb.CreateAccountCustomRequest,
+) (*pb.CreateAccountCustomResponse, error) {
+	return &pb.CreateAccountCustomResponse{}, nil
 }
 
 func (a *account) SetAccountTemplate(

@@ -69,7 +69,7 @@ func NewAccountService(
 	return svc
 }
 
-func (as *AccountService) CreateAccount(
+func (as *AccountService) CreateAccountBIP44(
 	ctx context.Context, accountName string,
 ) (*AccountInfo, error) {
 	accountInfo, err := as.repoManager.WalletRepository().CreateAccount(
