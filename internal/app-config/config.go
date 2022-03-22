@@ -128,27 +128,27 @@ func (c *AppConfig) repoManager() (ports.RepoManager, error) {
 		return c.rm, nil
 	}
 
-	var rm ports.RepoManager
-	var err error
-	if c.RepoManagerType == "inmemory" {
-		rm = inmemory.NewRepoManager()
-	}
-	if c.RepoManagerType == "badger" {
+	switch c.RepoManagerType {
+	case "inmemory":
+		c.rm = inmemory.NewRepoManager()
+		return c.rm, nil
+	case "badger":
 		if c.RepoManagerConfig == nil {
-			return nil, fmt.Errorf("missing repo manager config type")
+			return nil, fmt.Errorf("missing repo manager config args")
 		}
 		datadir, ok := c.RepoManagerConfig.(string)
 		if !ok {
 			return nil, fmt.Errorf("invalid repo manager config type, must be string")
 		}
-		rm, err = dbbadger.NewRepoManager(datadir, log.New())
+		rm, err := dbbadger.NewRepoManager(datadir, log.New())
+		if err != nil {
+			return nil, err
+		}
+		c.rm = rm
+		return c.rm, nil
+	default:
+		return nil, fmt.Errorf("unknown repo manager type")
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	c.rm = rm
-	return c.rm, nil
 }
 
 func (c *AppConfig) bcScanner() (ports.BlockchainScanner, error) {
@@ -156,11 +156,10 @@ func (c *AppConfig) bcScanner() (ports.BlockchainScanner, error) {
 		return c.bcs, nil
 	}
 
-	var bcs ports.BlockchainScanner
-	var err error
-	if c.BlockchainScannerType == "neutrino" {
+	switch c.BlockchainScannerType {
+	case "neutrino":
 		if c.BlockchainScannerConfig == nil {
-			return nil, fmt.Errorf("")
+			return nil, fmt.Errorf("missing blockchain scanner config args")
 		}
 		args, ok := c.BlockchainScannerConfig.(neutrino_scanner.NodeServiceArgs)
 		if !ok {
@@ -169,14 +168,15 @@ func (c *AppConfig) bcScanner() (ports.BlockchainScanner, error) {
 					"neutrino_scanner.NodeServiceArgs",
 			)
 		}
-		bcs, err = neutrino_scanner.NewNeutrinoScanner(args)
+		bcs, err := neutrino_scanner.NewNeutrinoScanner(args)
+		if err != nil {
+			return nil, err
+		}
+		c.bcs = bcs
+		return c.bcs, nil
+	default:
+		return nil, fmt.Errorf("unknown blockchain scanner type")
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	c.bcs = bcs
-	return c.bcs, nil
 }
 
 func (c *AppConfig) walletService() *application.WalletService {
