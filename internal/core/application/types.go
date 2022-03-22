@@ -32,11 +32,13 @@ type WalletStatus struct {
 }
 
 type WalletInfo struct {
-	Network           string
-	NativeAsset       string
-	RootPath          string
-	MasterBlindingKey string
-	Accounts          []AccountInfo
+	Network             string
+	NativeAsset         string
+	RootPath            string
+	MasterBlindingKey   string
+	BirthdayBlockHash   string
+	BirthdayBlockHeight uint32
+	Accounts            []AccountInfo
 }
 
 type UtxoInfo struct {

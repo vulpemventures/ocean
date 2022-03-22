@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/vulpemventures/go-elements/block"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
@@ -26,6 +28,7 @@ import (
 // feature).
 type WalletService struct {
 	repoManager ports.RepoManager
+	bcScanner   ports.BlockchainScanner
 	rootPath    string
 	network     *network.Network
 
@@ -36,10 +39,12 @@ type WalletService struct {
 }
 
 func NewWalletService(
-	repoManager ports.RepoManager, rootPath string, net *network.Network,
+	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
+	rootPath string, net *network.Network,
 ) *WalletService {
 	ws := &WalletService{
 		repoManager: repoManager,
+		bcScanner:   bcScanner,
 		rootPath:    rootPath,
 		network:     net,
 		lock:        &sync.RWMutex{},
@@ -70,8 +75,14 @@ func (ws *WalletService) CreateWallet(
 		return fmt.Errorf("wallet is already initialized")
 	}
 
+	birthdayBlock, err := ws.bcScanner.GetLatestBlock()
+	if err != nil {
+		return
+	}
+
 	newWallet, err := domain.NewWallet(
-		mnemonic, passpharse, ws.rootPath, ws.network.Name, nil,
+		mnemonic, passpharse, ws.rootPath, ws.network.Name,
+		birthdayBlock.Height, nil,
 	)
 	if err != nil {
 		return
@@ -110,6 +121,7 @@ func (ws *WalletService) ChangePassword(
 
 func (ws *WalletService) RestoreWallet(
 	ctx context.Context, mnemonic []string, passpharse string,
+	birthdayBlockHash []byte,
 ) (err error) {
 	defer func() {
 		if err == nil {
@@ -117,10 +129,16 @@ func (ws *WalletService) RestoreWallet(
 			ws.setSynced()
 		}
 	}()
+
+	birthdayBlock, err := ws.getBlockByHash(birthdayBlockHash)
+	if err != nil {
+		return
+	}
 	// TODO: implement restoration
 
 	newWallet, err := domain.NewWallet(
-		mnemonic, passpharse, ws.rootPath, ws.network.Name, nil,
+		mnemonic, passpharse, ws.rootPath, ws.network.Name,
+		birthdayBlock.Height, nil,
 	)
 	if err != nil {
 		return
@@ -138,28 +156,39 @@ func (ws *WalletService) GetStatus(_ context.Context) WalletStatus {
 }
 
 func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
-	ww, err := ws.repoManager.WalletRepository().GetWallet(ctx)
+	w, err := ws.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if ww.IsLocked() {
+	if w.IsLocked() {
 		return &WalletInfo{
-			Network:     ww.NetworkName,
+			Network:     w.NetworkName,
 			NativeAsset: ws.network.AssetID,
 		}, nil
 	}
 
-	masterBlingingKey, _ := ww.GetMasterBlindingKey()
-	accounts := make([]AccountInfo, 0, len(ww.AccountsByKey))
-	for _, a := range ww.AccountsByKey {
+	birthdayBlock, _ := ws.getBlockByHeight(w.BirthdayBlockHeight)
+	var birthdayBlockHash string
+	var birthdayBlockHeight uint32
+	if birthdayBlock != nil {
+		if hash, err := birthdayBlock.Hash(); err == nil {
+			birthdayBlockHash = hash.String()
+		}
+		birthdayBlockHeight = birthdayBlock.Height
+	}
+	masterBlingingKey, _ := w.GetMasterBlindingKey()
+	accounts := make([]AccountInfo, 0, len(w.AccountsByKey))
+	for _, a := range w.AccountsByKey {
 		accounts = append(accounts, AccountInfo(a.Info))
 	}
 	return &WalletInfo{
-		Network:           ww.NetworkName,
-		NativeAsset:       ws.network.AssetID,
-		RootPath:          ww.RootPath,
-		MasterBlindingKey: masterBlingingKey,
-		Accounts:          accounts,
+		Network:             w.NetworkName,
+		NativeAsset:         ws.network.AssetID,
+		RootPath:            w.RootPath,
+		MasterBlindingKey:   masterBlingingKey,
+		BirthdayBlockHash:   birthdayBlockHash,
+		BirthdayBlockHeight: birthdayBlockHeight,
+		Accounts:            accounts,
 	}, nil
 }
 
@@ -209,4 +238,20 @@ func (ws *WalletService) isSynced() bool {
 	defer ws.lock.RUnlock()
 
 	return ws.synced
+}
+
+func (ws *WalletService) getBlockByHash(blockHash []byte) (*block.Header, error) {
+	hash, err := chainhash.NewHash(blockHash)
+	if err != nil {
+		return nil, err
+	}
+	return ws.bcScanner.GetBlockHeader(*hash)
+}
+
+func (ws *WalletService) getBlockByHeight(blockHeight uint32) (*block.Header, error) {
+	hash, err := ws.bcScanner.GetBlockHash(blockHeight)
+	if err != nil {
+		return nil, err
+	}
+	return ws.bcScanner.GetBlockHeader(*hash)
 }

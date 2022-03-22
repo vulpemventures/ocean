@@ -30,6 +30,7 @@ var (
 	}
 	encryptedMnemonic = "8f29524ee5995c838ca6f28c7ded7da6dc51de804fd2703775989e65ddc1bb3b60122bf0f430bb3b7a267449aaeee103375737d679bfdabf172c3842048925e6f8952e214f6b900435d24cff938be78ad3bb303d305702fbf168534a45a57ac98ca940d4c3319f14d0c97a20b5bcb456d72857d48d0b4f0e0dcf71d1965b6a42aca8d84fcb66aadeabc812a9994cf66e7a75f8718a031418468f023c560312a02f46ec8e65d5dd65c968ddb93e10950e96c8e730ce7a74d33c6ddad9e12f45e534879f1605eb07fe90432f6592f7996091bbb3e3b2"
 	accountName       = "test1"
+	birthdayBlock     = uint32(1)
 )
 
 func TestMain(m *testing.M) {
@@ -52,11 +53,15 @@ func TestWalletService(t *testing.T) {
 
 func testInitWalletFromScratch(t *testing.T) {
 	t.Run("init_wallet_from_scratch", func(t *testing.T) {
+		mockedBcScanner := newMockedBcScanner()
+		mockedBcScanner.On("GetLatestBlock").Return(birthdayBlock, nil)
 		repoManager, err := newRepoManagerForNewWallet()
 		require.NoError(t, err)
 		require.NotNil(t, repoManager)
 
-		svc := application.NewWalletService(repoManager, rootPath, regtest)
+		svc := application.NewWalletService(
+			repoManager, mockedBcScanner, rootPath, regtest,
+		)
 
 		status := svc.GetStatus(ctx)
 		require.False(t, status.IsInitialized)
@@ -108,11 +113,14 @@ func testInitWalletFromScratch(t *testing.T) {
 
 func testInitWalletFromRestart(t *testing.T) {
 	t.Run("init_wallet_from_restart", func(t *testing.T) {
+		mockedBcScanner := newMockedBcScanner()
 		repoManager, err := newRepoManagerForExistingWallet()
 		require.NoError(t, err)
 		require.NotNil(t, repoManager)
 
-		svc := application.NewWalletService(repoManager, rootPath, regtest)
+		svc := application.NewWalletService(
+			repoManager, mockedBcScanner, rootPath, regtest,
+		)
 
 		status := svc.GetStatus(ctx)
 		require.True(t, status.IsInitialized)
@@ -230,7 +238,9 @@ func newRepoManagerForExistingWallet() (ports.RepoManager, error) {
 			},
 		},
 	}
-	wallet, err := domain.NewWallet(mnemonic, password, rootPath, regtest.Name, accounts)
+	wallet, err := domain.NewWallet(
+		mnemonic, password, rootPath, regtest.Name, birthdayBlock, accounts,
+	)
 	if err != nil {
 		return nil, err
 	}
