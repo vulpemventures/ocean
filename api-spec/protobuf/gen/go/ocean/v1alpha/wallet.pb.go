@@ -447,6 +447,7 @@ type RestoreWalletRequest struct {
 	Password string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	// The hash of the block at original wallet creation time. This will be the
 	// starting block for the wallet rescan.
+	// If not given, will rescan from genesis block.
 	BirthdayBlockHash string `protobuf:"bytes,3,opt,name=birthday_block_hash,json=birthdayBlockHash,proto3" json:"birthday_block_hash,omitempty"`
 }
 
