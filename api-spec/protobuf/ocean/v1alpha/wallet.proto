@@ -72,9 +72,12 @@ message RestoreWalletRequest{
   // The mnemonic from where deriving signing and blinding key pairs.
   string mnemonic = 1;
 
-  // The password to decrypt HD wallet. After restoration, the wallet is locked and
-  // the same password is required to unlock it.
-  string password = 3;
+  // The password to decrypt HD wallet. After restoration, the wallet is locked
+  // and the same password is required to unlock it.
+  string password = 2;
+  // The hash of the block at original wallet creation time. This will be the 
+  // starting block for the wallet rescan.
+  string birthday_block_hash = 3;
 }
 message RestoreWalletResponse{}
 
@@ -106,6 +109,10 @@ message GetInfoResponse{
   // The master blinding key derived from the blinding seed from where derive
   // blidning key pairs.
   string master_blinding_key = 4;
+  // The hash of the block at wallet creation time.
+  string birthday_block_hash = 5;
+  // The height of the block at wallet creation time.
+  uint32 birthday_block_height = 6;
   // List containing info about the wallet accounts.
-  repeated AccountInfo accounts = 5;
+  repeated AccountInfo accounts = 7;
 }
