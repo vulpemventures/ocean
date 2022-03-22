@@ -32,9 +32,10 @@ func (t WalletEventType) String() string {
 
 // WalletEvent holds info about an event occured within the repository.
 type WalletEvent struct {
-	EventType        WalletEventType
-	AccountName      string
-	AccountAddresses []AddressInfo
+	EventType            WalletEventType
+	AccountName          string
+	AccountBirthdayBlock uint32
+	AccountAddresses     []AddressInfo
 }
 
 // WalletRepository is the abstraction for any kind of database intended to
@@ -56,7 +57,9 @@ type WalletRepository interface {
 	// CreateAccount creates a new wallet account with the given name and returns
 	// its basic info.
 	// Generates a WalletAccountCreated event if successfull.
-	CreateAccount(ctx context.Context, accountName string) (*AccountInfo, error)
+	CreateAccount(
+		ctx context.Context, accountName string, birthdayBlock uint32,
+	) (*AccountInfo, error)
 	// DeriveNextExternalAddressesForAccount returns one or more new receiving
 	// addresses for the given account.
 	// Generates a WalletAccountAddressesDerived event if successfull.

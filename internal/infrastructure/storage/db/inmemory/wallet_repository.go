@@ -111,13 +111,13 @@ func (r *walletRepository) UpdateWallet(
 }
 
 func (r *walletRepository) CreateAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, birthdayBlock uint32,
 ) (*domain.AccountInfo, error) {
 	var accountInfo *domain.AccountInfo
 
 	if err := r.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
-			account, err := w.CreateAccount(accountName)
+			account, err := w.CreateAccount(accountName, birthdayBlock)
 			if err != nil {
 				return nil, err
 			}

@@ -100,12 +100,12 @@ func (r *walletRepository) UpdateWallet(
 }
 
 func (r *walletRepository) CreateAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, birthdayBlock uint32,
 ) (*domain.AccountInfo, error) {
 	var accountInfo *domain.AccountInfo
 	if err := r.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
-			account, err := w.CreateAccount(accountName)
+			account, err := w.CreateAccount(accountName, birthdayBlock)
 			if err != nil {
 				return nil, err
 			}
@@ -120,8 +120,9 @@ func (r *walletRepository) CreateAccount(
 	}
 
 	go r.publishEvent(domain.WalletEvent{
-		EventType:   domain.WalletAccountCreated,
-		AccountName: accountName,
+		EventType:            domain.WalletAccountCreated,
+		AccountName:          accountName,
+		AccountBirthdayBlock: birthdayBlock,
 	})
 
 	return accountInfo, nil

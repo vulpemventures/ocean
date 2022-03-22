@@ -30,6 +30,7 @@ type AccountInfo struct {
 // daemon's HD wallet
 type Account struct {
 	Info                   AccountInfo
+	BirthdayBlock          uint32
 	NextExternalIndex      uint
 	NextInternalIndex      uint
 	DerivationPathByScript map[string]string

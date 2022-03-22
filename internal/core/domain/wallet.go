@@ -21,6 +21,7 @@ var (
 	ErrWalletMissingMnemonic         = fmt.Errorf("missing mnemonic")
 	ErrWalletMissingPassword         = fmt.Errorf("missing password")
 	ErrWalletMissingNetwork          = fmt.Errorf("missing network name")
+	ErrWalletMissingBirthdayBlock    = fmt.Errorf("missing birthday block height")
 	ErrWalletLocked                  = fmt.Errorf("wallet is locked")
 	ErrWalletUnlocked                = fmt.Errorf("wallet must be locked")
 	ErrWalletMaxAccountNumberReached = fmt.Errorf("reached max number of accounts")
@@ -48,14 +49,15 @@ type AddressInfo struct {
 // Wallet is the data structure representing a secure HD wallet, ie. protected
 // by a password that encrypts/decrypts the mnemonic seed.
 type Wallet struct {
-	EncryptedMnemonic  []byte
-	PasswordHash       []byte
-	RootPath           string
-	NetworkName        string
-	AccountsByKey      map[string]*Account
-	AccountKeysByIndex map[uint32]string
-	AccountKeysByName  map[string]string
-	NextAccountIndex   uint32
+	EncryptedMnemonic   []byte
+	PasswordHash        []byte
+	BirthdayBlockHeight uint32
+	RootPath            string
+	NetworkName         string
+	AccountsByKey       map[string]*Account
+	AccountKeysByIndex  map[uint32]string
+	AccountKeysByName   map[string]string
+	NextAccountIndex    uint32
 }
 
 // NewWallet encrypts the provided mnemonic with the passhrase and returns a new
@@ -65,13 +67,17 @@ type Wallet struct {
 // The Wallet is locked by default since it is initialized without the mnemonic
 // in plain text.
 func NewWallet(
-	mnemonic []string, password, rootPath, network string, accounts []Account,
+	mnemonic []string, password, rootPath, network string,
+	birthdayBlock uint32, accounts []Account,
 ) (*Wallet, error) {
 	if len(mnemonic) <= 0 {
 		return nil, ErrWalletMissingMnemonic
 	}
 	if len(password) <= 0 {
 		return nil, ErrWalletMissingPassword
+	}
+	if birthdayBlock == 0 {
+		return nil, ErrWalletMissingBirthdayBlock
 	}
 	if network == "" {
 		return nil, ErrWalletMissingNetwork
@@ -111,13 +117,14 @@ func NewWallet(
 	}
 
 	return &Wallet{
-		EncryptedMnemonic:  encryptedMnemonic,
-		PasswordHash:       btcutil.Hash160([]byte(password)),
-		RootPath:           rootPath,
-		AccountsByKey:      accountsByKey,
-		AccountKeysByIndex: accountKeysByIndex,
-		AccountKeysByName:  accountKeysByName,
-		NetworkName:        network,
+		EncryptedMnemonic:   encryptedMnemonic,
+		PasswordHash:        btcutil.Hash160([]byte(password)),
+		BirthdayBlockHeight: birthdayBlock,
+		RootPath:            rootPath,
+		AccountsByKey:       accountsByKey,
+		AccountKeysByIndex:  accountKeysByIndex,
+		AccountKeysByName:   accountKeysByName,
+		NetworkName:         network,
 	}, nil
 }
 
@@ -210,9 +217,9 @@ func (w *Wallet) ChangePassword(currentPassword, newPassword string) error {
 	return nil
 }
 
-// CreateAccount creates a new account with the given name by preventin
-// collisions with existin ones. If successful, returns the Account created.
-func (w *Wallet) CreateAccount(name string) (*Account, error) {
+// CreateAccount creates a new account with the given name by preventing
+// collisions with existing ones. If successful, returns the Account created.
+func (w *Wallet) CreateAccount(name string, birthdayBlock uint32) (*Account, error) {
 	if w.IsLocked() {
 		return nil, ErrWalletLocked
 	}
@@ -231,10 +238,15 @@ func (w *Wallet) CreateAccount(name string) (*Account, error) {
 	accountKey := AccountKey{name, w.NextAccountIndex}
 	derivationPath, _ := wallet.ParseDerivationPath(w.RootPath)
 	derivationPath = append(derivationPath, w.NextAccountIndex+hdkeychain.HardenedKeyStart)
+	bdayBlock := w.BirthdayBlockHeight
+	if birthdayBlock > bdayBlock {
+		bdayBlock = birthdayBlock
+	}
 	accountInfo := AccountInfo{accountKey, xpub, derivationPath.String()}
 	account := &Account{
 		Info:                   accountInfo,
 		DerivationPathByScript: make(map[string]string),
+		BirthdayBlock:          bdayBlock,
 	}
 
 	w.AccountsByKey[accountKey.String()] = account
