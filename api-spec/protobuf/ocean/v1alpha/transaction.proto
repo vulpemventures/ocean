@@ -106,6 +106,8 @@ message EstimateFeesResponse{
 message SignTransactionRequest{
   // Raw transaction to sign.
   string tx_hex = 1;
+  // The sighash type. SIGHASH_ALL is used if not defined.
+  uint32 sighash_type = 2;
 }
 message SignTransactionResponse{
   // Raw signed transaction.
@@ -158,6 +160,9 @@ message BlindPsetResponse{
 message SignPsetRequest{
   // The partial transaction to sign in base64 format.
   string pset = 1;
+  // The sighash type. If not specified, SIGHASH_ALL is used for any input 
+  // to sign that doesn't already have one set.
+  uint32 sighash_type = 2;
 }
 message SignPsetResponse{
   // Signed partial transaction in base64 format.
