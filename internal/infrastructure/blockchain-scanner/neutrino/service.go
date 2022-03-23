@@ -1,15 +1,16 @@
 package neutrino_scanner
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/vulpemventures/go-elements/transaction"
 	"github.com/vulpemventures/neutrino-elements/pkg/blockservice"
 	"github.com/vulpemventures/neutrino-elements/pkg/node"
 	"github.com/vulpemventures/neutrino-elements/pkg/protocol"
@@ -142,24 +143,18 @@ func (s *service) GetUtxos(utxoKeys []domain.UtxoKey) ([]*domain.Utxo, error) {
 }
 
 func (s *service) BroadcastTransaction(txHex string) (string, error) {
-	baseUrl := esploraUrlFromNetwork(s.nodeConfig.Network)
-	client := &http.Client{}
-	url := fmt.Sprintf("%s/tx", baseUrl)
-	resp, err := client.Post(url, "text/plain", strings.NewReader(txHex))
+	tx, err := transaction.NewTxFromHex(txHex)
 	if err != nil {
+		return "", fmt.Errorf("invalid tx: %s", err)
+	}
+	if err := s.nodeSvc.SendTransaction(txHex); err != nil {
 		return "", err
 	}
-
-	defer resp.Body.Close()
-	txid, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	return string(txid), nil
+	return tx.TxHash().String(), nil
 }
 
 func (s *service) GetLatestBlock() ([]byte, uint32, error) {
-	block, err := s.headersRepo.ChainTip()
+	block, err := s.headersRepo.ChainTip(context.Background())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -172,7 +167,7 @@ func (s *service) GetBlockHeight(blockHash []byte) (uint32, error) {
 	if err != nil {
 		return 0, err
 	}
-	block, err := s.headersRepo.GetBlockHeader(*hash)
+	block, err := s.headersRepo.GetBlockHeader(context.Background(), *hash)
 	if err != nil {
 		return 0, err
 	}
@@ -180,14 +175,16 @@ func (s *service) GetBlockHeight(blockHash []byte) (uint32, error) {
 }
 
 func (s *service) GetBlockHash(height uint32) ([]byte, error) {
-	hash, err := s.headersRepo.GetBlockHashByHeight(height)
+	hash, err := s.headersRepo.GetBlockHashByHeight(context.Background(), height)
 	if err != nil {
 		return nil, err
 	}
 	return hash.CloneBytes(), nil
 }
 
-func (s *service) getOrCreateScanner(accountName string, startingBlock uint32) *scannerService {
+func (s *service) getOrCreateScanner(
+	accountName string, startingBlock uint32,
+) *scannerService {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -248,7 +245,9 @@ type esploraTxOut struct {
 	Script          string `json:"scriptpubkey"`
 }
 
-func (o esploraTxOut) toDomain(key domain.UtxoKey, confirmed bool) *domain.Utxo {
+func (o esploraTxOut) toDomain(
+	key domain.UtxoKey, confirmed bool,
+) *domain.Utxo {
 	script, _ := hex.DecodeString(o.Script)
 	valueCommitment, _ := hex.DecodeString(o.ValueCommitment)
 	assetCommitment, _ := hex.DecodeString(o.AssetCommitment)
