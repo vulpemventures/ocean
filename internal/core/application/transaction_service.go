@@ -7,6 +7,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/btcsuite/btcd/txscript"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
@@ -185,7 +186,7 @@ func (ts *TransactionService) EstimateFees(
 }
 
 func (ts *TransactionService) SignTransaction(
-	ctx context.Context, txHex string,
+	ctx context.Context, txHex string, sighashType uint32,
 ) (string, error) {
 	w, err := ts.getWallet(ctx)
 	if err != nil {
@@ -200,6 +201,7 @@ func (ts *TransactionService) SignTransaction(
 	return w.SignTransaction(wallet.SignTransactionArgs{
 		TxHex:        txHex,
 		InputsToSign: inputs,
+		SigHashType:  txscript.SigHashType(sighashType),
 	})
 }
 
@@ -288,7 +290,7 @@ func (ts *TransactionService) BlindPset(
 }
 
 func (ts *TransactionService) SignPset(
-	ctx context.Context, ptx string,
+	ctx context.Context, ptx string, sighashType uint32,
 ) (string, error) {
 	w, err := ts.getWallet(ctx)
 	if err != nil {
@@ -308,6 +310,7 @@ func (ts *TransactionService) SignPset(
 	return w.SignPset(wallet.SignPsetArgs{
 		PsetBase64:        ptx,
 		DerivationPathMap: derivationPaths,
+		SigHashType:       txscript.SigHashType(sighashType),
 	})
 }
 

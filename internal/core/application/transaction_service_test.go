@@ -90,7 +90,7 @@ func testExternalTransaction(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, blindedPset)
 
-		signedPset, err := svc.SignPset(ctx, blindedPset)
+		signedPset, err := svc.SignPset(ctx, blindedPset, 0)
 		require.NoError(t, err)
 
 		txHex, _, err := wallet.FinalizeAndExtractTransaction(wallet.FinalizeAndExtractTransactionArgs{

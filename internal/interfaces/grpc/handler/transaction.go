@@ -105,7 +105,7 @@ func (t *transaction) SignTransaction(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	signedTx, err := t.appSvc.SignTransaction(ctx, txHex)
+	signedTx, err := t.appSvc.SignTransaction(ctx, txHex, req.GetSighashType())
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func (t *transaction) SignPset(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	signedPtx, err := t.appSvc.SignPset(ctx, ptx)
+	signedPtx, err := t.appSvc.SignPset(ctx, ptx, req.GetSighashType())
 	if err != nil {
 		return nil, err
 	}

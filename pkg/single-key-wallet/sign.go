@@ -14,6 +14,7 @@ import (
 type SignTransactionArgs struct {
 	TxHex        string
 	InputsToSign map[uint32]Input
+	SigHashType  txscript.SigHashType
 }
 
 func (a SignTransactionArgs) validate() error {
@@ -52,6 +53,13 @@ func (a SignTransactionArgs) validate() error {
 	return nil
 }
 
+func (a SignTransactionArgs) sighashType() txscript.SigHashType {
+	if a.SigHashType == 0 {
+		return txscript.SigHashAll
+	}
+	return a.SigHashType
+}
+
 // SignTransaction signs all requested inputs of the given raw transaction.
 func (w *Wallet) SignTransaction(args SignTransactionArgs) (string, error) {
 	if err := args.validate(); err != nil {
@@ -63,7 +71,7 @@ func (w *Wallet) SignTransaction(args SignTransactionArgs) (string, error) {
 
 	tx, _ := transaction.NewTxFromHex(args.TxHex)
 	for i, in := range args.InputsToSign {
-		if err := w.signTxInput(tx, i, in); err != nil {
+		if err := w.signTxInput(tx, i, in, args.sighashType()); err != nil {
 			return "", err
 		}
 	}
@@ -74,6 +82,7 @@ func (w *Wallet) SignTransaction(args SignTransactionArgs) (string, error) {
 type SignPsetArgs struct {
 	PsetBase64        string
 	DerivationPathMap map[string]string
+	SigHashType       txscript.SigHashType
 }
 
 func (a SignPsetArgs) validate() error {
@@ -117,6 +126,13 @@ func (a SignPsetArgs) validate() error {
 	return nil
 }
 
+func (a SignPsetArgs) sighashType() txscript.SigHashType {
+	if a.SigHashType == 0 {
+		return txscript.SigHashAll
+	}
+	return a.SigHashType
+}
+
 // SignPset signs all inputs of a partial transaction matching the given
 // scripts of the derivation path map.
 func (w *Wallet) SignPset(args SignPsetArgs) (string, error) {
@@ -130,7 +146,7 @@ func (w *Wallet) SignPset(args SignPsetArgs) (string, error) {
 	ptx, _ := psetv2.NewPsetFromBase64(args.PsetBase64)
 	for i, in := range ptx.Inputs {
 		path := args.DerivationPathMap[hex.EncodeToString(in.WitnessUtxo.Script)]
-		err := w.signInput(ptx, i, path)
+		err := w.signInput(ptx, i, path, args.sighashType())
 		if err != nil {
 			return "", err
 		}
@@ -141,6 +157,7 @@ func (w *Wallet) SignPset(args SignPsetArgs) (string, error) {
 
 func (w *Wallet) signTxInput(
 	tx *transaction.Transaction, inIndex uint32, input Input,
+	sighashType txscript.SigHashType,
 ) error {
 	prvkey, pubkey, err := w.DeriveSigningKeyPair(DeriveSigningKeyPairArgs{
 		DerivationPath: input.DerivationPath,
@@ -169,7 +186,7 @@ func (w *Wallet) signTxInput(
 		value, _ = elementsutil.ValueToBytes(input.Value)
 	}
 	hashForSignature := unsignedTx.HashForWitnessV0(
-		int(inIndex), script, value, txscript.SigHashAll,
+		int(inIndex), script, value, sighashType,
 	)
 
 	signature, err := prvkey.Sign(hashForSignature[:])
@@ -184,7 +201,7 @@ func (w *Wallet) signTxInput(
 		)
 	}
 
-	sigWithSigHashType := append(signature.Serialize(), byte(txscript.SigHashAll))
+	sigWithSigHashType := append(signature.Serialize(), byte(sighashType))
 
 	tx.Inputs[inIndex].Witness = transaction.TxWitness{
 		sigWithSigHashType, pubkey.SerializeCompressed(),
@@ -193,11 +210,21 @@ func (w *Wallet) signTxInput(
 	return nil
 }
 
-func (w *Wallet) signInput(ptx *psetv2.Pset, inIndex int, derivationPath string) error {
+func (w *Wallet) signInput(
+	ptx *psetv2.Pset, inIndex int, derivationPath string,
+	sighashType txscript.SigHashType,
+) error {
 	signer, err := psetv2.NewSigner(ptx)
 	if err != nil {
 		return err
 	}
+
+	if ptx.Inputs[inIndex].SigHashType == 0 {
+		if err := signer.AddInSighashType(sighashType, inIndex); err != nil {
+			return err
+		}
+	}
+	input := ptx.Inputs[inIndex]
 
 	prvkey, pubkey, err := w.DeriveSigningKeyPair(DeriveSigningKeyPairArgs{
 		DerivationPath: derivationPath,
@@ -206,7 +233,9 @@ func (w *Wallet) signInput(ptx *psetv2.Pset, inIndex int, derivationPath string)
 		return err
 	}
 
-	pay, err := payment.FromScript(ptx.Inputs[inIndex].WitnessUtxo.Script, nil, nil)
+	pay, err := payment.FromScript(
+		input.WitnessUtxo.Script, nil, nil,
+	)
 	if err != nil {
 		return err
 	}
@@ -218,10 +247,7 @@ func (w *Wallet) signInput(ptx *psetv2.Pset, inIndex int, derivationPath string)
 	}
 
 	hashForSignature := unsingedTx.HashForWitnessV0(
-		inIndex,
-		script,
-		ptx.Inputs[inIndex].WitnessUtxo.Value,
-		txscript.SigHashAll,
+		inIndex, script, ptx.Inputs[inIndex].WitnessUtxo.Value, input.SigHashType,
 	)
 
 	signature, err := prvkey.Sign(hashForSignature[:])
@@ -236,7 +262,7 @@ func (w *Wallet) signInput(ptx *psetv2.Pset, inIndex int, derivationPath string)
 		)
 	}
 
-	sigWithSigHashType := append(signature.Serialize(), byte(txscript.SigHashAll))
+	sigWithSigHashType := append(signature.Serialize(), byte(input.SigHashType))
 	return signer.SignInput(
 		inIndex, sigWithSigHashType, pubkey.SerializeCompressed(), nil, nil,
 	)
