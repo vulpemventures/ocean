@@ -56,7 +56,7 @@ func (t *transaction) SelectUtxos(
 	}
 	strategy := parseCoinSelectionStrategy(req.GetStrategy())
 
-	utxos, change, err := t.appSvc.SelectUtxos(
+	utxos, change, expirationDate, err := t.appSvc.SelectUtxos(
 		ctx, accountName, targetAsset, targetAmount, strategy,
 	)
 	if err != nil {
@@ -67,7 +67,8 @@ func (t *transaction) SelectUtxos(
 			AccountName: accountName,
 			Utxos:       parseUtxos(utxos.Info()),
 		},
-		Change: change,
+		Change:         change,
+		ExpirationDate: expirationDate,
 	}, nil
 }
 

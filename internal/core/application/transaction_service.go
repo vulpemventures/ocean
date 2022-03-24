@@ -120,16 +120,16 @@ func (ts *TransactionService) GetTransactionInfo(
 func (ts *TransactionService) SelectUtxos(
 	ctx context.Context, accountName, targetAsset string, targetAmount uint64,
 	coinSelectionStrategy int,
-) (Utxos, uint64, error) {
+) (Utxos, uint64, int64, error) {
 	if _, err := ts.getAccount(ctx, accountName); err != nil {
-		return nil, 0, err
+		return nil, 0, -1, err
 	}
 
 	utxos, err := ts.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
 		ctx, accountName,
 	)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, -1, err
 	}
 
 	coinSelector := DefaultCoinSelector
@@ -139,7 +139,7 @@ func (ts *TransactionService) SelectUtxos(
 
 	utxos, change, err := coinSelector.SelectUtxos(utxos, targetAmount, targetAsset)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, -1, err
 	}
 	now := time.Now().Unix()
 	keys := Utxos(utxos).Keys()
@@ -147,7 +147,7 @@ func (ts *TransactionService) SelectUtxos(
 		ctx, keys, now,
 	)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, -1, err
 	}
 	if count > 0 {
 		ts.log(
@@ -156,7 +156,8 @@ func (ts *TransactionService) SelectUtxos(
 		)
 	}
 
-	return utxos, change, nil
+	expirationDate := time.Now().Add(ts.utxoExpiryDuration).Unix()
+	return utxos, change, expirationDate, nil
 }
 
 func (ts *TransactionService) EstimateFees(

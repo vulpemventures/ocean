@@ -41,11 +41,12 @@ func testExternalTransaction(t *testing.T) {
 			repoManager, mockedBcScanner, regtest, rootPath, utxoExpiryDuration,
 		)
 
-		selectedUtxos, change, err := svc.SelectUtxos(
+		selectedUtxos, change, expirationDate, err := svc.SelectUtxos(
 			ctx, accountName, regtest.AssetID, 1000000, coinSelectionStrategy,
 		)
 		require.NoError(t, err)
 		require.NotEmpty(t, selectedUtxos)
+		require.NotEmpty(t, expirationDate)
 
 		inputs := make(application.Inputs, 0, len(selectedUtxos))
 		for _, u := range selectedUtxos {
