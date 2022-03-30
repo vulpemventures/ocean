@@ -147,6 +147,11 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 				continue
 			}
 
+			var assetCommitment, valueCommitment []byte
+			if out.IsConfidential() {
+				valueCommitment, assetCommitment = out.Value, out.Asset
+			}
+
 			newUtxos = append(newUtxos, &domain.Utxo{
 				UtxoKey: domain.UtxoKey{
 					TxID: txid,
@@ -154,8 +159,8 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 				},
 				Value:           revealed.Value,
 				Asset:           assetFromBytes(revealed.Asset),
-				ValueCommitment: out.Value,
-				AssetCommitment: out.Asset,
+				ValueCommitment: valueCommitment,
+				AssetCommitment: assetCommitment,
 				ValueBlinder:    revealed.ValueBlindingFactor,
 				AssetBlinder:    revealed.AssetBlindingFactor,
 				Script:          out.Script,

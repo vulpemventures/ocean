@@ -439,6 +439,8 @@ github.com/vulpemventures/go-elements v0.3.6/go.mod h1:INB5xhaCSwJG25zjNQzOJ1Ksw
 github.com/vulpemventures/go-elements v0.3.7/go.mod h1:INB5xhaCSwJG25zjNQzOJ1KswFW4AIMobALWQdWNWSk=
 github.com/vulpemventures/go-elements v0.3.8-rc.3 h1:JWtfDrUkuHuln2lFALGyHZ6XU51Uc9lT93Z3CHp/p4A=
 github.com/vulpemventures/go-elements v0.3.8-rc.3/go.mod h1:INB5xhaCSwJG25zjNQzOJ1KswFW4AIMobALWQdWNWSk=
+github.com/vulpemventures/go-elements v0.3.8-rc.4 h1:X3NnsGrTPgfi94lubS9NoeYeYmkdGreJwx0HI2y4rt4=
+github.com/vulpemventures/go-elements v0.3.8-rc.4/go.mod h1:INB5xhaCSwJG25zjNQzOJ1KswFW4AIMobALWQdWNWSk=
 github.com/vulpemventures/go-secp256k1-zkp v1.1.0/go.mod h1:zo7CpgkuPgoe7fAV+inyxsI9IhGmcoFgyD8nqZaPSOM=
 github.com/vulpemventures/go-secp256k1-zkp v1.1.5 h1:oG1kO8ibVQ1wOvYcnFyuI+2YqnEZluXdRwkOPJlHBQM=
 github.com/vulpemventures/go-secp256k1-zkp v1.1.5/go.mod h1:zo7CpgkuPgoe7fAV+inyxsI9IhGmcoFgyD8nqZaPSOM=
