@@ -23,7 +23,7 @@ func (s *selector) SelectUtxos(
 	utxos []*domain.Utxo, targetAmount uint64, targetAsset string,
 ) ([]*domain.Utxo, uint64, error) {
 	sort.Slice(utxos, func(i, j int) bool {
-		return utxos[i].Value > utxos[j].Value
+		return utxos[i].Value < utxos[j].Value
 	})
 
 	targetUtxos := make([]*domain.Utxo, 0)
