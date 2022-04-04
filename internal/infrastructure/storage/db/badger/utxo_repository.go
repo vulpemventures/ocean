@@ -518,9 +518,7 @@ func (r *utxoRepository) publishEvent(event domain.UtxoEvent) {
 	// send over channel without blocking in case nobody is listening.
 	select {
 	case r.externalChEvents <- event:
-		return
 	default:
-		return
 	}
 }
 

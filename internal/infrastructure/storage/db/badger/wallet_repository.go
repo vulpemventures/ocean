@@ -280,9 +280,7 @@ func (r *walletRepository) publishEvent(event domain.WalletEvent) {
 	// send over channel without blocking in case nobody is listening.
 	select {
 	case r.externalChEvents <- event:
-		return
 	default:
-		return
 	}
 }
 

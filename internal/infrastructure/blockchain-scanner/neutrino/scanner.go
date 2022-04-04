@@ -107,7 +107,8 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 			blockHash = r.BlockHash.String()
 			blockHeight = r.BlockHeight
 		}
-		s.chTxs <- &domain.Transaction{
+		select {
+		case s.chTxs <- &domain.Transaction{
 			TxID:  txid,
 			TxHex: txHex,
 			Accounts: map[string]struct{}{
@@ -115,6 +116,8 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 			},
 			BlockHash:   blockHash,
 			BlockHeight: blockHeight,
+		}:
+		default:
 		}
 
 		spentUtxos := make([]*domain.Utxo, 0, len(tx.Inputs))
@@ -127,7 +130,10 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 				Spent: true,
 			})
 		}
-		s.chUtxos <- spentUtxos
+		select {
+		case s.chUtxos <- spentUtxos:
+		default:
+		}
 
 		newUtxos := make([]*domain.Utxo, 0)
 		for i, out := range tx.Outputs {
@@ -173,7 +179,10 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 		}
 
 		if len(newUtxos) > 0 {
-			s.chUtxos <- newUtxos
+			select {
+			case s.chUtxos <- newUtxos:
+			default:
+			}
 		}
 	}
 }

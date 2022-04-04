@@ -147,9 +147,7 @@ func (r *txRepository) publishEvent(event domain.TransactionEvent) {
 	// send over channel without blocking in case nobody is listening.
 	select {
 	case r.externalChEvents <- event:
-		return
 	default:
-		return
 	}
 }
 

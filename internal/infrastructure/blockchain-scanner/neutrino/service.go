@@ -88,10 +88,10 @@ func (s *service) Start() {
 }
 
 func (s *service) Stop() {
+	s.nodeSvc.Stop()
 	for _, scanner := range s.scanners {
 		scanner.stop()
 	}
-	s.nodeSvc.Stop()
 }
 
 func (s *service) GetUtxoChannel(accountName string) chan []*domain.Utxo {
