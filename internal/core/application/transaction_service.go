@@ -686,6 +686,8 @@ func (ts *TransactionService) getLockedInputs(
 			ValueCommitment: u.ValueCommitment,
 			AssetCommitment: u.AssetCommitment,
 			Nonce:           u.Nonce,
+			RangeProof:      u.RangeProof,
+			SurjectionProof: u.SurjectionProof,
 			DerivationPath:  derivationPath,
 		})
 	}

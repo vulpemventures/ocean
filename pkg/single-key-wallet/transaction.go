@@ -39,6 +39,8 @@ type Input struct {
 	ValueCommitment []byte
 	AssetCommitment []byte
 	Nonce           []byte
+	RangeProof      []byte
+	SurjectionProof []byte
 	DerivationPath  string
 }
 
@@ -70,10 +72,12 @@ func (i Input) prevout() *transaction.TxOutput {
 		nonce = make([]byte, 1)
 	}
 	return &transaction.TxOutput{
-		Asset:  asset,
-		Value:  value,
-		Script: i.Script,
-		Nonce:  nonce,
+		Asset:           asset,
+		Value:           value,
+		Script:          i.Script,
+		Nonce:           nonce,
+		RangeProof:      i.RangeProof,
+		SurjectionProof: i.SurjectionProof,
 	}
 }
 
