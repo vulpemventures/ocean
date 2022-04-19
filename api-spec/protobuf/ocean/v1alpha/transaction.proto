@@ -90,7 +90,7 @@ message SelectUtxosRequest{
 }
 message SelectUtxosResponse{
   // List of selected utxos.
-  Utxos utxos = 1;
+  repeated Utxo utxos = 1;
   // Eventual change amount if utxos cumulative sum exceeds the target amount.
   uint64 change = 2;
   // Expiration date for the selected utxo, which are temporary locked to

@@ -57,8 +57,12 @@ message Utxo {
   uint64 value = 4;
   // Script.
   bytes script = 5;
+  // Asset blinder for confidential utxo.
+  bytes asset_blinder = 6;
+  // Value blinder for confidential utxo.
+  bytes value_blinder = 7;
   // Name of the account owning the utxo.
-  string account_name = 6;
+  string account_name = 8;
 }
 
 message BlockDetails {

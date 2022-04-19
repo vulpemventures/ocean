@@ -63,10 +63,7 @@ func (t *transaction) SelectUtxos(
 		return nil, err
 	}
 	return &pb.SelectUtxosResponse{
-		Utxos: &pb.Utxos{
-			AccountName: accountName,
-			Utxos:       parseUtxos(utxos.Info()),
-		},
+		Utxos:          parseUtxos(utxos.Info()),
 		Change:         change,
 		ExpirationDate: expirationDate,
 	}, nil
