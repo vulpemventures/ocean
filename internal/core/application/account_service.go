@@ -60,12 +60,11 @@ func NewAccountService(
 		account := w.AccountsByKey[accountKey]
 		addressesInfo, _ := w.AllDerivedAddressesForAccount(accountName)
 		if len(addressesInfo) > 0 {
-			svc.log(
-				"account service: start watching addresses for account %s",
-				accountName,
-			)
+			svc.log("start watching addresses for account %s", accountName)
 			bcScanner.WatchForAccount(accountName, account.BirthdayBlock, addressesInfo)
 		}
+		go svc.listenToUtxoChannel(accountName, bcScanner.GetUtxoChannel(accountName))
+		go svc.listenToTxChannel(accountName, bcScanner.GetTxChannel(accountName))
 	}
 
 	return svc
@@ -332,7 +331,7 @@ func (as *AccountService) listenToTxChannel(
 			as.log("confirmed transaction %s for account %s", tx.TxID, accountName)
 		}
 
-		if !gotTx.EqualAccounts(tx) {
+		if !gotTx.HasAccounts(tx) {
 			if err := txRepo.UpdateTransaction(
 				ctx, tx.TxID, func(t *domain.Transaction) (*domain.Transaction, error) {
 					for _, account := range tx.GetAccounts() {

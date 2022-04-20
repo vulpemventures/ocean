@@ -155,7 +155,7 @@ func cleanAndExpandPath(path string) string {
 func jsonResponse(msg proto.Message) (string, error) {
 	buf, err := protojson.MarshalOptions{Multiline: true, EmitUnpopulated: true}.Marshal(msg)
 	if err != nil {
-		return "", fmt.Errorf("faile to marshal proto message: %s", err)
+		return "", fmt.Errorf("failed to marshal proto message: %s", err)
 	}
 	return string(buf), nil
 }

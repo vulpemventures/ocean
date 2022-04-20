@@ -32,3 +32,37 @@ func TestAddAccounts(t *testing.T) {
 	accounts = tx.GetAccounts()
 	require.Len(t, accounts, 2)
 }
+
+func TestHasAccounts(t *testing.T) {
+	tests := []struct {
+		t1       *domain.Transaction
+		t2       *domain.Transaction
+		expected bool
+	}{
+		{
+			&domain.Transaction{Accounts: map[string]struct{}{"test": {}}},
+			&domain.Transaction{Accounts: map[string]struct{}{"test": {}}},
+			true,
+		},
+		{
+			&domain.Transaction{Accounts: map[string]struct{}{"test": {}}},
+			&domain.Transaction{Accounts: map[string]struct{}{"foo": {}}},
+			false,
+		},
+		{
+			&domain.Transaction{Accounts: map[string]struct{}{"test": {}}},
+			&domain.Transaction{Accounts: map[string]struct{}{"test": {}, "foo": {}}},
+			false,
+		},
+		{
+			&domain.Transaction{Accounts: map[string]struct{}{"test": {}, "foo": {}}},
+			&domain.Transaction{Accounts: map[string]struct{}{"test": {}}},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		res := tt.t1.HasAccounts(tt.t2)
+		require.Equal(t, tt.expected, res)
+	}
+}

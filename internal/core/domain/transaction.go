@@ -43,11 +43,10 @@ func (t *Transaction) GetAccounts() []string {
 	return accounts
 }
 
-// EqualAccounts compares the account map of the current and the given txs,
-// returning whether they contain the same account names.
-func (t *Transaction) EqualAccounts(tx *Transaction) bool {
+// HasAccounts returns whether the current tx contains all account names of the provided one.
+func (t *Transaction) HasAccounts(tx *Transaction) bool {
 	for account := range tx.Accounts {
-		if _, ok := t.Accounts[account]; ok {
+		if _, ok := t.Accounts[account]; !ok {
 			return false
 		}
 	}
