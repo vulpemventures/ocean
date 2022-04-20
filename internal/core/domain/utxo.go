@@ -1,8 +1,11 @@
 package domain
 
 import (
+	"encoding/hex"
 	"fmt"
 	"time"
+
+	"github.com/btcsuite/btcd/btcutil"
 )
 
 var (
@@ -15,6 +18,12 @@ type UtxoKey struct {
 	VOut uint32
 }
 
+func (k UtxoKey) Hash() string {
+	buf, _ := hex.DecodeString(k.TxID)
+	buf = append(buf, byte(k.VOut))
+	return hex.EncodeToString(btcutil.Hash160(buf))
+}
+
 func (k UtxoKey) String() string {
 	return fmt.Sprintf("{%s: %d}", k.TxID, k.VOut)
 }
@@ -23,10 +32,12 @@ func (k UtxoKey) String() string {
 // they must be revealed to return useful UtxoInfo.
 type UtxoInfo struct {
 	UtxoKey
-	Value       uint64
-	Asset       string
-	Script      []byte
-	AccountName string
+	Value        uint64
+	Asset        string
+	Script       []byte
+	ValueBlinder []byte
+	AssetBlinder []byte
+	AccountName  string
 }
 
 func (i UtxoInfo) Key() UtxoKey {
@@ -106,7 +117,10 @@ func (u *Utxo) Key() UtxoKey {
 
 // Info returns a light view of the current utxo.
 func (u *Utxo) Info() UtxoInfo {
-	return UtxoInfo{u.Key(), u.Value, u.Asset, u.Script, u.AccountName}
+	return UtxoInfo{
+		u.Key(), u.Value, u.Asset, u.Script, u.ValueBlinder, u.AssetBlinder,
+		u.AccountName,
+	}
 }
 
 // Spend marks the utxos as spent.

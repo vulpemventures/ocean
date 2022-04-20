@@ -10,7 +10,7 @@ import (
 
 type utxoInmemoryStore struct {
 	utxosByAccount map[string][]domain.UtxoKey
-	utxos          map[domain.UtxoKey]*domain.Utxo
+	utxos          map[string]*domain.Utxo
 	lock           *sync.RWMutex
 }
 
@@ -29,7 +29,7 @@ func newUtxoRepository() *utxoRepository {
 	return &utxoRepository{
 		store: &utxoInmemoryStore{
 			utxosByAccount: make(map[string][]domain.UtxoKey),
-			utxos:          make(map[domain.UtxoKey]*domain.Utxo),
+			utxos:          make(map[string]*domain.Utxo),
 			lock:           &sync.RWMutex{},
 		},
 		chEvents:         make(chan domain.UtxoEvent),
@@ -55,7 +55,7 @@ func (r *utxoRepository) GetUtxosByKey(
 
 	utxos := make([]*domain.Utxo, 0, len(utxoKeys))
 	for _, key := range utxoKeys {
-		u, ok := r.store.utxos[key]
+		u, ok := r.store.utxos[key.Hash()]
 		if !ok {
 			continue
 		}
@@ -185,7 +185,7 @@ func (r *utxoRepository) DeleteUtxosForAccount(
 		return nil
 	}
 	for _, key := range keys {
-		delete(r.store.utxos, key)
+		delete(r.store.utxos, key.Hash())
 	}
 	delete(r.store.utxosByAccount, accountName)
 	return nil
@@ -199,10 +199,10 @@ func (r *utxoRepository) addUtxos(utxos []*domain.Utxo) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0, len(utxos))
 	for _, u := range utxos {
-		if _, ok := r.store.utxos[u.Key()]; ok {
+		if _, ok := r.store.utxos[u.Key().Hash()]; ok {
 			continue
 		}
-		r.store.utxos[u.Key()] = u
+		r.store.utxos[u.Key().Hash()] = u
 		r.store.utxosByAccount[u.AccountName] = append(
 			r.store.utxosByAccount[u.AccountName], u.Key(),
 		)
@@ -244,7 +244,7 @@ func (r *utxoRepository) getUtxosForAccount(
 
 	utxos := make([]*domain.Utxo, 0, len(keys))
 	for _, k := range keys {
-		u := r.store.utxos[k]
+		u := r.store.utxos[k.Hash()]
 
 		if spendableOnly {
 			if !u.IsLocked() && u.IsConfirmed() && !u.IsSpent() {
@@ -269,7 +269,7 @@ func (r *utxoRepository) spendUtxos(keys []domain.UtxoKey) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0, len(keys))
 	for _, key := range keys {
-		utxo, ok := r.store.utxos[key]
+		utxo, ok := r.store.utxos[key.Hash()]
 		if !ok {
 			continue
 		}
@@ -297,7 +297,7 @@ func (r *utxoRepository) confirmUtxos(keys []domain.UtxoKey) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0, len(keys))
 	for _, key := range keys {
-		utxo, ok := r.store.utxos[key]
+		utxo, ok := r.store.utxos[key.Hash()]
 		if !ok {
 			continue
 		}
@@ -327,7 +327,7 @@ func (r *utxoRepository) lockUtxos(
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0, len(keys))
 	for _, key := range keys {
-		utxo, ok := r.store.utxos[key]
+		utxo, ok := r.store.utxos[key.Hash()]
 		if !ok {
 			continue
 		}
@@ -355,7 +355,7 @@ func (r *utxoRepository) unlockUtxos(keys []domain.UtxoKey) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0, len(keys))
 	for _, key := range keys {
-		utxo, ok := r.store.utxos[key]
+		utxo, ok := r.store.utxos[key.Hash()]
 		if !ok {
 			continue
 		}

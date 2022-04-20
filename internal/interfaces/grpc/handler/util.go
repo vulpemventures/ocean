@@ -61,12 +61,14 @@ func parseUtxos(utxos []domain.UtxoInfo) []*pb.Utxo {
 	list := make([]*pb.Utxo, 0, len(utxos))
 	for _, u := range utxos {
 		list = append(list, &pb.Utxo{
-			Txid:        u.Key().TxID,
-			Index:       u.Key().VOut,
-			Asset:       u.Asset,
-			Value:       u.Value,
-			Script:      u.Script,
-			AccountName: u.AccountName,
+			Txid:         u.Key().TxID,
+			Index:        u.Key().VOut,
+			Asset:        u.Asset,
+			Value:        u.Value,
+			Script:       u.Script,
+			AssetBlinder: u.AssetBlinder,
+			ValueBlinder: u.ValueBlinder,
+			AccountName:  u.AccountName,
 		})
 	}
 	return list

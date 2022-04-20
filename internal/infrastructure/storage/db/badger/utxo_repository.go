@@ -477,11 +477,10 @@ func (r *utxoRepository) insertUtxo(
 	var err error
 	if ctx.Value("tx") != nil {
 		tx := ctx.Value("tx").(*badger.Txn)
-		err = r.store.TxInsert(tx, utxo.Key(), *utxo)
+		err = r.store.TxInsert(tx, utxo.Key().Hash(), *utxo)
 	} else {
-		err = r.store.Insert(utxo.Key(), *utxo)
+		err = r.store.Insert(utxo.Key().Hash(), *utxo)
 	}
-
 	if err != nil {
 		if err == badgerhold.ErrKeyExists {
 			return false, nil
