@@ -21,16 +21,17 @@ var (
 )
 
 type service struct {
-	config     ServiceConfig
-	appConfig  *appconfig.AppConfig
-	grpcServer *grpc.Server
+	config                   ServiceConfig
+	appConfig                *appconfig.AppConfig
+	grpcServer               *grpc.Server
+	chCloseStreamConnections chan (struct{})
 
 	log func(format string, a ...interface{})
 }
 
 func NewService(config ServiceConfig, appConfig *appconfig.AppConfig) (*service, error) {
 	logFn := func(format string, a ...interface{}) {
-		format = fmt.Sprintf("scanner: %s", format)
+		format = fmt.Sprintf("service: %s", format)
 		log.Infof(format, a...)
 	}
 	if err := config.validate(); err != nil {
@@ -48,7 +49,8 @@ func NewService(config ServiceConfig, appConfig *appconfig.AppConfig) (*service,
 		}
 		logFn("created TLS keypair in path %s", config.TLSLocation)
 	}
-	return &service{config, appConfig, nil, logFn}, nil
+	chCloseStreamConnections := make(chan struct{})
+	return &service{config, appConfig, nil, chCloseStreamConnections, logFn}, nil
 }
 
 func (s *service) Start() error {
@@ -115,7 +117,9 @@ func (s *service) start(withOnlyWalletService bool) (*grpc.Server, error) {
 	if !withOnlyWalletService {
 		accountHandler := grpc_handler.NewAccountHandler(s.appConfig.AccountService())
 		txHandler := grpc_handler.NewTransactionHandler(s.appConfig.TransactionService())
-		notifyHandler := grpc_handler.NewNotificationHandler(s.appConfig.NotificationService())
+		notifyHandler := grpc_handler.NewNotificationHandler(
+			s.appConfig.NotificationService(), s.chCloseStreamConnections,
+		)
 
 		pb.RegisterAccountServiceServer(grpcServer, accountHandler)
 		pb.RegisterTransactionServiceServer(grpcServer, txHandler)
@@ -131,6 +135,12 @@ func (s *service) start(withOnlyWalletService bool) (*grpc.Server, error) {
 }
 
 func (s *service) stop(onlyGrpcServer bool) {
+	select {
+	case s.chCloseStreamConnections <- struct{}{}:
+		s.log("closed stream connections")
+	default:
+	}
+
 	s.grpcServer.GracefulStop()
 	s.log("stopped grpc server")
 	if onlyGrpcServer {

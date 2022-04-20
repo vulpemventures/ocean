@@ -2,19 +2,23 @@ package grpc_handler
 
 import (
 	"context"
+	"fmt"
 
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1alpha"
 	"github.com/vulpemventures/ocean/internal/core/application"
 )
 
+var ErrStreamConnectionClosed = fmt.Errorf("connection closed on by server")
+
 type notification struct {
-	appSvc *application.NotificationService
+	appSvc  *application.NotificationService
+	chClose chan struct{}
 }
 
 func NewNotificationHandler(
-	appSvc *application.NotificationService,
+	appSvc *application.NotificationService, chClose chan struct{},
 ) pb.NotificationServiceServer {
-	return &notification{appSvc}
+	return &notification{appSvc, chClose}
 }
 
 func (n notification) TransactionNotifications(
@@ -26,24 +30,30 @@ func (n notification) TransactionNotifications(
 		return err
 	}
 
-	for e := range chTxEvents {
-		var blockDetails *pb.BlockDetails
-		if e.Transaction.IsConfirmed() {
-			blockDetails = &pb.BlockDetails{
-				Hash:   []byte(e.Transaction.BlockHash),
-				Height: e.Transaction.BlockHeight,
+	for {
+		select {
+		case e := <-chTxEvents:
+			var blockDetails *pb.BlockDetails
+			if e.Transaction.IsConfirmed() {
+				blockDetails = &pb.BlockDetails{
+					Hash:   []byte(e.Transaction.BlockHash),
+					Height: e.Transaction.BlockHeight,
+				}
 			}
-		}
-		if err := stream.Send(&pb.TransactionNotificationsResponse{
-			AccountNames: e.Transaction.GetAccounts(),
-			Txid:         e.Transaction.TxID,
-			BlockDetails: blockDetails,
-			EventType:    parseTxEventType(e.EventType),
-		}); err != nil {
-			return err
+			if err := stream.Send(&pb.TransactionNotificationsResponse{
+				AccountNames: e.Transaction.GetAccounts(),
+				Txid:         e.Transaction.TxID,
+				BlockDetails: blockDetails,
+				EventType:    parseTxEventType(e.EventType),
+			}); err != nil {
+				return err
+			}
+		case <-stream.Context().Done():
+			return nil
+		case <-n.chClose:
+			return ErrStreamConnectionClosed
 		}
 	}
-	return nil
 }
 
 func (n notification) UtxosNotifications(
@@ -55,15 +65,21 @@ func (n notification) UtxosNotifications(
 		return err
 	}
 
-	for e := range chUtxoEvents {
-		if err := stream.Send(&pb.UtxosNotificationsResponse{
-			Utxos:     parseUtxos(e.Utxos),
-			EventType: parseUtxoEventType(e.EventType),
-		}); err != nil {
-			return err
+	for {
+		select {
+		case e := <-chUtxoEvents:
+			if err := stream.Send(&pb.UtxosNotificationsResponse{
+				Utxos:     parseUtxos(e.Utxos),
+				EventType: parseUtxoEventType(e.EventType),
+			}); err != nil {
+				return err
+			}
+		case <-stream.Context().Done():
+			return nil
+		case <-n.chClose:
+			return ErrStreamConnectionClosed
 		}
 	}
-	return nil
 }
 
 func (n notification) AddWebhook(
