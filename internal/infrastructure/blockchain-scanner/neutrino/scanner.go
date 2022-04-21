@@ -77,9 +77,10 @@ func (s *scannerService) watchAddresses(addressesInfo []domain.AddressInfo) {
 
 		s.blindingKeys[info.Script] = info.BlindingKey
 		item, _ := scanner.NewScriptWatchItemFromAddress(info.Address)
-		// TODO: add WithPersistentWatch option when available.
 		s.svc.Watch(
-			scanner.WithWatchItem(item), scanner.WithStartBlock(s.startingBlockHeight),
+			scanner.WithWatchItem(item),
+			scanner.WithStartBlock(s.startingBlockHeight),
+			scanner.WithPersistent(),
 		)
 		s.log(
 			"start watching address %s for account %s",
