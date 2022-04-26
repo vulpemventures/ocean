@@ -64,6 +64,9 @@ func (s *service) Start() error {
 		return err
 	}
 
+	s.appConfig.BlockchainScanner().Start()
+	s.log("started blockchain scanner")
+
 	s.log("start listening on %s", s.config.address())
 
 	s.grpcServer = srv
@@ -92,8 +95,6 @@ func (s *service) registerHandlerForWalletEvents() error {
 }
 
 func (s *service) start(withOnlyWalletService bool) (*grpc.Server, error) {
-	s.appConfig.BlockchainScanner().Start()
-
 	grpcConfig := []grpc.ServerOption{
 		grpc_interceptor.UnaryInterceptor(), grpc_interceptor.StreamInterceptor(),
 	}
