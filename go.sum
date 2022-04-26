@@ -528,8 +528,8 @@ github.com/vulpemventures/go-elements v0.3.8-rc.7/go.mod h1:INB5xhaCSwJG25zjNQzO
 github.com/vulpemventures/go-secp256k1-zkp v1.1.0/go.mod h1:zo7CpgkuPgoe7fAV+inyxsI9IhGmcoFgyD8nqZaPSOM=
 github.com/vulpemventures/go-secp256k1-zkp v1.1.5 h1:oG1kO8ibVQ1wOvYcnFyuI+2YqnEZluXdRwkOPJlHBQM=
 github.com/vulpemventures/go-secp256k1-zkp v1.1.5/go.mod h1:zo7CpgkuPgoe7fAV+inyxsI9IhGmcoFgyD8nqZaPSOM=
-github.com/vulpemventures/neutrino-elements v0.1.0-rc.2 h1:6OQ+UZ/hjPLowwPAFAEqFrEctgxMufYsfKmEcf8DGUs=
-github.com/vulpemventures/neutrino-elements v0.1.0-rc.2/go.mod h1:fdlVXre+P376N9jN3STj6u7I/+4Axi4MAacQfEEqG64=
+github.com/vulpemventures/neutrino-elements v0.1.0 h1:3xc9YpBjcGf0Pjr19PG+/g7/J0m1/+HvpWGRvOvJa1U=
+github.com/vulpemventures/neutrino-elements v0.1.0/go.mod h1:fdlVXre+P376N9jN3STj6u7I/+4Axi4MAacQfEEqG64=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

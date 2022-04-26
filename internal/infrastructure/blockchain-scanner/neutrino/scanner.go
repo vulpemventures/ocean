@@ -80,7 +80,7 @@ func (s *scannerService) watchAddresses(addressesInfo []domain.AddressInfo) {
 		s.svc.Watch(
 			scanner.WithWatchItem(item),
 			scanner.WithStartBlock(s.startingBlockHeight),
-			scanner.WithPersistent(),
+			scanner.WithPersistentWatch(),
 		)
 		s.log(
 			"start watching address %s for account %s",
