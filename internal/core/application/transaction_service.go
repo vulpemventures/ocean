@@ -635,6 +635,7 @@ func (ts *TransactionService) getWallet(
 	}
 
 	return wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+		RootPath: ts.rootPath,
 		Mnemonic: mnemonic,
 	})
 }

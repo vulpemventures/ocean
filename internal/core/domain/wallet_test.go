@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/ocean/internal/core/domain"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 var (
@@ -21,6 +20,7 @@ var (
 		"because", "trade", "steak", "clock", "grace", "video", "jacket", "equal",
 	}
 	regtest           = network.Regtest.Name
+	rootPath          = "m/84'/1'"
 	password          = "password"
 	newPassword       = "newpassword"
 	wrongPassword     = "wrongpassword"
@@ -51,7 +51,7 @@ func TestNewWallet(t *testing.T) {
 		w, err := newTestWallet()
 		require.NoError(t, err)
 		require.NotNil(t, w)
-		require.Equal(t, wallet.DefaultRootPath, w.RootPath)
+		require.Equal(t, "m/84'/1'", w.RootPath)
 		require.Equal(t, regtest, w.NetworkName)
 		require.Equal(t, encryptedMnemonic, b2h(w.EncryptedMnemonic))
 		require.Equal(t, passwordHash, b2h(w.PasswordHash))
@@ -166,7 +166,7 @@ func TestWalletAccount(t *testing.T) {
 	require.Empty(t, account.DerivationPathByScript)
 	require.Equal(t, 0, int(account.Info.Key.Index))
 	require.Equal(t, accountName, account.Info.Key.Name)
-	require.Equal(t, "m/84'/0'/0'", account.Info.DerivationPath)
+	require.Equal(t, "m/84'/1'/0'", account.Info.DerivationPath)
 	require.NotEmpty(t, account.Info.Xpub)
 
 	w.Lock()
@@ -230,7 +230,7 @@ func TestWalletAccount(t *testing.T) {
 }
 
 func newTestWallet() (*domain.Wallet, error) {
-	return domain.NewWallet(mnemonic, password, "", regtest, birthdayBlock, nil)
+	return domain.NewWallet(mnemonic, password, rootPath, regtest, birthdayBlock, nil)
 }
 
 func b2h(buf []byte) string {

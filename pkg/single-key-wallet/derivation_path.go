@@ -15,28 +15,67 @@ type DerivationPath []uint32
 // ParseDerivationPath converts a derivation path in string format to a
 // DerivationPath type.
 func ParseDerivationPath(strPath string) (DerivationPath, error) {
-	var path DerivationPath
+	return parseDerivationPath(strPath, false)
+}
 
-	elems := strings.Split(strPath, "/")
-	switch {
-	case strPath == "":
-		return nil, ErrMissingDerivationPath
+func ParseRootDerivationPath(strPath string) (DerivationPath, error) {
+	path, err := parseDerivationPath(strPath, true)
+	if err != nil {
+		return nil, err
+	}
+	if len(path) != 2 {
+		return nil, ErrInvalidRootPathLen
+	}
+	if path[0] < hdkeychain.HardenedKeyStart || path[1] < hdkeychain.HardenedKeyStart {
+		return nil, ErrInvalidRootPath
+	}
+	return path, nil
+}
 
-	case containsEmptyString(elems):
-		return nil, ErrMalformedDerivationPath
-	case len(elems) < 2:
-		return nil, ErrMalformedDerivationPath
-
-	case len(elems) > 1:
-		if strings.TrimSpace(elems[0]) == "m" {
-			elems = elems[1:]
-		}
-
-	default:
-		return nil, ErrInvalidDerivationPath
+func (path DerivationPath) String() string {
+	if len(path) <= 0 {
+		return ""
 	}
 
-	// all remaining elems are relative, append one by one
+	result := "m"
+	for _, component := range path {
+		var hardened bool
+		if component >= hdkeychain.HardenedKeyStart {
+			component -= hdkeychain.HardenedKeyStart
+			hardened = true
+		}
+		result = fmt.Sprintf("%s/%d", result, component)
+		if hardened {
+			result += "'"
+		}
+	}
+	return result
+}
+
+func parseDerivationPath(
+	strPath string, checkAbsolutePath bool,
+) (DerivationPath, error) {
+	if strPath == "" {
+		return nil, ErrMissingDerivationPath
+	}
+
+	elems := strings.Split(strPath, "/")
+	if containsEmptyString(elems) {
+		return nil, ErrMalformedDerivationPath
+	}
+	if checkAbsolutePath {
+		if elems[0] != "m" {
+			return nil, ErrRequiredAbsoluteDerivationPath
+		}
+	}
+	if len(elems) < 2 {
+		return nil, ErrMalformedDerivationPath
+	}
+	if strings.TrimSpace(elems[0]) == "m" {
+		elems = elems[1:]
+	}
+
+	path := make(DerivationPath, 0)
 	for _, elem := range elems {
 		elem = strings.TrimSpace(elem)
 		var value uint32
@@ -65,26 +104,6 @@ func ParseDerivationPath(strPath string) (DerivationPath, error) {
 	}
 
 	return path, nil
-}
-
-func (path DerivationPath) String() string {
-	if len(path) <= 0 {
-		return ""
-	}
-
-	result := "m"
-	for _, component := range path {
-		var hardened bool
-		if component >= hdkeychain.HardenedKeyStart {
-			component -= hdkeychain.HardenedKeyStart
-			hardened = true
-		}
-		result = fmt.Sprintf("%s/%d", result, component)
-		if hardened {
-			result += "'"
-		}
-	}
-	return result
 }
 
 func containsEmptyString(composedPath []string) bool {

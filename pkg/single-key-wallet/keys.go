@@ -2,7 +2,6 @@ package wallet
 
 import (
 	"encoding/hex"
-	"math"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/btcutil/base58"
@@ -12,16 +11,12 @@ import (
 	"github.com/vulpemventures/go-elements/slip77"
 )
 
-const (
-	MaxHardenedValue = math.MaxUint32 - hdkeychain.HardenedKeyStart
-)
-
 type ExtendedKeyArgs struct {
 	Account uint32
 }
 
 func (a ExtendedKeyArgs) validate() error {
-	if a.Account > (MaxHardenedValue) {
+	if a.Account >= hdkeychain.HardenedKeyStart {
 		return ErrOutOfRangeDerivationPathAccount
 	}
 	return nil

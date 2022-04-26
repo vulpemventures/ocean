@@ -34,7 +34,6 @@ var (
 		"testnet": &network.Testnet,
 		"regtest": &network.Regtest,
 	}
-	defaultRootPath = wallet.DefaultRootPath
 )
 
 // AddressInfo holds useful info about a derived address.
@@ -84,9 +83,6 @@ func NewWallet(
 	}
 	if _, ok := networks[network]; !ok {
 		return nil, ErrWalletInvalidNetwork
-	}
-	if rootPath == "" {
-		rootPath = defaultRootPath
 	}
 
 	if _, err := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
@@ -232,7 +228,10 @@ func (w *Wallet) CreateAccount(name string, birthdayBlock uint32) (*Account, err
 
 	mnemonic := MnemonicStore.Get()
 
-	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{Mnemonic: mnemonic})
+	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+		RootPath: w.RootPath,
+		Mnemonic: mnemonic,
+	})
 	xpub, _ := ww.AccountExtendedPublicKey(wallet.ExtendedKeyArgs{Account: w.NextAccountIndex})
 
 	accountKey := AccountKey{name, w.NextAccountIndex}
@@ -333,6 +332,7 @@ func (w *Wallet) deriveNextAddressForAccount(
 
 	mnemonic, _ := w.GetMnemonic()
 	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
 
@@ -384,6 +384,7 @@ func (w *Wallet) allDerivedAddressesForAccount(
 	net := networkFromName(w.NetworkName)
 	mnemonic, _ := w.GetMnemonic()
 	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
 

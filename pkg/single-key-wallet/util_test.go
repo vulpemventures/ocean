@@ -4,7 +4,41 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"math/big"
+
+	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
+
+func randomInputs(num int) []wallet.Input {
+	ins := make([]wallet.Input, 0, num)
+	for i := 0; i < num; i++ {
+		ins = append(ins, wallet.Input{
+			TxID:            randomHex(32),
+			TxIndex:         randomVout(),
+			Value:           randomValue(),
+			Asset:           randomHex(32),
+			Script:          randomScript(),
+			ValueBlinder:    randomBytes(32),
+			AssetBlinder:    randomBytes(32),
+			ValueCommitment: randomValueCommitment(),
+			AssetCommitment: randomAssetCommitment(),
+			Nonce:           randomBytes(33),
+		})
+	}
+	return ins
+}
+
+func randomOutputs(num int) []wallet.Output {
+	outs := make([]wallet.Output, 0, num)
+	for i := 0; i < num; i++ {
+		outs = append(outs, wallet.Output{
+			Asset:   randomHex(32),
+			Amount:  randomValue(),
+			Address: testAddresses[i%3],
+		})
+	}
+
+	return outs
+}
 
 func randomScript() []byte {
 	return append([]byte{0, 20}, randomBytes(20)...)

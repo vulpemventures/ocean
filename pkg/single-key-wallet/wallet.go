@@ -1,11 +1,5 @@
 package wallet
 
-import "github.com/btcsuite/btcd/btcutil/hdkeychain"
-
-var (
-	DefaultRootPath = "m/84'/0'"
-)
-
 // Wallet is the data structure representing an HD wallet of an Elements based
 // network.
 type Wallet struct {
@@ -20,28 +14,15 @@ type NewWalletArgs struct {
 
 func (a NewWalletArgs) validate() error {
 	if a.RootPath == "" {
-		return nil
+		return ErrMissingRootPath
 	}
-	path, err := ParseDerivationPath(a.RootPath)
-	if err != nil {
+	if _, err := ParseRootDerivationPath(a.RootPath); err != nil {
 		return err
 	}
-	if len(path) != 2 {
-		return ErrInvalidRootPathLen
-	}
-	if path[0] < hdkeychain.HardenedKeyStart || path[1] < hdkeychain.HardenedKeyStart {
-		return ErrInvalidRootPathValue
+	if _, err := NewMnemonic(NewMnemonicArgs{EntropySize: 256}); err != nil {
+		return err
 	}
 	return nil
-}
-
-func (a NewWalletArgs) rootPath() DerivationPath {
-	rootPath := DefaultRootPath
-	if len(a.RootPath) > 0 {
-		rootPath = a.RootPath
-	}
-	path, _ := ParseDerivationPath(rootPath)
-	return path
 }
 
 // NewWallet creates a new HD wallet with a random mnemonic
@@ -50,15 +31,10 @@ func NewWallet(args NewWalletArgs) (*Wallet, error) {
 		return nil, err
 	}
 
-	mnemonic, err := NewMnemonic(NewMnemonicArgs{EntropySize: 256})
-	if err != nil {
-		return nil, err
-	}
+	mnemonic, _ := NewMnemonic(NewMnemonicArgs{EntropySize: 256})
 	seed := generateSeedFromMnemonic(mnemonic)
-
-	signingMasterKey, err := generateSigningMasterKey(
-		seed, args.rootPath(),
-	)
+	rootPath, _ := ParseRootDerivationPath(args.RootPath)
+	signingMasterKey, err := generateSigningMasterKey(seed, rootPath)
 	if err != nil {
 		return nil, err
 	}
@@ -80,17 +56,11 @@ type NewWalletFromMnemonicArgs struct {
 }
 
 func (a NewWalletFromMnemonicArgs) validate() error {
-	if a.RootPath != "" {
-		path, err := ParseDerivationPath(a.RootPath)
-		if err != nil {
-			return err
-		}
-		if len(path) != 2 {
-			return ErrInvalidRootPathLen
-		}
-		if path[0] < hdkeychain.HardenedKeyStart || path[1] < hdkeychain.HardenedKeyStart {
-			return ErrInvalidRootPathValue
-		}
+	if a.RootPath == "" {
+		return ErrMissingRootPath
+	}
+	if _, err := ParseRootDerivationPath(a.RootPath); err != nil {
+		return err
 	}
 	if len(a.Mnemonic) == 0 {
 		return ErrMissingMnemonic
@@ -101,15 +71,6 @@ func (a NewWalletFromMnemonicArgs) validate() error {
 	return nil
 }
 
-func (a NewWalletFromMnemonicArgs) rootPath() DerivationPath {
-	rootPath := DefaultRootPath
-	if len(a.RootPath) > 0 {
-		rootPath = a.RootPath
-	}
-	path, _ := ParseDerivationPath(rootPath)
-	return path
-}
-
 // NewWalletFromMnemonic creates a new HD wallet with the given mnemonic seed
 // and root path
 func NewWalletFromMnemonic(args NewWalletFromMnemonicArgs) (*Wallet, error) {
@@ -118,13 +79,11 @@ func NewWalletFromMnemonic(args NewWalletFromMnemonicArgs) (*Wallet, error) {
 	}
 
 	seed := generateSeedFromMnemonic(args.Mnemonic)
-	signingMasterKey, err := generateSigningMasterKey(
-		seed, args.rootPath(),
-	)
+	rootPath, _ := ParseRootDerivationPath(args.RootPath)
+	signingMasterKey, err := generateSigningMasterKey(seed, rootPath)
 	if err != nil {
 		return nil, err
 	}
-
 	blindingMasterKey, err := generateBlindingMasterKey(seed)
 	if err != nil {
 		return nil, err

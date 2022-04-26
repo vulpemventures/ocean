@@ -52,6 +52,9 @@ const (
 	// UtxoExpiryDurationKey is the key to customize the waiting time for one or
 	// more previously locked utxos to be unlocked if not yet spent.
 	UtxoExpiryDurationKey = "UTXO_EXPIRY_DURATION_IN_SECONDS"
+	// RootPathKey is the key to use a custom root path for the wallet,
+	// instead of the default m/84'/[1776|1]' (depending on network).
+	RootPathKey = "ROOT_PATH"
 
 	// DbLocation is the folder inside the datadir containing db files.
 	DbLocation = "db"
@@ -90,6 +93,11 @@ var (
 	}
 	supportedBcScanners = map[string]struct{}{
 		"neutrino": {},
+	}
+	coinTypeByNetwork = map[string]int{
+		network.Liquid.Name:  1776,
+		network.Testnet.Name: 1,
+		network.Regtest.Name: 1,
 	}
 )
 
@@ -203,6 +211,16 @@ func GetNetwork() *network.Network {
 	}
 
 	return net
+}
+
+func GetRootPath() string {
+	rootPath := GetString(RootPathKey)
+	if rootPath != "" {
+		return rootPath
+	}
+
+	coinType := coinTypeByNetwork[GetString(NetworkKey)]
+	return fmt.Sprintf("m/84'/%d'", coinType)
 }
 
 func GetString(key string) string {

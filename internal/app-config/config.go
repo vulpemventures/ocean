@@ -12,6 +12,7 @@ import (
 	neutrino_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/neutrino"
 	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/inmemory"
+	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 var (
@@ -93,6 +94,12 @@ func (c *AppConfig) Validate() error {
 		return err
 	}
 	if _, err := c.bcScanner(); err != nil {
+		return err
+	}
+	if c.RootPath == "" {
+		return fmt.Errorf("missing root path")
+	}
+	if _, err := wallet.ParseRootDerivationPath(c.RootPath); err != nil {
 		return err
 	}
 

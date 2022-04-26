@@ -14,11 +14,10 @@ import (
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
 	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 var (
-	rootPath    = wallet.DefaultRootPath
+	rootPath    = "m/84'/1'"
 	regtest     = &network.Regtest
 	ctx         = context.Background()
 	password    = "password"

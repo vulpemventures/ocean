@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/go-elements/network"
 	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
@@ -15,7 +16,7 @@ func TestAccountExtendedKey(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 
 		args := wallet.ExtendedKeyArgs{
@@ -33,7 +34,7 @@ func TestAccountExtendedKey(t *testing.T) {
 	t.Run("invalid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 
 		tests := []struct {
@@ -42,7 +43,7 @@ func TestAccountExtendedKey(t *testing.T) {
 		}{
 			{
 				args: wallet.ExtendedKeyArgs{
-					Account: wallet.MaxHardenedValue + 1,
+					Account: hdkeychain.HardenedKeyStart,
 				},
 				err: wallet.ErrOutOfRangeDerivationPathAccount,
 			},
@@ -63,7 +64,7 @@ func TestDeriveSigningKeyPair(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 
 		args := wallet.DeriveSigningKeyPairArgs{
@@ -78,7 +79,7 @@ func TestDeriveSigningKeyPair(t *testing.T) {
 	t.Run("invalid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 
 		tests := []struct {
@@ -116,7 +117,7 @@ func TestDeriveBlindingKeyPair(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 
 		script, _ := hex.DecodeString("001439397080b51ef22c59bd7469afacffbeec0da12e")
@@ -132,7 +133,7 @@ func TestDeriveBlindingKeyPair(t *testing.T) {
 	t.Run("invalid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -160,7 +161,7 @@ func TestDeriveConfidentialAddress(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 
 		args := wallet.DeriveConfidentialAddressArgs{
@@ -176,7 +177,7 @@ func TestDeriveConfidentialAddress(t *testing.T) {
 	t.Run("invalid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 
 		tests := []struct {

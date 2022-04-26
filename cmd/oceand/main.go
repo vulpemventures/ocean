@@ -37,6 +37,7 @@ var (
 	statsInterval      = time.Duration(config.GetInt(config.StatsIntervalKey)) * time.Second
 	nodePeers          = config.GetStringSlice(config.NodePeersKey)
 	utxoExpiryDuration = time.Duration(config.GetInt(config.UtxoExpiryDurationKey))
+	rootPath           = config.GetRootPath()
 )
 
 func main() {
@@ -77,6 +78,7 @@ func main() {
 		ExtraDomains: tlsExtraDomains,
 	}
 	appCfg := &appconfig.AppConfig{
+		RootPath:                rootPath,
 		Network:                 network,
 		UtxoExpiryDuration:      utxoExpiryDuration * time.Second,
 		RepoManagerType:         dbType,

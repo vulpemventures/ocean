@@ -23,7 +23,7 @@ func TestCreatePset(t *testing.T) {
 		inputs := randomInputs(2)
 		outputs := randomOutputs(3)
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 		require.NotNil(t, w)
 
@@ -38,36 +38,4 @@ func TestCreatePset(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, ptx)
 	})
-}
-
-func randomInputs(num int) []wallet.Input {
-	ins := make([]wallet.Input, 0, num)
-	for i := 0; i < num; i++ {
-		ins = append(ins, wallet.Input{
-			TxID:            randomHex(32),
-			TxIndex:         randomVout(),
-			Value:           randomValue(),
-			Asset:           randomHex(32),
-			Script:          randomScript(),
-			ValueBlinder:    randomBytes(32),
-			AssetBlinder:    randomBytes(32),
-			ValueCommitment: randomValueCommitment(),
-			AssetCommitment: randomAssetCommitment(),
-			Nonce:           randomBytes(33),
-		})
-	}
-	return ins
-}
-
-func randomOutputs(num int) []wallet.Output {
-	outs := make([]wallet.Output, 0, num)
-	for i := 0; i < num; i++ {
-		outs = append(outs, wallet.Output{
-			Asset:   randomHex(32),
-			Amount:  randomValue(),
-			Address: testAddresses[i%3],
-		})
-	}
-
-	return outs
 }

@@ -15,8 +15,8 @@ func TestParseDerivationPath(t *testing.T) {
 		t.Parallel()
 
 		tests := []struct {
-			input  string
-			output wallet.DerivationPath
+			derivationPath string
+			expected       wallet.DerivationPath
 		}{
 			// Plain absolute derivation paths
 			{"m/84'/0'/0'/0", wallet.DerivationPath{hdkeychain.HardenedKeyStart + 84, hdkeychain.HardenedKeyStart, hdkeychain.HardenedKeyStart, 0}},
@@ -43,9 +43,9 @@ func TestParseDerivationPath(t *testing.T) {
 			{"0/0", wallet.DerivationPath{0, 0}},
 		}
 		for _, tt := range tests {
-			path, err := wallet.ParseDerivationPath(tt.input)
+			path, err := wallet.ParseDerivationPath(tt.derivationPath)
 			require.NoError(t, err)
-			require.Equal(t, tt.output, path)
+			require.Equal(t, tt.expected, path)
 		}
 	})
 
@@ -53,8 +53,8 @@ func TestParseDerivationPath(t *testing.T) {
 		t.Parallel()
 
 		tests := []struct {
-			input string
-			err   error
+			derivationPath string
+			expectedErr    error
 		}{
 			// Invalid derivation paths
 			{"", wallet.ErrMissingDerivationPath},               // Empty relative derivation path
@@ -67,11 +67,50 @@ func TestParseDerivationPath(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			_, err := wallet.ParseDerivationPath(tt.input)
+			_, err := wallet.ParseDerivationPath(tt.derivationPath)
 			require.Error(t, err)
-			if tt.err != nil {
-				require.EqualError(t, tt.err, err.Error())
+			if tt.expectedErr != nil {
+				require.EqualError(t, tt.expectedErr, err.Error())
 			}
+		}
+	})
+}
+
+func TestParseRootDerivationPath(t *testing.T) {
+	t.Run("valid", func(t *testing.T) {
+		tests := []struct {
+			rootPath string
+			expected wallet.DerivationPath
+		}{
+			{"m/84'/0'", wallet.DerivationPath{hdkeychain.HardenedKeyStart + 84, hdkeychain.HardenedKeyStart}},
+			{"m/84'/1'", wallet.DerivationPath{hdkeychain.HardenedKeyStart + 84, hdkeychain.HardenedKeyStart + 1}},
+			{"m/44'/0'", wallet.DerivationPath{hdkeychain.HardenedKeyStart + 44, hdkeychain.HardenedKeyStart}},
+			{"m/44'/1'", wallet.DerivationPath{hdkeychain.HardenedKeyStart + 44, hdkeychain.HardenedKeyStart + 1}},
+		}
+
+		for _, tt := range tests {
+			path, err := wallet.ParseRootDerivationPath(tt.rootPath)
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, path)
+		}
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		tests := []struct {
+			rootPath    string
+			expectedErr error
+		}{
+			{"", wallet.ErrMissingDerivationPath},
+			{"m/84'", wallet.ErrInvalidRootPathLen},
+			{"m/84'/0'/0'", wallet.ErrInvalidRootPathLen},
+			{"m/84'/0", wallet.ErrInvalidRootPath},
+			{"m/84/0'", wallet.ErrInvalidRootPath},
+			{"84'/0'", wallet.ErrRequiredAbsoluteDerivationPath},
+		}
+
+		for _, tt := range tests {
+			_, err := wallet.ParseRootDerivationPath(tt.rootPath)
+			require.EqualError(t, tt.expectedErr, err.Error())
 		}
 	})
 }

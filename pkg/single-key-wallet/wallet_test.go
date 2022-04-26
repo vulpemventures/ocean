@@ -8,20 +8,27 @@ import (
 	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
+const (
+	testRootPath = "m/84'/1'"
+)
+
 func TestNewWallet(t *testing.T) {
 	t.Parallel()
 
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 
 		mnemonic, err := w.Mnemonic()
 		require.NoError(t, err)
 
 		otherWallet, err := wallet.NewWalletFromMnemonic(
-			wallet.NewWalletFromMnemonicArgs{Mnemonic: mnemonic},
+			wallet.NewWalletFromMnemonicArgs{
+				RootPath: testRootPath,
+				Mnemonic: mnemonic,
+			},
 		)
 		require.NoError(t, err)
 
@@ -30,22 +37,31 @@ func TestNewWallet(t *testing.T) {
 
 	t.Run("invalid", func(t *testing.T) {
 		tests := []struct {
-			mnemonic []string
-			err      error
+			args wallet.NewWalletFromMnemonicArgs
+			err  error
 		}{
 			{
-				mnemonic: nil,
-				err:      wallet.ErrMissingMnemonic,
+				args: wallet.NewWalletFromMnemonicArgs{
+					Mnemonic: strings.Split("legal winner thank year wave sausage worth useful legal winner thank yellow", " "),
+				},
+				err: wallet.ErrMissingRootPath,
 			},
 			{
-				mnemonic: strings.Split("legal winner thank year wave sausage worth useful legal winner thank yellow yellow", " "),
-				err:      wallet.ErrInvalidMnemonic,
+				args: wallet.NewWalletFromMnemonicArgs{
+					RootPath: testRootPath,
+				},
+				err: wallet.ErrMissingMnemonic,
+			},
+			{
+				args: wallet.NewWalletFromMnemonicArgs{
+					RootPath: testRootPath,
+					Mnemonic: strings.Split("legal winner thank year wave sausage worth useful legal winner thank yellow yellow", " "),
+				},
+				err: wallet.ErrInvalidMnemonic,
 			},
 		}
 		for _, tt := range tests {
-			_, err := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
-				Mnemonic: tt.mnemonic,
-			})
+			_, err := wallet.NewWalletFromMnemonic(tt.args)
 			require.EqualError(t, tt.err, err.Error())
 		}
 	})
