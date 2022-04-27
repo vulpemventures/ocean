@@ -1,0 +1,193 @@
+builds:
+  # daemon
+
+  ### Linux
+  - id: "oceand-linux-amd64"
+    main: ./cmd/oceand
+    ldflags:
+      - -s -X './cmd/oceand/main.version={{.Version}}' -X './cmd/oceand/main.commit={{.Commit}}' -X './cmd/oceand/main.date={{.Date}}'
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - linux
+    goarch:
+      - amd64
+    binary: oceand-linux-amd64
+
+  - id: "oceand-linux-arm64"
+    main: ./cmd/oceand
+    ldflags:
+      - -s -X './cmd/oceand/main.version={{.Version}}' -X './cmd/oceand/main.commit={{.Commit}}' -X './cmd/oceand/main.date={{.Date}}'
+    env:
+      - CGO_ENABLED=1
+      - CC=aarch64-linux-gnu-gcc
+      - CXX=aarch64-linux-gnu-g++
+    goos:
+      - linux
+    goarch:
+      - arm64
+    binary: oceand-linux-arm64
+
+  ### Darwin
+  - id: "oceand-darwin-amd64"
+    main: ./cmd/oceand
+    ldflags:
+      - -s -w
+    env:
+      - CGO_ENABLED=1
+      - CC=/home/runner/work/osxcross/target/bin/o64-clang
+      - CXX=/home/runner/work/osxcross/target/bin/o64-clang++
+    goos:
+      - darwin
+    goarch:
+      - amd64
+    binary: oceand-darwin-amd64
+
+  - id: "oceand-darwin-arm64"
+    main: ./cmd/oceand
+    ldflags:
+      - -s -X './cmd/oceand/main.version={{.Version}}' -X './cmd/oceand/main.commit={{.Commit}}' -X './cmd/oceand/main.date={{.Date}}'
+    env:
+      - CGO_ENABLED=1
+      - CC=/home/runner/work/osxcross/target/bin/oa64-clang
+      - CXX=/home/runner/work/osxcross/target/bin/oa64-clang++
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    binary: oceand-darwin-arm64
+
+  # CLI
+  - id: "ocean"
+    main: ./cmd/ocean
+    ldflags:
+      - -s -X 'main.version={{.Version}}' -X 'main.commit={{.Commit}}' -X 'main.date={{.Date}}'
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    binary: ocean-darwin
+
+## flag the semver v**.**.**-<tag>.* as pre-release on Github
+release:
+  prerelease: auto
+
+checksum:
+  name_template: "checksums.txt"
+
+signs:
+  - artifacts: checksum
+    args:
+      [
+        "--batch",
+        "-u",
+        "{{ .Env.GPG_FINGERPRINT }}",
+        "--output",
+        "${signature}",
+        "--detach-sign",
+        "${artifact}",
+      ]
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+changelog:
+  use: github
+
+archives:
+  - id: oceand
+    format: binary
+    builds:
+      - oceand-linux-amd64
+      - oceand-linux-arm64
+      - oceand-darwin-amd64
+      - oceand-darwin-arm64
+    name_template: "oceand-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
+  - id: ocean
+    format: binary
+    builds:
+      - ocean
+    name_template: "ocean-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
+dockers:
+  ###########################
+  # tag latest & prerelease #
+  ###########################
+
+  #amd64
+  - image_templates:
+      - "ghcr.io/vulpemventures/oceand:{{ .Tag }}-amd64"
+        # push always either release or prerelease with a docker tag with the semver only
+    skip_push: "false"
+    use: buildx
+    dockerfile: Dockerfile
+    # GOOS of the built binaries/packages that should be used.
+    goos: linux
+    # GOARCH of the built binaries/packages that should be used.
+    goarch: amd64
+    # Template of the docker build flags.
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title=oceand"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--build-arg=VERSION={{.Version}}"
+      - "--build-arg=COMMIT={{.Commit}}"
+      - "--build-arg=DATE={{.Date}}"
+
+    extra_files:
+      - go.mod
+      - go.sum
+      - internal
+      - pkg
+      - cmd
+      - api-spec
+
+  # arm64
+  - image_templates:
+      - "ghcr.io/vulpemventures/oceand:{{ .Tag }}-arm64v8"
+        # push always either release or prerelease with a docker tag with the semver only
+    skip_push: "false"
+    use: buildx
+    dockerfile: Dockerfile
+    # GOOS of the built binaries/packages that should be used.
+    goos: linux
+    # GOARCH of the built binaries/packages that should be used.
+    goarch: arm64
+    # Template of the docker build flags.
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title=oceand"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--build-arg=VERSION={{.Version}}"
+      - "--build-arg=COMMIT={{.Commit}}"
+      - "--build-arg=DATE={{.Date}}"
+
+    extra_files:
+      - go.mod
+      - go.sum
+      - internal
+      - pkg
+      - cmd
+      - api-spec
+
+docker_manifests:
+  - name_template: ghcr.io/vulpemventures/oceand:{{ .Tag }}
+    image_templates:
+      - ghcr.io/vulpemventures/oceand:{{ .Tag }}-amd64
+      - ghcr.io/vulpemventures/oceand:{{ .Tag }}-arm64v8
+    skip_push: "false"
+
+  - name_template: ghcr.io/vulpemventures/oceand:latest
+    image_templates:
+      - ghcr.io/vulpemventures/oceand:{{ .Tag }}-amd64
+      - ghcr.io/vulpemventures/oceand:{{ .Tag }}-arm64v8
+    skip_push: auto

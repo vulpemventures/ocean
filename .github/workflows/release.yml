@@ -1,0 +1,79 @@
+name: goreleaser
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-20.04
+    env:
+      DOCKER_CLI_EXPERIMENTAL: "enabled"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ">1.17.2"
+
+      - name: Cache Go modules
+        uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # This because https://github.com/plentico/osxcross-target/issues/2#issuecomment-815850611
+      - name: Downgrade libssl
+        run: |
+          echo 'deb http://security.ubuntu.com/ubuntu bionic-security main' | sudo tee -a /etc/apt/sources.list
+          sudo apt update && apt-cache policy libssl1.0-dev
+          sudo apt-get install libssl1.0-dev
+
+      - name: Install OSX cross-compiling targets
+        run: |
+          mkdir ../../osxcross
+          git clone https://github.com/plentico/osxcross-target.git ../../osxcross/target
+
+      - name: Install Linux aarch64 cross-compiling targets
+        run: sudo apt install gcc make gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+
+      - name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+
+      - name: Docker Login
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --rm-dist --debug
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1.3.1
+
+      - name: Publish protos to Buf Schema Registry
+        uses: bufbuild/buf-push-action@v1
+        with:
+          input: api-spec/protobuf
+          buf_token: ${{ secrets.BUF_TOKEN }}
