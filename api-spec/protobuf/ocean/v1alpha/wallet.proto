@@ -116,4 +116,6 @@ message GetInfoResponse{
   uint32 birthday_block_height = 6;
   // List containing info about the wallet accounts.
   repeated AccountInfo accounts = 7;
+  // Info about the current version of the ocean wallet.
+  BuildInfo build_info = 8;
 }

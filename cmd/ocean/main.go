@@ -11,6 +11,10 @@ import (
 )
 
 var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+
 	walletDatadir = btcutil.AppDataDir("ocean-wallet", false)
 	initialState  = map[string]string{
 		"rpcserver":     "localhost:18000",
@@ -27,6 +31,7 @@ var (
 				os.Mkdir(datadir, os.ModeDir|0755)
 			}
 		},
+		Version: formatVersion(),
 	}
 )
 

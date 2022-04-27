@@ -171,3 +171,9 @@ func capitalize(s string) string {
 	ss += s[1:]
 	return ss
 }
+
+func formatVersion() string {
+	return fmt.Sprintf(
+		"\nVersion: %s\nCommit: %s\nDate: %s", version, commit, date,
+	)
+}

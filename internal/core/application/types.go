@@ -39,6 +39,13 @@ type WalletInfo struct {
 	BirthdayBlockHash   string
 	BirthdayBlockHeight uint32
 	Accounts            []AccountInfo
+	BuildInfo           BuildInfo
+}
+
+type BuildInfo struct {
+	Version string
+	Commit  string
+	Date    string
 }
 
 type UtxoInfo struct {

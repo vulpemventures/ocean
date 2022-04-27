@@ -30,6 +30,7 @@ type WalletService struct {
 	bcScanner   ports.BlockchainScanner
 	rootPath    string
 	network     *network.Network
+	buildInfo   BuildInfo
 
 	initialized bool
 	unlocked    bool
@@ -39,13 +40,14 @@ type WalletService struct {
 
 func NewWalletService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
-	rootPath string, net *network.Network,
+	rootPath string, net *network.Network, buildInfo BuildInfo,
 ) *WalletService {
 	ws := &WalletService{
 		repoManager: repoManager,
 		bcScanner:   bcScanner,
 		rootPath:    rootPath,
 		network:     net,
+		buildInfo:   buildInfo,
 		lock:        &sync.RWMutex{},
 	}
 	w, _ := ws.repoManager.WalletRepository().GetWallet(context.Background())
@@ -180,6 +182,7 @@ func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
 		BirthdayBlockHash:   elementsutil.TxIDFromBytes(birthdayBlock),
 		BirthdayBlockHeight: w.BirthdayBlockHeight,
 		Accounts:            accounts,
+		BuildInfo:           ws.buildInfo,
 	}, nil
 }
 

@@ -17,6 +17,12 @@ import (
 )
 
 var (
+	// Build info.
+	version string
+	commit  string
+	date    string
+
+	// Config from env vars.
 	dbType             = config.GetString(config.DatabaseTypeKey)
 	bcScannerType      = config.GetString(config.BlockchainScannerTypeKey)
 	logLevel           = config.GetInt(config.LogLevelKey)
@@ -78,6 +84,9 @@ func main() {
 		ExtraDomains: tlsExtraDomains,
 	}
 	appCfg := &appconfig.AppConfig{
+		Version:                 version,
+		Commit:                  commit,
+		Date:                    date,
 		RootPath:                rootPath,
 		Network:                 network,
 		UtxoExpiryDuration:      utxoExpiryDuration * time.Second,

@@ -48,6 +48,10 @@ func (t supportedType) String() string {
 //	* RepoManagerConfig - (optional) Custom config args for the repository manager based on its type.
 //	* BlockchainScannerConfig - (optional) Custom config args for the blockchain scanner based on its type.
 type AppConfig struct {
+	Version string
+	Commit  string
+	Date    string
+
 	RootPath           string
 	Network            *network.Network
 	UtxoExpiryDuration time.Duration
@@ -193,7 +197,9 @@ func (c *AppConfig) walletService() *application.WalletService {
 
 	rm, _ := c.repoManager()
 	bcs, _ := c.bcScanner()
-	c.walletSvc = application.NewWalletService(rm, bcs, c.RootPath, c.Network)
+	c.walletSvc = application.NewWalletService(
+		rm, bcs, c.RootPath, c.Network, c.buildInfo(),
+	)
 	return c.walletSvc
 }
 
@@ -229,4 +235,20 @@ func (c *AppConfig) notificationService() *application.NotificationService {
 	rm, _ := c.repoManager()
 	c.notifySvc = application.NewNotificationService(rm)
 	return c.notifySvc
+}
+
+func (c *AppConfig) buildInfo() application.BuildInfo {
+	version := "dev"
+	if c.Version != "" {
+		version = c.Version
+	}
+	commit := "none"
+	if c.Commit != "" {
+		commit = c.Commit
+	}
+	date := "unknown"
+	if c.Date != "" {
+		date = c.Date
+	}
+	return application.BuildInfo{version, commit, date}
 }

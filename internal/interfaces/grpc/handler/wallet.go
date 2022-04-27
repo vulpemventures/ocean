@@ -140,5 +140,10 @@ func (w *wallet) GetInfo(ctx context.Context, _ *pb.GetInfoRequest) (*pb.GetInfo
 		BirthdayBlockHash:   info.BirthdayBlockHash,
 		BirthdayBlockHeight: info.BirthdayBlockHeight,
 		Accounts:            accounts,
+		BuildInfo: &pb.BuildInfo{
+			Version: info.BuildInfo.Version,
+			Commit:  info.BuildInfo.Commit,
+			Date:    info.BuildInfo.Date,
+		},
 	}, nil
 }

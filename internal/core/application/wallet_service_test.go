@@ -31,6 +31,9 @@ var (
 	accountName         = "test1"
 	birthdayBlockHeight = uint32(randomIntInRange(1, 1000))
 	birthdayBlockHash   = randomBytes(32)
+	buildInfo           = application.BuildInfo{
+		Version: "test", Commit: "none", Date: "unknown",
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -62,7 +65,7 @@ func testInitWalletFromScratch(t *testing.T) {
 		require.NotNil(t, repoManager)
 
 		svc := application.NewWalletService(
-			repoManager, mockedBcScanner, rootPath, regtest,
+			repoManager, mockedBcScanner, rootPath, regtest, buildInfo,
 		)
 
 		status := svc.GetStatus(ctx)
@@ -122,7 +125,7 @@ func testInitWalletFromRestart(t *testing.T) {
 		require.NotNil(t, repoManager)
 
 		svc := application.NewWalletService(
-			repoManager, mockedBcScanner, rootPath, regtest,
+			repoManager, mockedBcScanner, rootPath, regtest, buildInfo,
 		)
 
 		status := svc.GetStatus(ctx)

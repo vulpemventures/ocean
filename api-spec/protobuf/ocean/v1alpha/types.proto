@@ -2,6 +2,15 @@ syntax = "proto3";
 
 package ocean.v1alpha;
 
+message BuildInfo {
+  // Number of the version.
+  string version = 1;
+  // Hash of the commit.
+  string commit = 2;
+  // Date of the commit.
+  string date = 3;
+}
+
 message AccountInfo {
   // Account name.
   string name = 1;
