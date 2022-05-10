@@ -55,6 +55,11 @@ message Utxos {
   repeated Utxo utxos = 2;
 }
 
+message UtxoStatus {
+  string txid = 1;
+  BlockDetails block_info = 2;
+}
+
 message Utxo {
   // Txid of the uxo.
   string txid = 1;
@@ -72,13 +77,17 @@ message Utxo {
   bytes value_blinder = 7;
   // Name of the account owning the utxo.
   string account_name = 8;
+  // Info about utxo's spent status.
+  UtxoStatus spent_status = 9;
+  // Info about utxo's confirmation status.
+  UtxoStatus confirmed_status = 10;
 }
 
 message BlockDetails {
   // Hash of the block.
-  bytes hash = 1;
+  string hash = 1;
   // Heighth (index) of the block.
-  uint32 height = 2;
+  uint64 height = 2;
   // Timestamp of the block.
   int64 timestamp = 3;
 }

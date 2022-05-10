@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19ocean/v1alpha/types.proto\x12\rocean.v1alpha\"Q\n\tBuildInfo\x12\x18\n\x07version\x18\x01 \x01(\tR\x07version\x12\x16\n\x06\x63ommit\x18\x02 \x01(\tR\x06\x63ommit\x12\x12\n\x04\x64\x61te\x18\x03 \x01(\tR\x04\x64\x61te\"t\n\x0b\x41\x63\x63ountInfo\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n\x05index\x18\x02 \x01(\rR\x05index\x12\'\n\x0f\x64\x65rivation_path\x18\x03 \x01(\tR\x0e\x64\x65rivationPath\x12\x12\n\x04xpub\x18\x04 \x01(\tR\x04xpub\"\xb7\x01\n\x0b\x42\x61lanceInfo\x12+\n\x11\x63onfirmed_balance\x18\x01 \x01(\x04R\x10\x63onfirmedBalance\x12/\n\x13unconfirmed_balance\x18\x02 \x01(\x04R\x12unconfirmedBalance\x12%\n\x0elocked_balance\x18\x03 \x01(\x04R\rlockedBalance\x12#\n\rtotal_balance\x18\x04 \x01(\x04R\x0ctotalBalance\"1\n\x05Input\x12\x12\n\x04txid\x18\x01 \x01(\tR\x04txid\x12\x14\n\x05index\x18\x02 \x01(\rR\x05index\"P\n\x06Output\x12\x14\n\x05\x61sset\x18\x01 \x01(\tR\x05\x61sset\x12\x16\n\x06\x61mount\x18\x02 \x01(\x04R\x06\x61mount\x12\x18\n\x07\x61\x64\x64ress\x18\x03 \x01(\tR\x07\x61\x64\x64ress\"U\n\x05Utxos\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12)\n\x05utxos\x18\x02 \x03(\x0b\x32\x13.ocean.v1alpha.UtxoR\x05utxos\"\xe1\x01\n\x04Utxo\x12\x12\n\x04txid\x18\x01 \x01(\tR\x04txid\x12\x14\n\x05index\x18\x02 \x01(\rR\x05index\x12\x14\n\x05\x61sset\x18\x03 \x01(\tR\x05\x61sset\x12\x14\n\x05value\x18\x04 \x01(\x04R\x05value\x12\x16\n\x06script\x18\x05 \x01(\x0cR\x06script\x12#\n\rasset_blinder\x18\x06 \x01(\x0cR\x0c\x61ssetBlinder\x12#\n\rvalue_blinder\x18\x07 \x01(\x0cR\x0cvalueBlinder\x12!\n\x0c\x61\x63\x63ount_name\x18\x08 \x01(\tR\x0b\x61\x63\x63ountName\"X\n\x0c\x42lockDetails\x12\x12\n\x04hash\x18\x01 \x01(\x0cR\x04hash\x12\x16\n\x06height\x18\x02 \x01(\rR\x06height\x12\x1c\n\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\"\xca\x01\n\x08Template\x12\x36\n\x06\x66ormat\x18\x01 \x01(\x0e\x32\x1e.ocean.v1alpha.Template.FormatR\x06\x66ormat\x12\x14\n\x05value\x18\x02 \x01(\tR\x05value\"p\n\x06\x46ormat\x12\x16\n\x12\x46ORMAT_UNSPECIFIED\x10\x00\x12\x15\n\x11\x46ORMAT_DESCRIPTOR\x10\x01\x12\x15\n\x11\x46ORMAT_MINISCRIPT\x10\x02\x12\x10\n\x0c\x46ORMAT_IONIO\x10\x03\x12\x0e\n\nFORMAT_RAW\x10\x04*\x87\x01\n\x0bTxEventType\x12\x1d\n\x19TX_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x1d\n\x19TX_EVENT_TYPE_BROADCASTED\x10\x01\x12\x1d\n\x19TX_EVENT_TYPE_UNCONFIRMED\x10\x02\x12\x1b\n\x17TX_EVENT_TYPE_CONFIRMED\x10\x03*\xbd\x01\n\rUtxoEventType\x12\x1f\n\x1bUTXO_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x17\n\x13UTXO_EVENT_TYPE_NEW\x10\x01\x12\x1d\n\x19UTXO_EVENT_TYPE_CONFIRMED\x10\x02\x12\x1a\n\x16UTXO_EVENT_TYPE_LOCKED\x10\x03\x12\x1c\n\x18UTXO_EVENT_TYPE_UNLOCKED\x10\x04\x12\x19\n\x15UTXO_EVENT_TYPE_SPENT\x10\x05*w\n\x10WebhookEventType\x12\"\n\x1eWEBHOOK_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\"\n\x1eWEBHOOK_EVENT_TYPE_TRANSACTION\x10\x01\x12\x1b\n\x17WEBHOOK_EVENT_TYPE_UTXO\x10\x02\x42\xc6\x01\n\x11\x63om.ocean.v1alphaB\nTypesProtoP\x01ZPgithub.com/vulpemventures/ocean/api-spec/protobuf/gen/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19ocean/v1alpha/types.proto\x12\rocean.v1alpha\"Q\n\tBuildInfo\x12\x18\n\x07version\x18\x01 \x01(\tR\x07version\x12\x16\n\x06\x63ommit\x18\x02 \x01(\tR\x06\x63ommit\x12\x12\n\x04\x64\x61te\x18\x03 \x01(\tR\x04\x64\x61te\"t\n\x0b\x41\x63\x63ountInfo\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n\x05index\x18\x02 \x01(\rR\x05index\x12\'\n\x0f\x64\x65rivation_path\x18\x03 \x01(\tR\x0e\x64\x65rivationPath\x12\x12\n\x04xpub\x18\x04 \x01(\tR\x04xpub\"\xb7\x01\n\x0b\x42\x61lanceInfo\x12+\n\x11\x63onfirmed_balance\x18\x01 \x01(\x04R\x10\x63onfirmedBalance\x12/\n\x13unconfirmed_balance\x18\x02 \x01(\x04R\x12unconfirmedBalance\x12%\n\x0elocked_balance\x18\x03 \x01(\x04R\rlockedBalance\x12#\n\rtotal_balance\x18\x04 \x01(\x04R\x0ctotalBalance\"1\n\x05Input\x12\x12\n\x04txid\x18\x01 \x01(\tR\x04txid\x12\x14\n\x05index\x18\x02 \x01(\rR\x05index\"P\n\x06Output\x12\x14\n\x05\x61sset\x18\x01 \x01(\tR\x05\x61sset\x12\x16\n\x06\x61mount\x18\x02 \x01(\x04R\x06\x61mount\x12\x18\n\x07\x61\x64\x64ress\x18\x03 \x01(\tR\x07\x61\x64\x64ress\"U\n\x05Utxos\x12!\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\tR\x0b\x61\x63\x63ountName\x12)\n\x05utxos\x18\x02 \x03(\x0b\x32\x13.ocean.v1alpha.UtxoR\x05utxos\"\\\n\nUtxoStatus\x12\x12\n\x04txid\x18\x01 \x01(\tR\x04txid\x12:\n\nblock_info\x18\x02 \x01(\x0b\x32\x1b.ocean.v1alpha.BlockDetailsR\tblockInfo\"\xe5\x02\n\x04Utxo\x12\x12\n\x04txid\x18\x01 \x01(\tR\x04txid\x12\x14\n\x05index\x18\x02 \x01(\rR\x05index\x12\x14\n\x05\x61sset\x18\x03 \x01(\tR\x05\x61sset\x12\x14\n\x05value\x18\x04 \x01(\x04R\x05value\x12\x16\n\x06script\x18\x05 \x01(\x0cR\x06script\x12#\n\rasset_blinder\x18\x06 \x01(\x0cR\x0c\x61ssetBlinder\x12#\n\rvalue_blinder\x18\x07 \x01(\x0cR\x0cvalueBlinder\x12!\n\x0c\x61\x63\x63ount_name\x18\x08 \x01(\tR\x0b\x61\x63\x63ountName\x12<\n\x0cspent_status\x18\t \x01(\x0b\x32\x19.ocean.v1alpha.UtxoStatusR\x0bspentStatus\x12\x44\n\x10\x63onfirmed_status\x18\n \x01(\x0b\x32\x19.ocean.v1alpha.UtxoStatusR\x0f\x63onfirmedStatus\"X\n\x0c\x42lockDetails\x12\x12\n\x04hash\x18\x01 \x01(\tR\x04hash\x12\x16\n\x06height\x18\x02 \x01(\x04R\x06height\x12\x1c\n\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\"\xca\x01\n\x08Template\x12\x36\n\x06\x66ormat\x18\x01 \x01(\x0e\x32\x1e.ocean.v1alpha.Template.FormatR\x06\x66ormat\x12\x14\n\x05value\x18\x02 \x01(\tR\x05value\"p\n\x06\x46ormat\x12\x16\n\x12\x46ORMAT_UNSPECIFIED\x10\x00\x12\x15\n\x11\x46ORMAT_DESCRIPTOR\x10\x01\x12\x15\n\x11\x46ORMAT_MINISCRIPT\x10\x02\x12\x10\n\x0c\x46ORMAT_IONIO\x10\x03\x12\x0e\n\nFORMAT_RAW\x10\x04*\x87\x01\n\x0bTxEventType\x12\x1d\n\x19TX_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x1d\n\x19TX_EVENT_TYPE_BROADCASTED\x10\x01\x12\x1d\n\x19TX_EVENT_TYPE_UNCONFIRMED\x10\x02\x12\x1b\n\x17TX_EVENT_TYPE_CONFIRMED\x10\x03*\xbd\x01\n\rUtxoEventType\x12\x1f\n\x1bUTXO_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x17\n\x13UTXO_EVENT_TYPE_NEW\x10\x01\x12\x1d\n\x19UTXO_EVENT_TYPE_CONFIRMED\x10\x02\x12\x1a\n\x16UTXO_EVENT_TYPE_LOCKED\x10\x03\x12\x1c\n\x18UTXO_EVENT_TYPE_UNLOCKED\x10\x04\x12\x19\n\x15UTXO_EVENT_TYPE_SPENT\x10\x05*w\n\x10WebhookEventType\x12\"\n\x1eWEBHOOK_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\"\n\x1eWEBHOOK_EVENT_TYPE_TRANSACTION\x10\x01\x12\x1b\n\x17WEBHOOK_EVENT_TYPE_UTXO\x10\x02\x42\xc6\x01\n\x11\x63om.ocean.v1alphaB\nTypesProtoP\x01ZPgithub.com/vulpemventures/ocean/api-spec/protobuf/gen/ocean/v1alpha;oceanv1alpha\xa2\x02\x03OXX\xaa\x02\rOcean.V1alpha\xca\x02\rOcean\\V1alpha\xe2\x02\x19Ocean\\V1alpha\\GPBMetadata\xea\x02\x0eOcean::V1alphab\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ocean.v1alpha.types_pb2', globals())
@@ -21,12 +21,12 @@ if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'\n\021com.ocean.v1alphaB\nTypesProtoP\001ZPgithub.com/vulpemventures/ocean/api-spec/protobuf/gen/ocean/v1alpha;oceanv1alpha\242\002\003OXX\252\002\rOcean.V1alpha\312\002\rOcean\\V1alpha\342\002\031Ocean\\V1alpha\\GPBMetadata\352\002\016Ocean::V1alpha'
-  _TXEVENTTYPE._serialized_start=1175
-  _TXEVENTTYPE._serialized_end=1310
-  _UTXOEVENTTYPE._serialized_start=1313
-  _UTXOEVENTTYPE._serialized_end=1502
-  _WEBHOOKEVENTTYPE._serialized_start=1504
-  _WEBHOOKEVENTTYPE._serialized_end=1623
+  _TXEVENTTYPE._serialized_start=1401
+  _TXEVENTTYPE._serialized_end=1536
+  _UTXOEVENTTYPE._serialized_start=1539
+  _UTXOEVENTTYPE._serialized_end=1728
+  _WEBHOOKEVENTTYPE._serialized_start=1730
+  _WEBHOOKEVENTTYPE._serialized_end=1849
   _BUILDINFO._serialized_start=44
   _BUILDINFO._serialized_end=125
   _ACCOUNTINFO._serialized_start=127
@@ -39,12 +39,14 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _OUTPUT._serialized_end=562
   _UTXOS._serialized_start=564
   _UTXOS._serialized_end=649
-  _UTXO._serialized_start=652
-  _UTXO._serialized_end=877
-  _BLOCKDETAILS._serialized_start=879
-  _BLOCKDETAILS._serialized_end=967
-  _TEMPLATE._serialized_start=970
-  _TEMPLATE._serialized_end=1172
-  _TEMPLATE_FORMAT._serialized_start=1060
-  _TEMPLATE_FORMAT._serialized_end=1172
+  _UTXOSTATUS._serialized_start=651
+  _UTXOSTATUS._serialized_end=743
+  _UTXO._serialized_start=746
+  _UTXO._serialized_end=1103
+  _BLOCKDETAILS._serialized_start=1105
+  _BLOCKDETAILS._serialized_end=1193
+  _TEMPLATE._serialized_start=1196
+  _TEMPLATE._serialized_end=1398
+  _TEMPLATE_FORMAT._serialized_start=1286
+  _TEMPLATE_FORMAT._serialized_end=1398
 # @@protoc_insertion_point(module_scope)
