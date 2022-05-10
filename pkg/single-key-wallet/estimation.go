@@ -33,12 +33,12 @@ func EstimateTxSize(inputs []Input, outputs []Output) uint64 {
 	for _, in := range inputs {
 		inputScriptTypes = append(inputScriptTypes, in.scriptType())
 	}
-	outputScriptTypes := make([]int, 0, len(outputs))
+	outputScripts := make([]int, 0, len(outputs))
 	for _, out := range outputs {
-		outputScriptTypes = append(outputScriptTypes, out.scriptType())
+		outputScripts = append(outputScripts, out.scriptSize())
 	}
 
-	txSize := estimateTxSize(inputScriptTypes, nil, nil, outputScriptTypes)
+	txSize := estimateTxSize(inputScriptTypes, nil, nil, outputScripts)
 	return uint64(txSize)
 }
 
@@ -55,17 +55,17 @@ func EstimateFees(
 
 func estimateTxSize(
 	inScriptTypes, inAuxiliaryRedeemScriptSize, inAuxiliaryWitnessSize,
-	outScriptTypes []int,
+	outScripts []int,
 ) int {
 	baseSize := calcTxSize(
 		false,
 		inScriptTypes, inAuxiliaryRedeemScriptSize, inAuxiliaryWitnessSize,
-		outScriptTypes,
+		outScripts,
 	)
 	totalSize := calcTxSize(
 		true,
 		inScriptTypes, inAuxiliaryRedeemScriptSize, inAuxiliaryWitnessSize,
-		outScriptTypes,
+		outScripts,
 	)
 
 	weight := baseSize*3 + totalSize
@@ -77,16 +77,16 @@ func estimateTxSize(
 func calcTxSize(
 	withWitness bool,
 	inScriptTypes, inAuxiliaryRedeemScriptSize, inAuxiliaryWitnessSize,
-	outScriptTypes []int,
+	outScriptSizes []int,
 ) int {
 	txSize := calcTxBaseSize(
 		inScriptTypes, inAuxiliaryRedeemScriptSize,
-		outScriptTypes,
+		outScriptSizes,
 	)
 	if withWitness {
 		txSize += calcTxWitnessSize(
 			inScriptTypes, inAuxiliaryWitnessSize,
-			outScriptTypes,
+			outScriptSizes,
 		)
 	}
 	return txSize
@@ -113,7 +113,7 @@ var (
 
 func calcTxBaseSize(
 	inScriptTypes, inAuxiliaryRedeemScriptSize,
-	outScriptTypes []int,
+	outScriptSizes []int,
 ) int {
 	// hash + index + sequence
 	inBaseSize := 40
@@ -131,8 +131,7 @@ func calcTxBaseSize(
 	// asset + value + nonce commitments
 	outBaseSize := 33 + 33 + 33
 	outsSize := 0
-	for _, scriptType := range outScriptTypes {
-		scriptSize := scriptPubKeySizeByScriptType[scriptType]
+	for _, scriptSize := range outScriptSizes {
 		outsSize += outBaseSize + scriptSize
 	}
 	// size of unconf fee out
@@ -141,7 +140,7 @@ func calcTxBaseSize(
 
 	return 9 +
 		varIntSerializeSize(uint64(len(inScriptTypes))) +
-		varIntSerializeSize(uint64(len(outScriptTypes)+1)) +
+		varIntSerializeSize(uint64(len(outScriptSizes)+1)) +
 		insSize + outsSize
 }
 

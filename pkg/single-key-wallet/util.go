@@ -81,3 +81,7 @@ func varIntSerializeSize(val uint64) int {
 	// Discriminant 1 byte plus 8 bytes for the uint64.
 	return 9
 }
+
+func varSliceSerializeSize(val []byte) int {
+	return varIntSerializeSize(uint64(len(val))) + len(val)
+}

@@ -112,12 +112,12 @@ func (o Output) validate() error {
 	return nil
 }
 
-func (o Output) scriptType() int {
+func (o Output) scriptSize() int {
 	if o.Address == "" {
-		return -1
+		return 0
 	}
 	script, _ := address.ToOutputScript(o.Address)
-	return scriptTypes[address.GetScriptType(script)]
+	return varSliceSerializeSize(script)
 }
 
 type CreatePsetArgs struct {
