@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"encoding/hex"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ var (
 	newUtxos         []*domain.Utxo
 	utxoKeys         []domain.UtxoKey
 	balanceByAsset   map[string]*domain.Balance
+	txid             = hex.EncodeToString(make([]byte, 32))
 )
 
 func TestUtxoRepository(t *testing.T) {
@@ -123,11 +125,12 @@ func testGetBalanceForAccount(t *testing.T, repo domain.UtxoRepository) {
 
 func testConfirmUtxos(t *testing.T, repo domain.UtxoRepository) {
 	t.Run("confirm_utxos", func(t *testing.T) {
-		count, err := repo.ConfirmUtxos(ctx, utxoKeys)
+		status := domain.UtxoStatus{"", 1, 0, ""}
+		count, err := repo.ConfirmUtxos(ctx, utxoKeys, status)
 		require.NoError(t, err)
 		require.Equal(t, len(newUtxos), count)
 
-		count, err = repo.ConfirmUtxos(ctx, utxoKeys)
+		count, err = repo.ConfirmUtxos(ctx, utxoKeys, status)
 		require.NoError(t, err)
 		require.Zero(t, count)
 
@@ -221,11 +224,12 @@ func testUnlockUtxos(t *testing.T, repo domain.UtxoRepository) {
 
 func testSpendUtxos(t *testing.T, repo domain.UtxoRepository) {
 	t.Run("spend_utxos", func(t *testing.T) {
-		count, err := repo.SpendUtxos(ctx, utxoKeys)
+		status := domain.UtxoStatus{txid, 1, 0, ""}
+		count, err := repo.SpendUtxos(ctx, utxoKeys, status)
 		require.NoError(t, err)
 		require.Equal(t, len(newUtxos), count)
 
-		count, err = repo.SpendUtxos(ctx, utxoKeys)
+		count, err = repo.SpendUtxos(ctx, utxoKeys, status)
 		require.NoError(t, err)
 		require.Zero(t, count)
 

@@ -36,7 +36,7 @@ func (n notification) TransactionNotifications(
 			var blockDetails *pb.BlockDetails
 			if e.Transaction.IsConfirmed() {
 				blockDetails = &pb.BlockDetails{
-					Hash:   []byte(e.Transaction.BlockHash),
+					Hash:   e.Transaction.BlockHash,
 					Height: e.Transaction.BlockHeight,
 				}
 			}

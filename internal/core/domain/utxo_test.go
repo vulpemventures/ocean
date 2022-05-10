@@ -1,6 +1,7 @@
 package domain_test
 
 import (
+	"encoding/hex"
 	"testing"
 	"time"
 
@@ -14,7 +15,8 @@ func TestSpendUtxo(t *testing.T) {
 	u := domain.Utxo{}
 	require.False(t, u.IsSpent())
 
-	u.Spend()
+	err := u.Spend(domain.UtxoStatus{hex.EncodeToString(make([]byte, 32)), 1, 0, ""})
+	require.NoError(t, err)
 	require.True(t, u.IsSpent())
 }
 
@@ -24,7 +26,7 @@ func TestConfirmUtxo(t *testing.T) {
 	u := domain.Utxo{}
 	require.False(t, u.IsConfirmed())
 
-	u.Confirm()
+	u.Confirm(domain.UtxoStatus{"", 1, 0, ""})
 	require.True(t, u.IsConfirmed())
 }
 

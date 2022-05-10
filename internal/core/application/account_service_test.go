@@ -1,6 +1,7 @@
 package application_test
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -62,7 +63,8 @@ func TestAccountService(t *testing.T) {
 
 	// Simulate withdrawing all funds by spending every spendable utxo coming
 	// from ListUtxosForAccount.
-	_, err = repoManager.UtxoRepository().SpendUtxos(ctx, utxos.Spendable.Keys())
+	status := domain.UtxoStatus{hex.EncodeToString(make([]byte, 32)), 1, 0, ""}
+	_, err = repoManager.UtxoRepository().SpendUtxos(ctx, utxos.Spendable.Keys(), status)
 	require.NoError(t, err)
 
 	// Now deleting the account should work without errors.

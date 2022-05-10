@@ -103,10 +103,10 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 		s.log("received report for tx %s", txid)
 
 		var blockHash string
-		var blockHeight uint32
+		var blockHeight uint64
 		if r.BlockHash != nil {
 			blockHash = r.BlockHash.String()
-			blockHeight = r.BlockHeight
+			blockHeight = uint64(r.BlockHeight)
 		}
 		select {
 		case s.chTxs <- &domain.Transaction{
@@ -128,7 +128,11 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 					TxID: elementsutil.TxIDFromBytes(in.Hash),
 					VOut: in.Index,
 				},
-				Spent: true,
+				SpentStatus: domain.UtxoStatus{
+					Txid:        txid,
+					BlockHeight: blockHeight,
+					BlockHash:   blockHash,
+				},
 			})
 		}
 		select {
@@ -175,7 +179,10 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 				RangeProof:      out.RangeProof,
 				SurjectionProof: out.SurjectionProof,
 				AccountName:     s.accountName,
-				Confirmed:       true,
+				ConfirmedStatus: domain.UtxoStatus{
+					BlockHeight: blockHeight,
+					BlockHash:   blockHash,
+				},
 			})
 		}
 

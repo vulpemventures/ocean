@@ -46,7 +46,7 @@ func (r *txRepository) AddTransaction(
 }
 
 func (r *txRepository) ConfirmTransaction(
-	ctx context.Context, txid, blockHash string, blockheight uint32,
+	ctx context.Context, txid, blockHash string, blockheight uint64,
 ) (bool, error) {
 	r.store.lock.Lock()
 	defer r.store.lock.Unlock()
@@ -106,7 +106,7 @@ func (r *txRepository) addTx(
 }
 
 func (r *txRepository) confirmTx(
-	ctx context.Context, txid string, blockHash string, blockHeight uint32,
+	ctx context.Context, txid string, blockHash string, blockHeight uint64,
 ) (bool, error) {
 	tx, err := r.getTx(ctx, txid)
 	if err != nil {

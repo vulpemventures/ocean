@@ -55,7 +55,7 @@ func (r *transactionRepository) AddTransaction(
 }
 
 func (r *transactionRepository) ConfirmTransaction(
-	ctx context.Context, txid, blockHash string, blockheight uint32,
+	ctx context.Context, txid, blockHash string, blockheight uint64,
 ) (bool, error) {
 	tx, err := r.getTx(ctx, txid)
 	if err != nil {

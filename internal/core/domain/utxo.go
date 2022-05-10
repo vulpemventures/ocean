@@ -32,12 +32,14 @@ func (k UtxoKey) String() string {
 // they must be revealed to return useful UtxoInfo.
 type UtxoInfo struct {
 	UtxoKey
-	Value        uint64
-	Asset        string
-	Script       []byte
-	ValueBlinder []byte
-	AssetBlinder []byte
-	AccountName  string
+	Value           uint64
+	Asset           string
+	Script          []byte
+	ValueBlinder    []byte
+	AssetBlinder    []byte
+	AccountName     string
+	SpentStatus     UtxoStatus
+	ConfirmedStatus UtxoStatus
 }
 
 func (i UtxoInfo) Key() UtxoKey {
@@ -53,6 +55,13 @@ type Balance struct {
 
 func (b *Balance) Total() uint64 {
 	return b.Confirmed + b.Unconfirmed + b.Locked
+}
+
+type UtxoStatus struct {
+	Txid        string
+	BlockHeight uint64
+	BlockTime   int64
+	BlockHash   string
 }
 
 // Utxo is the data structure representing an Elements UTXO with extra info
@@ -72,18 +81,18 @@ type Utxo struct {
 	SurjectionProof []byte
 	AccountName     string
 	LockTimestamp   int64
-	Spent           bool
-	Confirmed       bool
+	SpentStatus     UtxoStatus
+	ConfirmedStatus UtxoStatus
 }
 
 // IsSpent returns whether the utxo have been spent.
 func (u *Utxo) IsSpent() bool {
-	return u.Spent
+	return u.SpentStatus != UtxoStatus{}
 }
 
 // IsConfirmed returns whether the utxo is confirmed.
 func (u *Utxo) IsConfirmed() bool {
-	return u.Confirmed
+	return u.ConfirmedStatus != UtxoStatus{}
 }
 
 // IsConfidential returns whether the utxo is a confidential one.
@@ -119,19 +128,47 @@ func (u *Utxo) Key() UtxoKey {
 func (u *Utxo) Info() UtxoInfo {
 	return UtxoInfo{
 		u.Key(), u.Value, u.Asset, u.Script, u.ValueBlinder, u.AssetBlinder,
-		u.AccountName,
+		u.AccountName, u.SpentStatus, u.ConfirmedStatus,
 	}
 }
 
 // Spend marks the utxos as spent.
-func (u *Utxo) Spend() {
-	u.Spent = true
+func (u *Utxo) Spend(status UtxoStatus) error {
+	if u.IsSpent() {
+		return nil
+	}
+
+	emptyStatus := UtxoStatus{}
+	if status == emptyStatus {
+		return fmt.Errorf("status must not be empty")
+	}
+	if status.Txid == "" {
+		return fmt.Errorf("missing txid")
+	}
+	if status.BlockHeight == 0 && status.BlockTime == 0 && status.BlockHash == "" {
+		return fmt.Errorf("missing block info")
+	}
+	u.SpentStatus = status
 	u.LockTimestamp = 0
+	return nil
 }
 
 // Confirm marks the utxos as confirmed.
-func (u *Utxo) Confirm() {
-	u.Confirmed = true
+func (u *Utxo) Confirm(status UtxoStatus) error {
+	if u.IsConfirmed() {
+		return nil
+	}
+
+	emptyStatus := UtxoStatus{}
+	if status == emptyStatus {
+		return fmt.Errorf("status must not be empty")
+	}
+	if status.BlockHeight == 0 && status.BlockTime == 0 && status.BlockHash == "" {
+		return fmt.Errorf("missing block info")
+	}
+	u.ConfirmedStatus = status
+	u.ConfirmedStatus.Txid = ""
+	return nil
 }
 
 // Lock marks the current utxo as locked.

@@ -7,7 +7,7 @@ type Transaction struct {
 	TxID        string
 	TxHex       string
 	BlockHash   string
-	BlockHeight uint32
+	BlockHeight uint64
 	Accounts    map[string]struct{}
 }
 
@@ -17,7 +17,7 @@ func (t *Transaction) IsConfirmed() bool {
 }
 
 // Confirm marks the tx as confirmed.
-func (t *Transaction) Confirm(blockHash string, blockHeight uint32) {
+func (t *Transaction) Confirm(blockHash string, blockHeight uint64) {
 	if t.IsConfirmed() {
 		return
 	}

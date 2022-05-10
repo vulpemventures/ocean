@@ -135,7 +135,12 @@ func (s *service) GetUtxos(utxoKeys []domain.UtxoKey) ([]*domain.Utxo, error) {
 		}
 		tx := esploraTx{}
 		json.Unmarshal(body, &tx)
-		utxo := tx.Outputs[key.VOut].toDomain(key, tx.Status.Confirmed)
+		confirmedStatus := domain.UtxoStatus{
+			BlockHeight: tx.Status.BlockHeight,
+			BlockTime:   tx.Status.BlockTimestamp,
+			BlockHash:   tx.Status.BlockHash,
+		}
+		utxo := tx.Outputs[key.VOut].toDomain(key, confirmedStatus)
 		utxos = append(utxos, utxo)
 	}
 
@@ -246,22 +251,19 @@ type esploraTxOut struct {
 }
 
 func (o esploraTxOut) toDomain(
-	key domain.UtxoKey, confirmed bool,
+	key domain.UtxoKey, confirmedStatus domain.UtxoStatus,
 ) *domain.Utxo {
 	script, _ := hex.DecodeString(o.Script)
 	valueCommitment, _ := hex.DecodeString(o.ValueCommitment)
 	assetCommitment, _ := hex.DecodeString(o.AssetCommitment)
 	return &domain.Utxo{
-		UtxoKey: domain.UtxoKey{
-			TxID: key.TxID,
-			VOut: key.VOut,
-		},
+		UtxoKey:         key,
 		Value:           o.Value,
 		Asset:           o.Asset,
 		AssetCommitment: assetCommitment,
 		ValueCommitment: valueCommitment,
 		Script:          script,
-		Confirmed:       confirmed,
+		ConfirmedStatus: confirmedStatus,
 	}
 }
 
@@ -276,7 +278,7 @@ type esploraTxIn struct {
 
 type esploraTxStatus struct {
 	Confirmed      bool   `json:"confirmed"`
-	BlockHeight    uint32 `json:"block_height"`
+	BlockHeight    uint64 `json:"block_height"`
 	BlockHash      string `json:"block_hash"`
 	BlockTimestamp int64  `json:"block_time"`
 }

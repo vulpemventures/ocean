@@ -71,8 +71,8 @@ func (r *utxoRepository) GetAllUtxos(
 func (r *utxoRepository) GetSpendableUtxos(
 	ctx context.Context,
 ) ([]*domain.Utxo, error) {
-	query := badgerhold.Where("Spent").Eq(false).And("Confirmed").Eq(true).
-		And("LockTimestamp").Eq(int64(0))
+	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
+		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).And("LockTimestamp").Eq(int64(0))
 
 	return r.findUtxos(ctx, query)
 }
@@ -88,7 +88,8 @@ func (r *utxoRepository) GetAllUtxosForAccount(
 func (r *utxoRepository) GetSpendableUtxosForAccount(
 	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
-	query := badgerhold.Where("Spent").Eq(false).And("Confirmed").Eq(true).
+	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
+		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).
 		And("LockTimestamp").Eq(int64(0)).And("AccountName").Eq(accountName)
 
 	return r.findUtxos(ctx, query)
@@ -97,8 +98,8 @@ func (r *utxoRepository) GetSpendableUtxosForAccount(
 func (r *utxoRepository) GetLockedUtxosForAccount(
 	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
-	query := badgerhold.Where("Spent").Eq(false).And("LockTimestamp").Gt(int64(0)).
-		And("AccountName").Eq(accountName)
+	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
+		And("LockTimestamp").Gt(int64(0)).And("AccountName").Eq(accountName)
 
 	return r.findUtxos(ctx, query)
 }
@@ -136,15 +137,15 @@ func (r *utxoRepository) GetBalanceForAccount(
 }
 
 func (r *utxoRepository) SpendUtxos(
-	ctx context.Context, utxoKeys []domain.UtxoKey,
+	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
 ) (int, error) {
-	return r.spendUtxos(ctx, utxoKeys)
+	return r.spendUtxos(ctx, utxoKeys, status)
 }
 
 func (r *utxoRepository) ConfirmUtxos(
-	ctx context.Context, utxoKeys []domain.UtxoKey,
+	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
 ) (int, error) {
-	return r.confirmUtxos(ctx, utxoKeys)
+	return r.confirmUtxos(ctx, utxoKeys, status)
 }
 
 func (r *utxoRepository) LockUtxos(
@@ -212,12 +213,12 @@ func (r *utxoRepository) getAllUtxos(ctx context.Context) []*domain.Utxo {
 }
 
 func (r *utxoRepository) spendUtxos(
-	ctx context.Context, utxoKeys []domain.UtxoKey,
+	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
 ) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0)
 	for _, key := range utxoKeys {
-		done, info, err := r.spendUtxo(ctx, key)
+		done, info, err := r.spendUtxo(ctx, key, status)
 		if err != nil {
 			return -1, err
 		}
@@ -237,12 +238,12 @@ func (r *utxoRepository) spendUtxos(
 }
 
 func (r *utxoRepository) confirmUtxos(
-	ctx context.Context, utxoKeys []domain.UtxoKey,
+	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
 ) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0)
 	for _, key := range utxoKeys {
-		done, info, err := r.confirmUtxo(ctx, key)
+		done, info, err := r.confirmUtxo(ctx, key, status)
 		if err != nil {
 			return -1, err
 		}
@@ -315,7 +316,7 @@ func (r *utxoRepository) unlockUtxos(
 }
 
 func (r *utxoRepository) spendUtxo(
-	ctx context.Context, key domain.UtxoKey,
+	ctx context.Context, key domain.UtxoKey, status domain.UtxoStatus,
 ) (bool, *domain.UtxoInfo, error) {
 	query := badgerhold.Where("TxID").Eq(key.TxID).And("VOut").Eq(key.VOut)
 	utxos, err := r.findUtxos(ctx, query)
@@ -332,7 +333,9 @@ func (r *utxoRepository) spendUtxo(
 		return false, nil, nil
 	}
 
-	utxo.Spend()
+	if err := utxo.Spend(status); err != nil {
+		return false, nil, err
+	}
 	if err := r.updateUtxo(ctx, utxo); err != nil {
 		return false, nil, err
 	}
@@ -342,7 +345,7 @@ func (r *utxoRepository) spendUtxo(
 }
 
 func (r *utxoRepository) confirmUtxo(
-	ctx context.Context, key domain.UtxoKey,
+	ctx context.Context, key domain.UtxoKey, status domain.UtxoStatus,
 ) (bool, *domain.UtxoInfo, error) {
 	query := badgerhold.Where("TxID").Eq(key.TxID).And("VOut").Eq(key.VOut)
 	utxos, err := r.findUtxos(ctx, query)
@@ -359,7 +362,9 @@ func (r *utxoRepository) confirmUtxo(
 		return false, nil, nil
 	}
 
-	utxo.Confirm()
+	if err := utxo.Confirm(status); err != nil {
+		return false, nil, err
+	}
 	if err := r.updateUtxo(ctx, utxo); err != nil {
 		return false, nil, err
 	}

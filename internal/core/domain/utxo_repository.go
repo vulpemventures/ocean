@@ -62,10 +62,10 @@ type UtxoRepository interface {
 	GetBalanceForAccount(ctx context.Context, account string) (map[string]*Balance, error)
 	// SpendUtxos updates the status of the given list of utxos to "spent".
 	// Generates a UtxoSpent event if successfull.
-	SpendUtxos(ctx context.Context, utxoKeys []UtxoKey) (int, error)
+	SpendUtxos(ctx context.Context, utxoKeys []UtxoKey, status UtxoStatus) (int, error)
 	// ConfirmUtxos updates the status of the given list of utxos to "confirmed".
 	// Generates a UtxoConfirmed event if successfull.
-	ConfirmUtxos(ctx context.Context, utxoKeys []UtxoKey) (int, error)
+	ConfirmUtxos(ctx context.Context, utxoKeys []UtxoKey, status UtxoStatus) (int, error)
 	// LockUtxos updates the status of the given list of utxos to "locked".
 	// Generates a UtxoLocked event if successfull.
 	LockUtxos(ctx context.Context, utxoKeys []UtxoKey, timestamp int64) (int, error)

@@ -200,7 +200,9 @@ func randomUtxo(accountName, addr string) *domain.Utxo {
 		Script:          script,
 		Nonce:           nonce,
 		AccountName:     accountName,
-		Confirmed:       true,
+		ConfirmedStatus: domain.UtxoStatus{
+			BlockHeight: uint64(randomIntInRange(1, 10000)),
+		},
 	}
 }
 
@@ -209,7 +211,7 @@ func randomTx(txid, accountName string) *domain.Transaction {
 		TxHex:       randomHex(200),
 		TxID:        txid,
 		BlockHash:   randomHex(32),
-		BlockHeight: uint32(randomIntInRange(1, 10000)),
+		BlockHeight: uint64(randomIntInRange(1, 10000)),
 		Accounts: map[string]struct{}{
 			accountName: {},
 		},

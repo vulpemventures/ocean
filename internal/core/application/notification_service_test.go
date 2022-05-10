@@ -1,6 +1,7 @@
 package application_test
 
 import (
+	"encoding/hex"
 	"testing"
 	"time"
 
@@ -52,7 +53,8 @@ func testGetUtxoChannel(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	repoManager.UtxoRepository().SpendUtxos(ctx, keys)
+	status := domain.UtxoStatus{hex.EncodeToString(make([]byte, 32)), 1, 0, ""}
+	repoManager.UtxoRepository().SpendUtxos(ctx, keys, status)
 
 	time.Sleep(time.Second)
 
@@ -81,7 +83,7 @@ func testGetTxChannel(t *testing.T) {
 	time.Sleep(time.Second)
 
 	blockHash := randomHex(32)
-	blockHeight := uint32(randomIntInRange(1, 300))
+	blockHeight := uint64(randomIntInRange(1, 300))
 	repoManager.TransactionRepository().ConfirmTransaction(
 		ctx, txid, blockHash, blockHeight,
 	)

@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/vulpemventures/go-elements/elementsutil"
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1alpha"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"github.com/vulpemventures/ocean/internal/core/domain"
@@ -60,15 +59,38 @@ func parseAccountName(name string) (string, error) {
 func parseUtxos(utxos []domain.UtxoInfo) []*pb.Utxo {
 	list := make([]*pb.Utxo, 0, len(utxos))
 	for _, u := range utxos {
+		emptyStatus := domain.UtxoStatus{}
+		var spentStatus, confirmedStatus *pb.UtxoStatus
+		if u.SpentStatus != emptyStatus {
+			spentStatus = &pb.UtxoStatus{
+				Txid: u.SpentStatus.Txid,
+				BlockInfo: &pb.BlockDetails{
+					Hash:      u.SpentStatus.BlockHash,
+					Height:    u.SpentStatus.BlockHeight,
+					Timestamp: u.SpentStatus.BlockTime,
+				},
+			}
+		}
+		if u.ConfirmedStatus != emptyStatus {
+			confirmedStatus = &pb.UtxoStatus{
+				BlockInfo: &pb.BlockDetails{
+					Hash:      u.ConfirmedStatus.BlockHash,
+					Height:    u.ConfirmedStatus.BlockHeight,
+					Timestamp: u.ConfirmedStatus.BlockTime,
+				},
+			}
+		}
 		list = append(list, &pb.Utxo{
-			Txid:         u.Key().TxID,
-			Index:        u.Key().VOut,
-			Asset:        u.Asset,
-			Value:        u.Value,
-			Script:       u.Script,
-			AssetBlinder: u.AssetBlinder,
-			ValueBlinder: u.ValueBlinder,
-			AccountName:  u.AccountName,
+			Txid:            u.Key().TxID,
+			Index:           u.Key().VOut,
+			Asset:           u.Asset,
+			Value:           u.Value,
+			Script:          u.Script,
+			AssetBlinder:    u.AssetBlinder,
+			ValueBlinder:    u.ValueBlinder,
+			AccountName:     u.AccountName,
+			SpentStatus:     spentStatus,
+			ConfirmedStatus: confirmedStatus,
 		})
 	}
 	return list
@@ -78,9 +100,8 @@ func parseBlockDetails(tx application.TransactionInfo) *pb.BlockDetails {
 	if tx.BlockHash == "" {
 		return nil
 	}
-	blockHash, _ := elementsutil.TxIDToBytes(tx.BlockHash)
 	return &pb.BlockDetails{
-		Hash:      blockHash,
+		Hash:      tx.BlockHash,
 		Height:    tx.BlockHeight,
 		Timestamp: int64(tx.BlockHeight),
 	}

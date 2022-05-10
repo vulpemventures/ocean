@@ -60,7 +60,7 @@ func testTransactionRepository(t *testing.T, repo domain.TransactionRepository) 
 
 	t.Run("confirm_transaction", func(t *testing.T) {
 		blockHash := randomHex(32)
-		blockHeight := uint32(randomIntInRange(100, 1000))
+		blockHeight := uint64(randomIntInRange(100, 1000))
 
 		done, err := repo.ConfirmTransaction(ctx, txid, blockHash, blockHeight)
 		require.NoError(t, err)
