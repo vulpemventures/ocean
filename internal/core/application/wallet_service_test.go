@@ -74,8 +74,13 @@ func testInitWalletFromScratch(t *testing.T) {
 		require.False(t, status.IsUnlocked)
 
 		info, err := svc.GetInfo(ctx)
-		require.Error(t, err)
-		require.Nil(t, info)
+		require.NoError(t, err)
+		require.Condition(t, func() bool {
+			return info.Network != "" && info.NativeAsset != "" &&
+				info.BuildInfo != application.BuildInfo{} && info.RootPath == "" &&
+				info.MasterBlindingKey == "" && info.BirthdayBlockHash == "" &&
+				info.BirthdayBlockHeight == 0 && len(info.Accounts) == 0
+		})
 
 		newMnemonic, err := svc.GenSeed(ctx)
 		require.NoError(t, err)

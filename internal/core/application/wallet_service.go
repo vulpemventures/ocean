@@ -181,6 +181,7 @@ func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
 		return &WalletInfo{
 			Network:     ws.network.Name,
 			NativeAsset: ws.network.AssetID,
+			BuildInfo:   ws.buildInfo,
 		}, nil
 	}
 
