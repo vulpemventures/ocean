@@ -22,6 +22,9 @@ service WalletService {
   // Unlock tries to unlock the HD Wallet using the given password.
   rpc Unlock(UnlockRequest) returns (UnlockResponse);
 
+  // Lock locks the HD wallet.
+  rpc Lock(LockRequest) returns (LockResponse);
+
   // ChangePassword changes the password used to encrypt/decrypt the HD seeds.
   // It requires the wallet to be locked.
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
@@ -58,6 +61,9 @@ message UnlockRequest{
   string password = 1;
 }
 message UnlockResponse{}
+
+message LockRequest{}
+message LockResponse{}
 
 message ChangePasswordRequest{
   // The current password used to encrypt the walley.

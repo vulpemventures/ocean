@@ -70,6 +70,16 @@ func (w *wallet) Unlock(
 	return &pb.UnlockResponse{}, nil
 }
 
+func (w *wallet) Lock(
+	ctx context.Context, req *pb.LockRequest,
+) (*pb.LockResponse, error) {
+	if err := w.appSvc.Lock(ctx); err != nil {
+		return nil, err
+	}
+
+	return &pb.LockResponse{}, nil
+}
+
 func (w *wallet) ChangePassword(
 	ctx context.Context, req *pb.ChangePasswordRequest,
 ) (*pb.ChangePasswordResponse, error) {

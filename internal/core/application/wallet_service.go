@@ -96,6 +96,10 @@ func (ws *WalletService) CreateWallet(
 func (ws *WalletService) Unlock(
 	ctx context.Context, password string,
 ) (err error) {
+	if ws.isUnlocked() {
+		return nil
+	}
+
 	defer func() {
 		if err == nil {
 			ws.setUnlocked()
@@ -103,6 +107,20 @@ func (ws *WalletService) Unlock(
 	}()
 
 	return ws.repoManager.WalletRepository().UnlockWallet(ctx, password)
+}
+
+func (ws *WalletService) Lock(ctx context.Context) (err error) {
+	if !ws.isUnlocked() {
+		return nil
+	}
+
+	defer func() {
+		if err == nil {
+			ws.setLocked()
+		}
+	}()
+
+	return ws.repoManager.WalletRepository().LockWallet(ctx)
 }
 
 func (ws *WalletService) ChangePassword(
@@ -157,13 +175,11 @@ func (ws *WalletService) GetStatus(_ context.Context) WalletStatus {
 }
 
 func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
-	w, err := ws.repoManager.WalletRepository().GetWallet(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if w.IsLocked() {
+	w, _ := ws.repoManager.WalletRepository().GetWallet(ctx)
+
+	if w == nil || w.IsLocked() {
 		return &WalletInfo{
-			Network:     w.NetworkName,
+			Network:     ws.network.Name,
 			NativeAsset: ws.network.AssetID,
 		}, nil
 	}
@@ -211,6 +227,13 @@ func (ws *WalletService) setUnlocked() {
 	defer ws.lock.Unlock()
 
 	ws.unlocked = true
+}
+
+func (ws *WalletService) setLocked() {
+	ws.lock.Lock()
+	defer ws.lock.Unlock()
+
+	ws.unlocked = false
 }
 
 func (ws *WalletService) isUnlocked() bool {

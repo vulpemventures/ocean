@@ -30,6 +30,8 @@ type WalletServiceClient interface {
 	CreateWallet(ctx context.Context, in *CreateWalletRequest, opts ...grpc.CallOption) (*CreateWalletResponse, error)
 	// Unlock tries to unlock the HD Wallet using the given password.
 	Unlock(ctx context.Context, in *UnlockRequest, opts ...grpc.CallOption) (*UnlockResponse, error)
+	// Lock locks the HD wallet.
+	Lock(ctx context.Context, in *LockRequest, opts ...grpc.CallOption) (*LockResponse, error)
 	// ChangePassword changes the password used to encrypt/decrypt the HD seeds.
 	// It requires the wallet to be locked.
 	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error)
@@ -71,6 +73,15 @@ func (c *walletServiceClient) CreateWallet(ctx context.Context, in *CreateWallet
 func (c *walletServiceClient) Unlock(ctx context.Context, in *UnlockRequest, opts ...grpc.CallOption) (*UnlockResponse, error) {
 	out := new(UnlockResponse)
 	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/Unlock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) Lock(ctx context.Context, in *LockRequest, opts ...grpc.CallOption) (*LockResponse, error) {
+	out := new(LockResponse)
+	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/Lock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +136,8 @@ type WalletServiceServer interface {
 	CreateWallet(context.Context, *CreateWalletRequest) (*CreateWalletResponse, error)
 	// Unlock tries to unlock the HD Wallet using the given password.
 	Unlock(context.Context, *UnlockRequest) (*UnlockResponse, error)
+	// Lock locks the HD wallet.
+	Lock(context.Context, *LockRequest) (*LockResponse, error)
 	// ChangePassword changes the password used to encrypt/decrypt the HD seeds.
 	// It requires the wallet to be locked.
 	ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error)
@@ -149,6 +162,9 @@ func (UnimplementedWalletServiceServer) CreateWallet(context.Context, *CreateWal
 }
 func (UnimplementedWalletServiceServer) Unlock(context.Context, *UnlockRequest) (*UnlockResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unlock not implemented")
+}
+func (UnimplementedWalletServiceServer) Lock(context.Context, *LockRequest) (*LockResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Lock not implemented")
 }
 func (UnimplementedWalletServiceServer) ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
@@ -224,6 +240,24 @@ func _WalletService_Unlock_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).Unlock(ctx, req.(*UnlockRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_Lock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LockRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).Lock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocean.v1alpha.WalletService/Lock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).Lock(ctx, req.(*LockRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -318,6 +352,10 @@ var WalletService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Unlock",
 			Handler:    _WalletService_Unlock_Handler,
+		},
+		{
+			MethodName: "Lock",
+			Handler:    _WalletService_Lock_Handler,
 		},
 		{
 			MethodName: "ChangePassword",

@@ -40,6 +40,12 @@ var (
 		Long:  "this command lets you unlock the ocean wallet with your password",
 		RunE:  walletUnlock,
 	}
+	walletLockCmd = &cobra.Command{
+		Use:   "lock",
+		Short: "lock the wallet",
+		Long:  "this command lets you lock the ocean wallet",
+		RunE:  walletLock,
+	}
 	walletChangePwdCmd = &cobra.Command{
 		Use:   "changepassword",
 		Short: "change the wallet password",
@@ -84,8 +90,8 @@ func init() {
 	walletChangePwdCmd.MarkFlagRequired("new-password")
 
 	walletCmd.AddCommand(
-		walletGenSeedCmd, walletCreateCmd, walletUnlockCmd, walletChangePwdCmd,
-		walletInfoCmd, walletStatusCmd,
+		walletGenSeedCmd, walletCreateCmd, walletUnlockCmd, walletLockCmd,
+		walletChangePwdCmd, walletInfoCmd, walletStatusCmd,
 	)
 }
 
@@ -173,6 +179,24 @@ func walletUnlock(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("wallet unlocked")
+	return nil
+}
+
+func walletLock(cmd *cobra.Command, args []string) error {
+	client, cleanup, err := getWalletClient()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	if _, err := client.Lock(
+		context.Background(), &pb.LockRequest{},
+	); err != nil {
+		printErr(err)
+		return nil
+	}
+
+	fmt.Println("wallet locked")
 	return nil
 }
 

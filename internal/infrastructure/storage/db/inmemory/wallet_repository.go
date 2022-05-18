@@ -90,6 +90,23 @@ func (r *walletRepository) UnlockWallet(
 	return nil
 }
 
+func (r *walletRepository) LockWallet(ctx context.Context) error {
+	if err := r.UpdateWallet(
+		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
+			w.Lock()
+			return w, nil
+		},
+	); err != nil {
+		return err
+	}
+
+	go r.publishEvent(domain.WalletEvent{
+		EventType: domain.WalletLocked,
+	})
+
+	return nil
+}
+
 func (r *walletRepository) UpdateWallet(
 	ctx context.Context, updateFn func(*domain.Wallet) (*domain.Wallet, error),
 ) error {

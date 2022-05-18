@@ -7,6 +7,7 @@ import (
 const (
 	WalletCreated WalletEventType = iota
 	WalletUnlocked
+	WalletLocked
 	WalletPasswordChanged
 	WalletAccountCreated
 	WalletAccountAddressesDerived
@@ -17,6 +18,7 @@ var (
 	walletTypeString = map[WalletEventType]string{
 		WalletCreated:                 "WalletCreated",
 		WalletUnlocked:                "WalletUnlocked",
+		WalletLocked:                  "WalletLocked",
 		WalletPasswordChanged:         "WalletPasswordChanged",
 		WalletAccountCreated:          "WalletAccountCreated",
 		WalletAccountAddressesDerived: "WalletAccountAddressesDerived",
@@ -49,6 +51,9 @@ type WalletRepository interface {
 	// UnlockWallet attempts to update the status of the Wallet to "unlocked".
 	// Generates a WalletUnlocked event if successfull.
 	UnlockWallet(ctx context.Context, password string) error
+	// LockkWallet updates the status of the Wallet to "locked".
+	// Generates a WalletLocked event if successfull.
+	LockWallet(ctx context.Context) error
 	// UpdateWallet allows to make multiple changes to the Wallet in a
 	// transactional way.
 	UpdateWallet(

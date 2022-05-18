@@ -35,6 +35,11 @@ class WalletServiceStub(object):
                 request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.UnlockRequest.SerializeToString,
                 response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.UnlockResponse.FromString,
                 )
+        self.Lock = channel.unary_unary(
+                '/ocean.v1alpha.WalletService/Lock',
+                request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.LockRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.LockResponse.FromString,
+                )
         self.ChangePassword = channel.unary_unary(
                 '/ocean.v1alpha.WalletService/ChangePassword',
                 request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.ChangePasswordRequest.SerializeToString,
@@ -89,6 +94,13 @@ class WalletServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Lock(self, request, context):
+        """Lock locks the HD wallet.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def ChangePassword(self, request, context):
         """ChangePassword changes the password used to encrypt/decrypt the HD seeds.
         It requires the wallet to be locked.
@@ -136,6 +148,11 @@ def add_WalletServiceServicer_to_server(servicer, server):
                     servicer.Unlock,
                     request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.UnlockRequest.FromString,
                     response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.UnlockResponse.SerializeToString,
+            ),
+            'Lock': grpc.unary_unary_rpc_method_handler(
+                    servicer.Lock,
+                    request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.LockRequest.FromString,
+                    response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.LockResponse.SerializeToString,
             ),
             'ChangePassword': grpc.unary_unary_rpc_method_handler(
                     servicer.ChangePassword,
@@ -221,6 +238,23 @@ class WalletService(object):
         return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/Unlock',
             ocean_dot_v1alpha_dot_wallet__pb2.UnlockRequest.SerializeToString,
             ocean_dot_v1alpha_dot_wallet__pb2.UnlockResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Lock(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/Lock',
+            ocean_dot_v1alpha_dot_wallet__pb2.LockRequest.SerializeToString,
+            ocean_dot_v1alpha_dot_wallet__pb2.LockResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
