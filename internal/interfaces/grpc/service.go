@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1alpha"
 	appconfig "github.com/vulpemventures/ocean/internal/app-config"
-	"github.com/vulpemventures/ocean/internal/core/domain"
 	grpc_handler "github.com/vulpemventures/ocean/internal/interfaces/grpc/handler"
 	grpc_interceptor "github.com/vulpemventures/ocean/internal/interfaces/grpc/interceptor"
 	"google.golang.org/grpc"
@@ -54,12 +53,7 @@ func NewService(config ServiceConfig, appConfig *appconfig.AppConfig) (*service,
 }
 
 func (s *service) Start() error {
-	if err := s.registerHandlerForWalletEvents(); err != nil {
-		return err
-	}
-
-	withOnlyWalletService := true
-	srv, err := s.start(withOnlyWalletService)
+	srv, err := s.start()
 	if err != nil {
 		return err
 	}
@@ -80,21 +74,7 @@ func (s *service) Stop() {
 	s.log("shutdown")
 }
 
-func (s *service) registerHandlerForWalletEvents() error {
-	s.appConfig.WalletService().RegisterHandlerForWalletEvent(
-		domain.WalletUnlocked, func(_ domain.WalletEvent) {
-			onlyGrpcServer := true
-			s.stop(onlyGrpcServer)
-			withOnlyWalletService := true
-			withAllServices := !withOnlyWalletService
-			srv, _ := s.start(withAllServices)
-			s.grpcServer = srv
-		},
-	)
-	return nil
-}
-
-func (s *service) start(withOnlyWalletService bool) (*grpc.Server, error) {
+func (s *service) start() (*grpc.Server, error) {
 	grpcConfig := []grpc.ServerOption{
 		grpc_interceptor.UnaryInterceptor(), grpc_interceptor.StreamInterceptor(),
 	}
@@ -115,20 +95,18 @@ func (s *service) start(withOnlyWalletService bool) (*grpc.Server, error) {
 
 	s.log("registered wallet handler on public interface")
 
-	if !withOnlyWalletService {
-		accountHandler := grpc_handler.NewAccountHandler(s.appConfig.AccountService())
-		txHandler := grpc_handler.NewTransactionHandler(s.appConfig.TransactionService())
-		notifyHandler := grpc_handler.NewNotificationHandler(
-			s.appConfig.NotificationService(), s.chCloseStreamConnections,
-		)
+	accountHandler := grpc_handler.NewAccountHandler(s.appConfig.AccountService())
+	txHandler := grpc_handler.NewTransactionHandler(s.appConfig.TransactionService())
+	notifyHandler := grpc_handler.NewNotificationHandler(
+		s.appConfig.NotificationService(), s.chCloseStreamConnections,
+	)
 
-		pb.RegisterAccountServiceServer(grpcServer, accountHandler)
-		pb.RegisterTransactionServiceServer(grpcServer, txHandler)
-		pb.RegisterNotificationServiceServer(grpcServer, notifyHandler)
-		s.log("registered account handler on public interface")
-		s.log("registered transaction handler on public interface")
-		s.log("registered notification handler on public interface")
-	}
+	pb.RegisterAccountServiceServer(grpcServer, accountHandler)
+	pb.RegisterTransactionServiceServer(grpcServer, txHandler)
+	pb.RegisterNotificationServiceServer(grpcServer, notifyHandler)
+	s.log("registered account handler on public interface")
+	s.log("registered transaction handler on public interface")
+	s.log("registered notification handler on public interface")
 
 	go grpcServer.Serve(s.config.listener())
 
