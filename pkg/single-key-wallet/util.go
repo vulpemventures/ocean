@@ -4,9 +4,9 @@ import (
 	"math"
 	"strings"
 
+	"github.com/btcsuite/btcd/btcutil/base58"
+	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcutil/base58"
-	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/vulpemventures/go-bip39"
 	"github.com/vulpemventures/go-elements/slip77"
 )

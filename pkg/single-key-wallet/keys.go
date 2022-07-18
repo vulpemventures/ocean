@@ -3,7 +3,7 @@ package wallet
 import (
 	"encoding/hex"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 	"github.com/vulpemventures/go-elements/network"
@@ -126,8 +126,8 @@ func (w *Wallet) DeriveSigningKeyPair(args DeriveSigningKeyPairArgs) (
 		return nil, nil, err
 	}
 
-	prvKey := (*btcec.PrivateKey)(privateKey.ToECDSA())
-	pubKey := (*btcec.PublicKey)(publicKey.ToECDSA())
+	prvKey := (*btcec.PrivateKey)(privateKey)
+	pubKey := (*btcec.PublicKey)(publicKey)
 	return prvKey, pubKey, nil
 }
 

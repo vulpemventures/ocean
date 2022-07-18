@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/payment"
@@ -189,11 +190,7 @@ func (w *Wallet) signTxInput(
 		int(inIndex), script, value, sighashType,
 	)
 
-	signature, err := prvkey.Sign(hashForSignature[:])
-	if err != nil {
-		return err
-	}
-
+	signature := ecdsa.Sign(prvkey, hashForSignature[:])
 	if !signature.Verify(hashForSignature[:], pubkey) {
 		return fmt.Errorf(
 			"signature verification failed for input %d",
@@ -229,6 +226,7 @@ func (w *Wallet) signInput(
 	prvkey, pubkey, err := w.DeriveSigningKeyPair(DeriveSigningKeyPairArgs{
 		DerivationPath: derivationPath,
 	})
+
 	if err != nil {
 		return err
 	}
@@ -250,11 +248,7 @@ func (w *Wallet) signInput(
 		inIndex, script, ptx.Inputs[inIndex].WitnessUtxo.Value, input.SigHashType,
 	)
 
-	signature, err := prvkey.Sign(hashForSignature[:])
-	if err != nil {
-		return err
-	}
-
+	signature := ecdsa.Sign(prvkey, hashForSignature[:])
 	if !signature.Verify(hashForSignature[:], pubkey) {
 		return fmt.Errorf(
 			"signature verification failed for input %d",

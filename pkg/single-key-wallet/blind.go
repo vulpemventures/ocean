@@ -101,7 +101,8 @@ func (w *Wallet) BlindPsetWithOwnedInputs(
 		}
 	}
 
-	blinderHandler, err := confidential.NewBlinderHandlerFromOwnedInputs(
+	blindingValidator := confidential.NewZKPValidator()
+	blindingGenerator, err := confidential.NewZKPGeneratorFromOwnedInputs(
 		ownedInputsByIndex, nil,
 	)
 	if err != nil {
@@ -109,7 +110,7 @@ func (w *Wallet) BlindPsetWithOwnedInputs(
 	}
 
 	outputIndexesToBlind := w.getOutputIndexesToBlind(ptx, inputIndexes)
-	outBlindArgs, err := blinderHandler.BlindOutputs(
+	outBlindArgs, err := blindingGenerator.BlindOutputs(
 		ptx, outputIndexesToBlind, nil,
 	)
 	if err != nil {
@@ -121,7 +122,9 @@ func (w *Wallet) BlindPsetWithOwnedInputs(
 		ownedInputs = append(ownedInputs, ownedInputsByIndex[uint32(i)])
 	}
 
-	blinder, err := psetv2.NewBlinder(ptx, ownedInputs, blinderHandler)
+	blinder, err := psetv2.NewBlinder(
+		ptx, ownedInputs, blindingValidator, blindingGenerator,
+	)
 	if err != nil {
 		return "", err
 	}
@@ -193,14 +196,15 @@ func (w *Wallet) BlindPsetWithMasterKey(
 		return "", err
 	}
 
-	blinderHandler, err := confidential.NewBlinderHandlerFromMasterBlindingKey(
+	blindingValidator := confidential.NewZKPValidator()
+	blindingGenerator, err := confidential.NewZKPGeneratorFromMasterBlindingKey(
 		w.blindingMasterKey, nil,
 	)
 	if err != nil {
 		return "", err
 	}
 
-	ownedInputs, err := blinderHandler.UnblindInputs(ptx, ownedInputIndexes)
+	ownedInputs, err := blindingGenerator.UnblindInputs(ptx, ownedInputIndexes)
 	if err != nil {
 		return "", err
 	}
@@ -214,7 +218,7 @@ func (w *Wallet) BlindPsetWithMasterKey(
 		ptx, inputIndexes,
 	)
 
-	outBlindArgs, err := blinderHandler.BlindOutputs(
+	outBlindArgs, err := blindingGenerator.BlindOutputs(
 		ptx, outputIndexesToBlind, nil,
 	)
 	if err != nil {
@@ -223,7 +227,9 @@ func (w *Wallet) BlindPsetWithMasterKey(
 
 	// extraInputs is empty in case no ExtraBlindingKeys are passaed within args.
 	ownedInputs = append(ownedInputs, extraInputs...)
-	blinder, err := psetv2.NewBlinder(ptx, ownedInputs, blinderHandler)
+	blinder, err := psetv2.NewBlinder(
+		ptx, ownedInputs, blindingValidator, blindingGenerator,
+	)
 	if err != nil {
 		return "", err
 	}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/btcsuite/btcutil"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/spf13/cobra"
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1alpha"
 )
