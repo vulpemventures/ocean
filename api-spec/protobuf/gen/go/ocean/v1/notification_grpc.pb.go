@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: ocean/v1alpha/notification.proto
+// source: ocean/v1/notification.proto
 
-package oceanv1alpha
+package oceanv1
 
 import (
 	context "context"
@@ -43,7 +43,7 @@ func NewNotificationServiceClient(cc grpc.ClientConnInterface) NotificationServi
 }
 
 func (c *notificationServiceClient) TransactionNotifications(ctx context.Context, in *TransactionNotificationsRequest, opts ...grpc.CallOption) (NotificationService_TransactionNotificationsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &NotificationService_ServiceDesc.Streams[0], "/ocean.v1alpha.NotificationService/TransactionNotifications", opts...)
+	stream, err := c.cc.NewStream(ctx, &NotificationService_ServiceDesc.Streams[0], "/ocean.v1.NotificationService/TransactionNotifications", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (x *notificationServiceTransactionNotificationsClient) Recv() (*Transaction
 }
 
 func (c *notificationServiceClient) UtxosNotifications(ctx context.Context, in *UtxosNotificationsRequest, opts ...grpc.CallOption) (NotificationService_UtxosNotificationsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &NotificationService_ServiceDesc.Streams[1], "/ocean.v1alpha.NotificationService/UtxosNotifications", opts...)
+	stream, err := c.cc.NewStream(ctx, &NotificationService_ServiceDesc.Streams[1], "/ocean.v1.NotificationService/UtxosNotifications", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (x *notificationServiceUtxosNotificationsClient) Recv() (*UtxosNotification
 
 func (c *notificationServiceClient) AddWebhook(ctx context.Context, in *AddWebhookRequest, opts ...grpc.CallOption) (*AddWebhookResponse, error) {
 	out := new(AddWebhookResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.NotificationService/AddWebhook", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.NotificationService/AddWebhook", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (c *notificationServiceClient) AddWebhook(ctx context.Context, in *AddWebho
 
 func (c *notificationServiceClient) RemoveWebhook(ctx context.Context, in *RemoveWebhookRequest, opts ...grpc.CallOption) (*RemoveWebhookResponse, error) {
 	out := new(RemoveWebhookResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.NotificationService/RemoveWebhook", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.NotificationService/RemoveWebhook", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (c *notificationServiceClient) RemoveWebhook(ctx context.Context, in *Remov
 
 func (c *notificationServiceClient) ListWebhooks(ctx context.Context, in *ListWebhooksRequest, opts ...grpc.CallOption) (*ListWebhooksResponse, error) {
 	out := new(ListWebhooksResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.NotificationService/ListWebhooks", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.NotificationService/ListWebhooks", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,7 @@ func _NotificationService_AddWebhook_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.NotificationService/AddWebhook",
+		FullMethod: "/ocean.v1.NotificationService/AddWebhook",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NotificationServiceServer).AddWebhook(ctx, req.(*AddWebhookRequest))
@@ -250,7 +250,7 @@ func _NotificationService_RemoveWebhook_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.NotificationService/RemoveWebhook",
+		FullMethod: "/ocean.v1.NotificationService/RemoveWebhook",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NotificationServiceServer).RemoveWebhook(ctx, req.(*RemoveWebhookRequest))
@@ -268,7 +268,7 @@ func _NotificationService_ListWebhooks_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.NotificationService/ListWebhooks",
+		FullMethod: "/ocean.v1.NotificationService/ListWebhooks",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NotificationServiceServer).ListWebhooks(ctx, req.(*ListWebhooksRequest))
@@ -280,7 +280,7 @@ func _NotificationService_ListWebhooks_Handler(srv interface{}, ctx context.Cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var NotificationService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ocean.v1alpha.NotificationService",
+	ServiceName: "ocean.v1.NotificationService",
 	HandlerType: (*NotificationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -308,5 +308,5 @@ var NotificationService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "ocean/v1alpha/notification.proto",
+	Metadata: "ocean/v1/notification.proto",
 }

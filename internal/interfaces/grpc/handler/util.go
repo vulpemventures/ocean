@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1alpha"
+	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 )

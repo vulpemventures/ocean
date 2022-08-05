@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: ocean/v1alpha/wallet.proto
+// source: ocean/v1/wallet.proto
 
-package oceanv1alpha
+package oceanv1
 
 import (
 	context "context"
@@ -54,7 +54,7 @@ func NewWalletServiceClient(cc grpc.ClientConnInterface) WalletServiceClient {
 
 func (c *walletServiceClient) GenSeed(ctx context.Context, in *GenSeedRequest, opts ...grpc.CallOption) (*GenSeedResponse, error) {
 	out := new(GenSeedResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/GenSeed", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.WalletService/GenSeed", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (c *walletServiceClient) GenSeed(ctx context.Context, in *GenSeedRequest, o
 
 func (c *walletServiceClient) CreateWallet(ctx context.Context, in *CreateWalletRequest, opts ...grpc.CallOption) (*CreateWalletResponse, error) {
 	out := new(CreateWalletResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/CreateWallet", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.WalletService/CreateWallet", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (c *walletServiceClient) CreateWallet(ctx context.Context, in *CreateWallet
 
 func (c *walletServiceClient) Unlock(ctx context.Context, in *UnlockRequest, opts ...grpc.CallOption) (*UnlockResponse, error) {
 	out := new(UnlockResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/Unlock", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.WalletService/Unlock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (c *walletServiceClient) Unlock(ctx context.Context, in *UnlockRequest, opt
 
 func (c *walletServiceClient) Lock(ctx context.Context, in *LockRequest, opts ...grpc.CallOption) (*LockResponse, error) {
 	out := new(LockResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/Lock", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.WalletService/Lock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (c *walletServiceClient) Lock(ctx context.Context, in *LockRequest, opts ..
 
 func (c *walletServiceClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error) {
 	out := new(ChangePasswordResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/ChangePassword", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.WalletService/ChangePassword", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (c *walletServiceClient) ChangePassword(ctx context.Context, in *ChangePass
 
 func (c *walletServiceClient) RestoreWallet(ctx context.Context, in *RestoreWalletRequest, opts ...grpc.CallOption) (*RestoreWalletResponse, error) {
 	out := new(RestoreWalletResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/RestoreWallet", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.WalletService/RestoreWallet", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (c *walletServiceClient) RestoreWallet(ctx context.Context, in *RestoreWall
 
 func (c *walletServiceClient) Status(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
 	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/Status", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.WalletService/Status", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (c *walletServiceClient) Status(ctx context.Context, in *StatusRequest, opt
 
 func (c *walletServiceClient) GetInfo(ctx context.Context, in *GetInfoRequest, opts ...grpc.CallOption) (*GetInfoResponse, error) {
 	out := new(GetInfoResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.WalletService/GetInfo", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.WalletService/GetInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func _WalletService_GenSeed_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.WalletService/GenSeed",
+		FullMethod: "/ocean.v1.WalletService/GenSeed",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).GenSeed(ctx, req.(*GenSeedRequest))
@@ -218,7 +218,7 @@ func _WalletService_CreateWallet_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.WalletService/CreateWallet",
+		FullMethod: "/ocean.v1.WalletService/CreateWallet",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).CreateWallet(ctx, req.(*CreateWalletRequest))
@@ -236,7 +236,7 @@ func _WalletService_Unlock_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.WalletService/Unlock",
+		FullMethod: "/ocean.v1.WalletService/Unlock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).Unlock(ctx, req.(*UnlockRequest))
@@ -254,7 +254,7 @@ func _WalletService_Lock_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.WalletService/Lock",
+		FullMethod: "/ocean.v1.WalletService/Lock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).Lock(ctx, req.(*LockRequest))
@@ -272,7 +272,7 @@ func _WalletService_ChangePassword_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.WalletService/ChangePassword",
+		FullMethod: "/ocean.v1.WalletService/ChangePassword",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).ChangePassword(ctx, req.(*ChangePasswordRequest))
@@ -290,7 +290,7 @@ func _WalletService_RestoreWallet_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.WalletService/RestoreWallet",
+		FullMethod: "/ocean.v1.WalletService/RestoreWallet",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).RestoreWallet(ctx, req.(*RestoreWalletRequest))
@@ -308,7 +308,7 @@ func _WalletService_Status_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.WalletService/Status",
+		FullMethod: "/ocean.v1.WalletService/Status",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).Status(ctx, req.(*StatusRequest))
@@ -326,7 +326,7 @@ func _WalletService_GetInfo_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.WalletService/GetInfo",
+		FullMethod: "/ocean.v1.WalletService/GetInfo",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WalletServiceServer).GetInfo(ctx, req.(*GetInfoRequest))
@@ -338,7 +338,7 @@ func _WalletService_GetInfo_Handler(srv interface{}, ctx context.Context, dec fu
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WalletService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ocean.v1alpha.WalletService",
+	ServiceName: "ocean.v1.WalletService",
 	HandlerType: (*WalletServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -375,5 +375,5 @@ var WalletService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "ocean/v1alpha/wallet.proto",
+	Metadata: "ocean/v1/wallet.proto",
 }

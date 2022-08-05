@@ -5,7 +5,7 @@ import (
 	"math/big"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1alpha"
+	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	appconfig "github.com/vulpemventures/ocean/internal/app-config"
 	grpc_handler "github.com/vulpemventures/ocean/internal/interfaces/grpc/handler"
 	grpc_interceptor "github.com/vulpemventures/ocean/internal/interfaces/grpc/interceptor"

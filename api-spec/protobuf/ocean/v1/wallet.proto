@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package ocean.v1alpha;
+package ocean.v1;
 
-import "ocean/v1alpha/types.proto";
+import "ocean/v1/types.proto";
 
 // WalletService is used to create, or restore an HD Wallet.
 // It stores signing and blinding seeds used for signing and blinding of

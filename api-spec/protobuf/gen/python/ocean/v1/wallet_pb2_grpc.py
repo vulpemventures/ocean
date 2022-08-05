@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from ocean.v1alpha import wallet_pb2 as ocean_dot_v1alpha_dot_wallet__pb2
+from ocean.v1 import wallet_pb2 as ocean_dot_v1_dot_wallet__pb2
 
 
 class WalletServiceStub(object):
@@ -21,44 +21,44 @@ class WalletServiceStub(object):
             channel: A grpc.Channel.
         """
         self.GenSeed = channel.unary_unary(
-                '/ocean.v1alpha.WalletService/GenSeed',
-                request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.GenSeedRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.GenSeedResponse.FromString,
+                '/ocean.v1.WalletService/GenSeed',
+                request_serializer=ocean_dot_v1_dot_wallet__pb2.GenSeedRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_wallet__pb2.GenSeedResponse.FromString,
                 )
         self.CreateWallet = channel.unary_unary(
-                '/ocean.v1alpha.WalletService/CreateWallet',
-                request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.CreateWalletRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.CreateWalletResponse.FromString,
+                '/ocean.v1.WalletService/CreateWallet',
+                request_serializer=ocean_dot_v1_dot_wallet__pb2.CreateWalletRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_wallet__pb2.CreateWalletResponse.FromString,
                 )
         self.Unlock = channel.unary_unary(
-                '/ocean.v1alpha.WalletService/Unlock',
-                request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.UnlockRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.UnlockResponse.FromString,
+                '/ocean.v1.WalletService/Unlock',
+                request_serializer=ocean_dot_v1_dot_wallet__pb2.UnlockRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_wallet__pb2.UnlockResponse.FromString,
                 )
         self.Lock = channel.unary_unary(
-                '/ocean.v1alpha.WalletService/Lock',
-                request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.LockRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.LockResponse.FromString,
+                '/ocean.v1.WalletService/Lock',
+                request_serializer=ocean_dot_v1_dot_wallet__pb2.LockRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_wallet__pb2.LockResponse.FromString,
                 )
         self.ChangePassword = channel.unary_unary(
-                '/ocean.v1alpha.WalletService/ChangePassword',
-                request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.ChangePasswordRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.ChangePasswordResponse.FromString,
+                '/ocean.v1.WalletService/ChangePassword',
+                request_serializer=ocean_dot_v1_dot_wallet__pb2.ChangePasswordRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_wallet__pb2.ChangePasswordResponse.FromString,
                 )
         self.RestoreWallet = channel.unary_unary(
-                '/ocean.v1alpha.WalletService/RestoreWallet',
-                request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.RestoreWalletRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.RestoreWalletResponse.FromString,
+                '/ocean.v1.WalletService/RestoreWallet',
+                request_serializer=ocean_dot_v1_dot_wallet__pb2.RestoreWalletRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_wallet__pb2.RestoreWalletResponse.FromString,
                 )
         self.Status = channel.unary_unary(
-                '/ocean.v1alpha.WalletService/Status',
-                request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.StatusRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.StatusResponse.FromString,
+                '/ocean.v1.WalletService/Status',
+                request_serializer=ocean_dot_v1_dot_wallet__pb2.StatusRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_wallet__pb2.StatusResponse.FromString,
                 )
         self.GetInfo = channel.unary_unary(
-                '/ocean.v1alpha.WalletService/GetInfo',
-                request_serializer=ocean_dot_v1alpha_dot_wallet__pb2.GetInfoRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.GetInfoResponse.FromString,
+                '/ocean.v1.WalletService/GetInfo',
+                request_serializer=ocean_dot_v1_dot_wallet__pb2.GetInfoRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_wallet__pb2.GetInfoResponse.FromString,
                 )
 
 
@@ -136,47 +136,47 @@ def add_WalletServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'GenSeed': grpc.unary_unary_rpc_method_handler(
                     servicer.GenSeed,
-                    request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.GenSeedRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.GenSeedResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_wallet__pb2.GenSeedRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_wallet__pb2.GenSeedResponse.SerializeToString,
             ),
             'CreateWallet': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateWallet,
-                    request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.CreateWalletRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.CreateWalletResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_wallet__pb2.CreateWalletRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_wallet__pb2.CreateWalletResponse.SerializeToString,
             ),
             'Unlock': grpc.unary_unary_rpc_method_handler(
                     servicer.Unlock,
-                    request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.UnlockRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.UnlockResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_wallet__pb2.UnlockRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_wallet__pb2.UnlockResponse.SerializeToString,
             ),
             'Lock': grpc.unary_unary_rpc_method_handler(
                     servicer.Lock,
-                    request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.LockRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.LockResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_wallet__pb2.LockRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_wallet__pb2.LockResponse.SerializeToString,
             ),
             'ChangePassword': grpc.unary_unary_rpc_method_handler(
                     servicer.ChangePassword,
-                    request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.ChangePasswordRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.ChangePasswordResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_wallet__pb2.ChangePasswordRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_wallet__pb2.ChangePasswordResponse.SerializeToString,
             ),
             'RestoreWallet': grpc.unary_unary_rpc_method_handler(
                     servicer.RestoreWallet,
-                    request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.RestoreWalletRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.RestoreWalletResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_wallet__pb2.RestoreWalletRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_wallet__pb2.RestoreWalletResponse.SerializeToString,
             ),
             'Status': grpc.unary_unary_rpc_method_handler(
                     servicer.Status,
-                    request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.StatusRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.StatusResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_wallet__pb2.StatusRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_wallet__pb2.StatusResponse.SerializeToString,
             ),
             'GetInfo': grpc.unary_unary_rpc_method_handler(
                     servicer.GetInfo,
-                    request_deserializer=ocean_dot_v1alpha_dot_wallet__pb2.GetInfoRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_wallet__pb2.GetInfoResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_wallet__pb2.GetInfoRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_wallet__pb2.GetInfoResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'ocean.v1alpha.WalletService', rpc_method_handlers)
+            'ocean.v1.WalletService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -201,9 +201,9 @@ class WalletService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/GenSeed',
-            ocean_dot_v1alpha_dot_wallet__pb2.GenSeedRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_wallet__pb2.GenSeedResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/GenSeed',
+            ocean_dot_v1_dot_wallet__pb2.GenSeedRequest.SerializeToString,
+            ocean_dot_v1_dot_wallet__pb2.GenSeedResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -218,9 +218,9 @@ class WalletService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/CreateWallet',
-            ocean_dot_v1alpha_dot_wallet__pb2.CreateWalletRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_wallet__pb2.CreateWalletResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/CreateWallet',
+            ocean_dot_v1_dot_wallet__pb2.CreateWalletRequest.SerializeToString,
+            ocean_dot_v1_dot_wallet__pb2.CreateWalletResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -235,9 +235,9 @@ class WalletService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/Unlock',
-            ocean_dot_v1alpha_dot_wallet__pb2.UnlockRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_wallet__pb2.UnlockResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/Unlock',
+            ocean_dot_v1_dot_wallet__pb2.UnlockRequest.SerializeToString,
+            ocean_dot_v1_dot_wallet__pb2.UnlockResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -252,9 +252,9 @@ class WalletService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/Lock',
-            ocean_dot_v1alpha_dot_wallet__pb2.LockRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_wallet__pb2.LockResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/Lock',
+            ocean_dot_v1_dot_wallet__pb2.LockRequest.SerializeToString,
+            ocean_dot_v1_dot_wallet__pb2.LockResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -269,9 +269,9 @@ class WalletService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/ChangePassword',
-            ocean_dot_v1alpha_dot_wallet__pb2.ChangePasswordRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_wallet__pb2.ChangePasswordResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/ChangePassword',
+            ocean_dot_v1_dot_wallet__pb2.ChangePasswordRequest.SerializeToString,
+            ocean_dot_v1_dot_wallet__pb2.ChangePasswordResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -286,9 +286,9 @@ class WalletService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/RestoreWallet',
-            ocean_dot_v1alpha_dot_wallet__pb2.RestoreWalletRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_wallet__pb2.RestoreWalletResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/RestoreWallet',
+            ocean_dot_v1_dot_wallet__pb2.RestoreWalletRequest.SerializeToString,
+            ocean_dot_v1_dot_wallet__pb2.RestoreWalletResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -303,9 +303,9 @@ class WalletService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/Status',
-            ocean_dot_v1alpha_dot_wallet__pb2.StatusRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_wallet__pb2.StatusResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/Status',
+            ocean_dot_v1_dot_wallet__pb2.StatusRequest.SerializeToString,
+            ocean_dot_v1_dot_wallet__pb2.StatusResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -320,8 +320,8 @@ class WalletService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.WalletService/GetInfo',
-            ocean_dot_v1alpha_dot_wallet__pb2.GetInfoRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_wallet__pb2.GetInfoResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/GetInfo',
+            ocean_dot_v1_dot_wallet__pb2.GetInfoRequest.SerializeToString,
+            ocean_dot_v1_dot_wallet__pb2.GetInfoResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

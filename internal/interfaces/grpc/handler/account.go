@@ -3,7 +3,7 @@ package grpc_handler
 import (
 	"context"
 
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1alpha"
+	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

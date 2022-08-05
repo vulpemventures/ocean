@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package ocean.v1alpha;
+package ocean.v1;
 
-import "ocean/v1alpha/types.proto";
+import "ocean/v1/types.proto";
 
 /*
   TransactionService is used to craft and sign various kind's of transactions.

@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from ocean.v1alpha import account_pb2 as ocean_dot_v1alpha_dot_account__pb2
+from ocean.v1 import account_pb2 as ocean_dot_v1_dot_account__pb2
 
 
 class AccountServiceStub(object):
@@ -18,49 +18,49 @@ class AccountServiceStub(object):
             channel: A grpc.Channel.
         """
         self.CreateAccountBIP44 = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/CreateAccountBIP44',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Request.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Response.FromString,
+                '/ocean.v1.AccountService/CreateAccountBIP44',
+                request_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Request.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Response.FromString,
                 )
         self.CreateAccountCustom = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/CreateAccountCustom',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomResponse.FromString,
+                '/ocean.v1.AccountService/CreateAccountCustom',
+                request_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomResponse.FromString,
                 )
         self.SetAccountTemplate = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/SetAccountTemplate',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.SetAccountTemplateRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.SetAccountTemplateResponse.FromString,
+                '/ocean.v1.AccountService/SetAccountTemplate',
+                request_serializer=ocean_dot_v1_dot_account__pb2.SetAccountTemplateRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.SetAccountTemplateResponse.FromString,
                 )
         self.DeriveAddress = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/DeriveAddress',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.DeriveAddressRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.DeriveAddressResponse.FromString,
+                '/ocean.v1.AccountService/DeriveAddress',
+                request_serializer=ocean_dot_v1_dot_account__pb2.DeriveAddressRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.DeriveAddressResponse.FromString,
                 )
         self.DeriveChangeAddress = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/DeriveChangeAddress',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.DeriveChangeAddressRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.DeriveChangeAddressResponse.FromString,
+                '/ocean.v1.AccountService/DeriveChangeAddress',
+                request_serializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressResponse.FromString,
                 )
         self.ListAddresses = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/ListAddresses',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.ListAddressesRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.ListAddressesResponse.FromString,
+                '/ocean.v1.AccountService/ListAddresses',
+                request_serializer=ocean_dot_v1_dot_account__pb2.ListAddressesRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.ListAddressesResponse.FromString,
                 )
         self.Balance = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/Balance',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.BalanceRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.BalanceResponse.FromString,
+                '/ocean.v1.AccountService/Balance',
+                request_serializer=ocean_dot_v1_dot_account__pb2.BalanceRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.BalanceResponse.FromString,
                 )
         self.ListUtxos = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/ListUtxos',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.ListUtxosRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.ListUtxosResponse.FromString,
+                '/ocean.v1.AccountService/ListUtxos',
+                request_serializer=ocean_dot_v1_dot_account__pb2.ListUtxosRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.ListUtxosResponse.FromString,
                 )
         self.DeleteAccount = channel.unary_unary(
-                '/ocean.v1alpha.AccountService/DeleteAccount',
-                request_serializer=ocean_dot_v1alpha_dot_account__pb2.DeleteAccountRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_account__pb2.DeleteAccountResponse.FromString,
+                '/ocean.v1.AccountService/DeleteAccount',
+                request_serializer=ocean_dot_v1_dot_account__pb2.DeleteAccountRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.DeleteAccountResponse.FromString,
                 )
 
 
@@ -141,52 +141,52 @@ def add_AccountServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'CreateAccountBIP44': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateAccountBIP44,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Request.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Response.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Request.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Response.SerializeToString,
             ),
             'CreateAccountCustom': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateAccountCustom,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomResponse.SerializeToString,
             ),
             'SetAccountTemplate': grpc.unary_unary_rpc_method_handler(
                     servicer.SetAccountTemplate,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.SetAccountTemplateRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.SetAccountTemplateResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.SetAccountTemplateRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.SetAccountTemplateResponse.SerializeToString,
             ),
             'DeriveAddress': grpc.unary_unary_rpc_method_handler(
                     servicer.DeriveAddress,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.DeriveAddressRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.DeriveAddressResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.DeriveAddressRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.DeriveAddressResponse.SerializeToString,
             ),
             'DeriveChangeAddress': grpc.unary_unary_rpc_method_handler(
                     servicer.DeriveChangeAddress,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.DeriveChangeAddressRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.DeriveChangeAddressResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressResponse.SerializeToString,
             ),
             'ListAddresses': grpc.unary_unary_rpc_method_handler(
                     servicer.ListAddresses,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.ListAddressesRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.ListAddressesResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.ListAddressesRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.ListAddressesResponse.SerializeToString,
             ),
             'Balance': grpc.unary_unary_rpc_method_handler(
                     servicer.Balance,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.BalanceRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.BalanceResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.BalanceRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.BalanceResponse.SerializeToString,
             ),
             'ListUtxos': grpc.unary_unary_rpc_method_handler(
                     servicer.ListUtxos,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.ListUtxosRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.ListUtxosResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.ListUtxosRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.ListUtxosResponse.SerializeToString,
             ),
             'DeleteAccount': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteAccount,
-                    request_deserializer=ocean_dot_v1alpha_dot_account__pb2.DeleteAccountRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_account__pb2.DeleteAccountResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.DeleteAccountRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.DeleteAccountResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'ocean.v1alpha.AccountService', rpc_method_handlers)
+            'ocean.v1.AccountService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -208,9 +208,9 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/CreateAccountBIP44',
-            ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Request.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.CreateAccountBIP44Response.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/CreateAccountBIP44',
+            ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Request.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -225,9 +225,9 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/CreateAccountCustom',
-            ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.CreateAccountCustomResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/CreateAccountCustom',
+            ocean_dot_v1_dot_account__pb2.CreateAccountCustomRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.CreateAccountCustomResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -242,9 +242,9 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/SetAccountTemplate',
-            ocean_dot_v1alpha_dot_account__pb2.SetAccountTemplateRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.SetAccountTemplateResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/SetAccountTemplate',
+            ocean_dot_v1_dot_account__pb2.SetAccountTemplateRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.SetAccountTemplateResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -259,9 +259,9 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/DeriveAddress',
-            ocean_dot_v1alpha_dot_account__pb2.DeriveAddressRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.DeriveAddressResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/DeriveAddress',
+            ocean_dot_v1_dot_account__pb2.DeriveAddressRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.DeriveAddressResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -276,9 +276,9 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/DeriveChangeAddress',
-            ocean_dot_v1alpha_dot_account__pb2.DeriveChangeAddressRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.DeriveChangeAddressResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/DeriveChangeAddress',
+            ocean_dot_v1_dot_account__pb2.DeriveChangeAddressRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.DeriveChangeAddressResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -293,9 +293,9 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/ListAddresses',
-            ocean_dot_v1alpha_dot_account__pb2.ListAddressesRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.ListAddressesResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/ListAddresses',
+            ocean_dot_v1_dot_account__pb2.ListAddressesRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.ListAddressesResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -310,9 +310,9 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/Balance',
-            ocean_dot_v1alpha_dot_account__pb2.BalanceRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.BalanceResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/Balance',
+            ocean_dot_v1_dot_account__pb2.BalanceRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.BalanceResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -327,9 +327,9 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/ListUtxos',
-            ocean_dot_v1alpha_dot_account__pb2.ListUtxosRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.ListUtxosResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/ListUtxos',
+            ocean_dot_v1_dot_account__pb2.ListUtxosRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.ListUtxosResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -344,8 +344,8 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.AccountService/DeleteAccount',
-            ocean_dot_v1alpha_dot_account__pb2.DeleteAccountRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_account__pb2.DeleteAccountResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/DeleteAccount',
+            ocean_dot_v1_dot_account__pb2.DeleteAccountRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.DeleteAccountResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

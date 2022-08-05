@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from ocean.v1alpha import notification_pb2 as ocean_dot_v1alpha_dot_notification__pb2
+from ocean.v1 import notification_pb2 as ocean_dot_v1_dot_notification__pb2
 
 
 class NotificationServiceStub(object):
@@ -23,29 +23,29 @@ class NotificationServiceStub(object):
             channel: A grpc.Channel.
         """
         self.TransactionNotifications = channel.unary_stream(
-                '/ocean.v1alpha.NotificationService/TransactionNotifications',
-                request_serializer=ocean_dot_v1alpha_dot_notification__pb2.TransactionNotificationsRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_notification__pb2.TransactionNotificationsResponse.FromString,
+                '/ocean.v1.NotificationService/TransactionNotifications',
+                request_serializer=ocean_dot_v1_dot_notification__pb2.TransactionNotificationsRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_notification__pb2.TransactionNotificationsResponse.FromString,
                 )
         self.UtxosNotifications = channel.unary_stream(
-                '/ocean.v1alpha.NotificationService/UtxosNotifications',
-                request_serializer=ocean_dot_v1alpha_dot_notification__pb2.UtxosNotificationsRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_notification__pb2.UtxosNotificationsResponse.FromString,
+                '/ocean.v1.NotificationService/UtxosNotifications',
+                request_serializer=ocean_dot_v1_dot_notification__pb2.UtxosNotificationsRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_notification__pb2.UtxosNotificationsResponse.FromString,
                 )
         self.AddWebhook = channel.unary_unary(
-                '/ocean.v1alpha.NotificationService/AddWebhook',
-                request_serializer=ocean_dot_v1alpha_dot_notification__pb2.AddWebhookRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_notification__pb2.AddWebhookResponse.FromString,
+                '/ocean.v1.NotificationService/AddWebhook',
+                request_serializer=ocean_dot_v1_dot_notification__pb2.AddWebhookRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_notification__pb2.AddWebhookResponse.FromString,
                 )
         self.RemoveWebhook = channel.unary_unary(
-                '/ocean.v1alpha.NotificationService/RemoveWebhook',
-                request_serializer=ocean_dot_v1alpha_dot_notification__pb2.RemoveWebhookRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_notification__pb2.RemoveWebhookResponse.FromString,
+                '/ocean.v1.NotificationService/RemoveWebhook',
+                request_serializer=ocean_dot_v1_dot_notification__pb2.RemoveWebhookRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_notification__pb2.RemoveWebhookResponse.FromString,
                 )
         self.ListWebhooks = channel.unary_unary(
-                '/ocean.v1alpha.NotificationService/ListWebhooks',
-                request_serializer=ocean_dot_v1alpha_dot_notification__pb2.ListWebhooksRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_notification__pb2.ListWebhooksResponse.FromString,
+                '/ocean.v1.NotificationService/ListWebhooks',
+                request_serializer=ocean_dot_v1_dot_notification__pb2.ListWebhooksRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_notification__pb2.ListWebhooksResponse.FromString,
                 )
 
 
@@ -104,32 +104,32 @@ def add_NotificationServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'TransactionNotifications': grpc.unary_stream_rpc_method_handler(
                     servicer.TransactionNotifications,
-                    request_deserializer=ocean_dot_v1alpha_dot_notification__pb2.TransactionNotificationsRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_notification__pb2.TransactionNotificationsResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_notification__pb2.TransactionNotificationsRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_notification__pb2.TransactionNotificationsResponse.SerializeToString,
             ),
             'UtxosNotifications': grpc.unary_stream_rpc_method_handler(
                     servicer.UtxosNotifications,
-                    request_deserializer=ocean_dot_v1alpha_dot_notification__pb2.UtxosNotificationsRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_notification__pb2.UtxosNotificationsResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_notification__pb2.UtxosNotificationsRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_notification__pb2.UtxosNotificationsResponse.SerializeToString,
             ),
             'AddWebhook': grpc.unary_unary_rpc_method_handler(
                     servicer.AddWebhook,
-                    request_deserializer=ocean_dot_v1alpha_dot_notification__pb2.AddWebhookRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_notification__pb2.AddWebhookResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_notification__pb2.AddWebhookRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_notification__pb2.AddWebhookResponse.SerializeToString,
             ),
             'RemoveWebhook': grpc.unary_unary_rpc_method_handler(
                     servicer.RemoveWebhook,
-                    request_deserializer=ocean_dot_v1alpha_dot_notification__pb2.RemoveWebhookRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_notification__pb2.RemoveWebhookResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_notification__pb2.RemoveWebhookRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_notification__pb2.RemoveWebhookResponse.SerializeToString,
             ),
             'ListWebhooks': grpc.unary_unary_rpc_method_handler(
                     servicer.ListWebhooks,
-                    request_deserializer=ocean_dot_v1alpha_dot_notification__pb2.ListWebhooksRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_notification__pb2.ListWebhooksResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_notification__pb2.ListWebhooksRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_notification__pb2.ListWebhooksResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'ocean.v1alpha.NotificationService', rpc_method_handlers)
+            'ocean.v1.NotificationService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -156,9 +156,9 @@ class NotificationService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/ocean.v1alpha.NotificationService/TransactionNotifications',
-            ocean_dot_v1alpha_dot_notification__pb2.TransactionNotificationsRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_notification__pb2.TransactionNotificationsResponse.FromString,
+        return grpc.experimental.unary_stream(request, target, '/ocean.v1.NotificationService/TransactionNotifications',
+            ocean_dot_v1_dot_notification__pb2.TransactionNotificationsRequest.SerializeToString,
+            ocean_dot_v1_dot_notification__pb2.TransactionNotificationsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -173,9 +173,9 @@ class NotificationService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/ocean.v1alpha.NotificationService/UtxosNotifications',
-            ocean_dot_v1alpha_dot_notification__pb2.UtxosNotificationsRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_notification__pb2.UtxosNotificationsResponse.FromString,
+        return grpc.experimental.unary_stream(request, target, '/ocean.v1.NotificationService/UtxosNotifications',
+            ocean_dot_v1_dot_notification__pb2.UtxosNotificationsRequest.SerializeToString,
+            ocean_dot_v1_dot_notification__pb2.UtxosNotificationsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -190,9 +190,9 @@ class NotificationService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.NotificationService/AddWebhook',
-            ocean_dot_v1alpha_dot_notification__pb2.AddWebhookRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_notification__pb2.AddWebhookResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.NotificationService/AddWebhook',
+            ocean_dot_v1_dot_notification__pb2.AddWebhookRequest.SerializeToString,
+            ocean_dot_v1_dot_notification__pb2.AddWebhookResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -207,9 +207,9 @@ class NotificationService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.NotificationService/RemoveWebhook',
-            ocean_dot_v1alpha_dot_notification__pb2.RemoveWebhookRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_notification__pb2.RemoveWebhookResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.NotificationService/RemoveWebhook',
+            ocean_dot_v1_dot_notification__pb2.RemoveWebhookRequest.SerializeToString,
+            ocean_dot_v1_dot_notification__pb2.RemoveWebhookResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -224,8 +224,8 @@ class NotificationService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.NotificationService/ListWebhooks',
-            ocean_dot_v1alpha_dot_notification__pb2.ListWebhooksRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_notification__pb2.ListWebhooksResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.NotificationService/ListWebhooks',
+            ocean_dot_v1_dot_notification__pb2.ListWebhooksRequest.SerializeToString,
+            ocean_dot_v1_dot_notification__pb2.ListWebhooksResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

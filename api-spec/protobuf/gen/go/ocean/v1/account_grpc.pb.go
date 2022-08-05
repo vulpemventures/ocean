@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: ocean/v1alpha/account.proto
+// source: ocean/v1/account.proto
 
-package oceanv1alpha
+package oceanv1
 
 import (
 	context "context"
@@ -55,7 +55,7 @@ func NewAccountServiceClient(cc grpc.ClientConnInterface) AccountServiceClient {
 
 func (c *accountServiceClient) CreateAccountBIP44(ctx context.Context, in *CreateAccountBIP44Request, opts ...grpc.CallOption) (*CreateAccountBIP44Response, error) {
 	out := new(CreateAccountBIP44Response)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/CreateAccountBIP44", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/CreateAccountBIP44", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *accountServiceClient) CreateAccountBIP44(ctx context.Context, in *Creat
 
 func (c *accountServiceClient) CreateAccountCustom(ctx context.Context, in *CreateAccountCustomRequest, opts ...grpc.CallOption) (*CreateAccountCustomResponse, error) {
 	out := new(CreateAccountCustomResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/CreateAccountCustom", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/CreateAccountCustom", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (c *accountServiceClient) CreateAccountCustom(ctx context.Context, in *Crea
 
 func (c *accountServiceClient) SetAccountTemplate(ctx context.Context, in *SetAccountTemplateRequest, opts ...grpc.CallOption) (*SetAccountTemplateResponse, error) {
 	out := new(SetAccountTemplateResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/SetAccountTemplate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/SetAccountTemplate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (c *accountServiceClient) SetAccountTemplate(ctx context.Context, in *SetAc
 
 func (c *accountServiceClient) DeriveAddress(ctx context.Context, in *DeriveAddressRequest, opts ...grpc.CallOption) (*DeriveAddressResponse, error) {
 	out := new(DeriveAddressResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/DeriveAddress", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/DeriveAddress", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (c *accountServiceClient) DeriveAddress(ctx context.Context, in *DeriveAddr
 
 func (c *accountServiceClient) DeriveChangeAddress(ctx context.Context, in *DeriveChangeAddressRequest, opts ...grpc.CallOption) (*DeriveChangeAddressResponse, error) {
 	out := new(DeriveChangeAddressResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/DeriveChangeAddress", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/DeriveChangeAddress", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (c *accountServiceClient) DeriveChangeAddress(ctx context.Context, in *Deri
 
 func (c *accountServiceClient) ListAddresses(ctx context.Context, in *ListAddressesRequest, opts ...grpc.CallOption) (*ListAddressesResponse, error) {
 	out := new(ListAddressesResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/ListAddresses", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/ListAddresses", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (c *accountServiceClient) ListAddresses(ctx context.Context, in *ListAddres
 
 func (c *accountServiceClient) Balance(ctx context.Context, in *BalanceRequest, opts ...grpc.CallOption) (*BalanceResponse, error) {
 	out := new(BalanceResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/Balance", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/Balance", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (c *accountServiceClient) Balance(ctx context.Context, in *BalanceRequest, 
 
 func (c *accountServiceClient) ListUtxos(ctx context.Context, in *ListUtxosRequest, opts ...grpc.CallOption) (*ListUtxosResponse, error) {
 	out := new(ListUtxosResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/ListUtxos", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/ListUtxos", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (c *accountServiceClient) ListUtxos(ctx context.Context, in *ListUtxosReque
 
 func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
 	out := new(DeleteAccountResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.AccountService/DeleteAccount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/DeleteAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func _AccountService_CreateAccountBIP44_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/CreateAccountBIP44",
+		FullMethod: "/ocean.v1.AccountService/CreateAccountBIP44",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).CreateAccountBIP44(ctx, req.(*CreateAccountBIP44Request))
@@ -232,7 +232,7 @@ func _AccountService_CreateAccountCustom_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/CreateAccountCustom",
+		FullMethod: "/ocean.v1.AccountService/CreateAccountCustom",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).CreateAccountCustom(ctx, req.(*CreateAccountCustomRequest))
@@ -250,7 +250,7 @@ func _AccountService_SetAccountTemplate_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/SetAccountTemplate",
+		FullMethod: "/ocean.v1.AccountService/SetAccountTemplate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).SetAccountTemplate(ctx, req.(*SetAccountTemplateRequest))
@@ -268,7 +268,7 @@ func _AccountService_DeriveAddress_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/DeriveAddress",
+		FullMethod: "/ocean.v1.AccountService/DeriveAddress",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).DeriveAddress(ctx, req.(*DeriveAddressRequest))
@@ -286,7 +286,7 @@ func _AccountService_DeriveChangeAddress_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/DeriveChangeAddress",
+		FullMethod: "/ocean.v1.AccountService/DeriveChangeAddress",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).DeriveChangeAddress(ctx, req.(*DeriveChangeAddressRequest))
@@ -304,7 +304,7 @@ func _AccountService_ListAddresses_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/ListAddresses",
+		FullMethod: "/ocean.v1.AccountService/ListAddresses",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).ListAddresses(ctx, req.(*ListAddressesRequest))
@@ -322,7 +322,7 @@ func _AccountService_Balance_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/Balance",
+		FullMethod: "/ocean.v1.AccountService/Balance",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).Balance(ctx, req.(*BalanceRequest))
@@ -340,7 +340,7 @@ func _AccountService_ListUtxos_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/ListUtxos",
+		FullMethod: "/ocean.v1.AccountService/ListUtxos",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).ListUtxos(ctx, req.(*ListUtxosRequest))
@@ -358,7 +358,7 @@ func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.AccountService/DeleteAccount",
+		FullMethod: "/ocean.v1.AccountService/DeleteAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
@@ -370,7 +370,7 @@ func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AccountService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ocean.v1alpha.AccountService",
+	ServiceName: "ocean.v1.AccountService",
 	HandlerType: (*AccountServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -411,5 +411,5 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "ocean/v1alpha/account.proto",
+	Metadata: "ocean/v1/account.proto",
 }

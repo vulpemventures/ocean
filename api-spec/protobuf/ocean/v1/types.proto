@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ocean.v1alpha;
+package ocean.v1;
 
 message BuildInfo {
   // Number of the version.

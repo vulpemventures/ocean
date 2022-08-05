@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from ocean.v1alpha import transaction_pb2 as ocean_dot_v1alpha_dot_transaction__pb2
+from ocean.v1 import transaction_pb2 as ocean_dot_v1_dot_transaction__pb2
 
 
 class TransactionServiceStub(object):
@@ -17,79 +17,79 @@ class TransactionServiceStub(object):
             channel: A grpc.Channel.
         """
         self.GetTransaction = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/GetTransaction',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionResponse.FromString,
+                '/ocean.v1.TransactionService/GetTransaction',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.GetTransactionRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.GetTransactionResponse.FromString,
                 )
         self.SelectUtxos = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/SelectUtxos',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.SelectUtxosRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.SelectUtxosResponse.FromString,
+                '/ocean.v1.TransactionService/SelectUtxos',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.SelectUtxosRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.SelectUtxosResponse.FromString,
                 )
         self.EstimateFees = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/EstimateFees',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.EstimateFeesRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.EstimateFeesResponse.FromString,
+                '/ocean.v1.TransactionService/EstimateFees',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.EstimateFeesRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.EstimateFeesResponse.FromString,
                 )
         self.SignTransaction = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/SignTransaction',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.SignTransactionRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.SignTransactionResponse.FromString,
+                '/ocean.v1.TransactionService/SignTransaction',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.SignTransactionRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.SignTransactionResponse.FromString,
                 )
         self.BroadcastTransaction = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/BroadcastTransaction',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.BroadcastTransactionRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.BroadcastTransactionResponse.FromString,
+                '/ocean.v1.TransactionService/BroadcastTransaction',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.BroadcastTransactionRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.BroadcastTransactionResponse.FromString,
                 )
         self.CreatePset = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/CreatePset',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.CreatePsetRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.CreatePsetResponse.FromString,
+                '/ocean.v1.TransactionService/CreatePset',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.CreatePsetRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.CreatePsetResponse.FromString,
                 )
         self.UpdatePset = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/UpdatePset',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.UpdatePsetRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.UpdatePsetResponse.FromString,
+                '/ocean.v1.TransactionService/UpdatePset',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.UpdatePsetRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.UpdatePsetResponse.FromString,
                 )
         self.BlindPset = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/BlindPset',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.BlindPsetRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.BlindPsetResponse.FromString,
+                '/ocean.v1.TransactionService/BlindPset',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.BlindPsetRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.BlindPsetResponse.FromString,
                 )
         self.SignPset = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/SignPset',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.SignPsetRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.SignPsetResponse.FromString,
+                '/ocean.v1.TransactionService/SignPset',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.SignPsetRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.SignPsetResponse.FromString,
                 )
         self.Mint = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/Mint',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.MintRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.MintResponse.FromString,
+                '/ocean.v1.TransactionService/Mint',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.MintRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.MintResponse.FromString,
                 )
         self.Remint = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/Remint',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.RemintRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.RemintResponse.FromString,
+                '/ocean.v1.TransactionService/Remint',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.RemintRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.RemintResponse.FromString,
                 )
         self.Burn = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/Burn',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.BurnRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.BurnResponse.FromString,
+                '/ocean.v1.TransactionService/Burn',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.BurnRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.BurnResponse.FromString,
                 )
         self.Transfer = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/Transfer',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.TransferRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.TransferResponse.FromString,
+                '/ocean.v1.TransactionService/Transfer',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.TransferRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.TransferResponse.FromString,
                 )
         self.PegInAddress = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/PegInAddress',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.PegInAddressRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.PegInAddressResponse.FromString,
+                '/ocean.v1.TransactionService/PegInAddress',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.PegInAddressRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.PegInAddressResponse.FromString,
                 )
         self.ClaimPegIn = channel.unary_unary(
-                '/ocean.v1alpha.TransactionService/ClaimPegIn',
-                request_serializer=ocean_dot_v1alpha_dot_transaction__pb2.ClaimPegInRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.ClaimPegInResponse.FromString,
+                '/ocean.v1.TransactionService/ClaimPegIn',
+                request_serializer=ocean_dot_v1_dot_transaction__pb2.ClaimPegInRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_transaction__pb2.ClaimPegInResponse.FromString,
                 )
 
 
@@ -216,82 +216,82 @@ def add_TransactionServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'GetTransaction': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTransaction,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.GetTransactionRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.GetTransactionResponse.SerializeToString,
             ),
             'SelectUtxos': grpc.unary_unary_rpc_method_handler(
                     servicer.SelectUtxos,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.SelectUtxosRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.SelectUtxosResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.SelectUtxosRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.SelectUtxosResponse.SerializeToString,
             ),
             'EstimateFees': grpc.unary_unary_rpc_method_handler(
                     servicer.EstimateFees,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.EstimateFeesRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.EstimateFeesResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.EstimateFeesRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.EstimateFeesResponse.SerializeToString,
             ),
             'SignTransaction': grpc.unary_unary_rpc_method_handler(
                     servicer.SignTransaction,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.SignTransactionRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.SignTransactionResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.SignTransactionRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.SignTransactionResponse.SerializeToString,
             ),
             'BroadcastTransaction': grpc.unary_unary_rpc_method_handler(
                     servicer.BroadcastTransaction,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.BroadcastTransactionRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.BroadcastTransactionResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.BroadcastTransactionRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.BroadcastTransactionResponse.SerializeToString,
             ),
             'CreatePset': grpc.unary_unary_rpc_method_handler(
                     servicer.CreatePset,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.CreatePsetRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.CreatePsetResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.CreatePsetRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.CreatePsetResponse.SerializeToString,
             ),
             'UpdatePset': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdatePset,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.UpdatePsetRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.UpdatePsetResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.UpdatePsetRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.UpdatePsetResponse.SerializeToString,
             ),
             'BlindPset': grpc.unary_unary_rpc_method_handler(
                     servicer.BlindPset,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.BlindPsetRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.BlindPsetResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.BlindPsetRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.BlindPsetResponse.SerializeToString,
             ),
             'SignPset': grpc.unary_unary_rpc_method_handler(
                     servicer.SignPset,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.SignPsetRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.SignPsetResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.SignPsetRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.SignPsetResponse.SerializeToString,
             ),
             'Mint': grpc.unary_unary_rpc_method_handler(
                     servicer.Mint,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.MintRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.MintResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.MintRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.MintResponse.SerializeToString,
             ),
             'Remint': grpc.unary_unary_rpc_method_handler(
                     servicer.Remint,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.RemintRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.RemintResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.RemintRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.RemintResponse.SerializeToString,
             ),
             'Burn': grpc.unary_unary_rpc_method_handler(
                     servicer.Burn,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.BurnRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.BurnResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.BurnRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.BurnResponse.SerializeToString,
             ),
             'Transfer': grpc.unary_unary_rpc_method_handler(
                     servicer.Transfer,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.TransferRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.TransferResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.TransferRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.TransferResponse.SerializeToString,
             ),
             'PegInAddress': grpc.unary_unary_rpc_method_handler(
                     servicer.PegInAddress,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.PegInAddressRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.PegInAddressResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.PegInAddressRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.PegInAddressResponse.SerializeToString,
             ),
             'ClaimPegIn': grpc.unary_unary_rpc_method_handler(
                     servicer.ClaimPegIn,
-                    request_deserializer=ocean_dot_v1alpha_dot_transaction__pb2.ClaimPegInRequest.FromString,
-                    response_serializer=ocean_dot_v1alpha_dot_transaction__pb2.ClaimPegInResponse.SerializeToString,
+                    request_deserializer=ocean_dot_v1_dot_transaction__pb2.ClaimPegInRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_transaction__pb2.ClaimPegInResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'ocean.v1alpha.TransactionService', rpc_method_handlers)
+            'ocean.v1.TransactionService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -312,9 +312,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/GetTransaction',
-            ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.GetTransactionResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/GetTransaction',
+            ocean_dot_v1_dot_transaction__pb2.GetTransactionRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.GetTransactionResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -329,9 +329,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/SelectUtxos',
-            ocean_dot_v1alpha_dot_transaction__pb2.SelectUtxosRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.SelectUtxosResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/SelectUtxos',
+            ocean_dot_v1_dot_transaction__pb2.SelectUtxosRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.SelectUtxosResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -346,9 +346,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/EstimateFees',
-            ocean_dot_v1alpha_dot_transaction__pb2.EstimateFeesRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.EstimateFeesResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/EstimateFees',
+            ocean_dot_v1_dot_transaction__pb2.EstimateFeesRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.EstimateFeesResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -363,9 +363,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/SignTransaction',
-            ocean_dot_v1alpha_dot_transaction__pb2.SignTransactionRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.SignTransactionResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/SignTransaction',
+            ocean_dot_v1_dot_transaction__pb2.SignTransactionRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.SignTransactionResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -380,9 +380,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/BroadcastTransaction',
-            ocean_dot_v1alpha_dot_transaction__pb2.BroadcastTransactionRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.BroadcastTransactionResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/BroadcastTransaction',
+            ocean_dot_v1_dot_transaction__pb2.BroadcastTransactionRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.BroadcastTransactionResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -397,9 +397,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/CreatePset',
-            ocean_dot_v1alpha_dot_transaction__pb2.CreatePsetRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.CreatePsetResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/CreatePset',
+            ocean_dot_v1_dot_transaction__pb2.CreatePsetRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.CreatePsetResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -414,9 +414,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/UpdatePset',
-            ocean_dot_v1alpha_dot_transaction__pb2.UpdatePsetRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.UpdatePsetResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/UpdatePset',
+            ocean_dot_v1_dot_transaction__pb2.UpdatePsetRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.UpdatePsetResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -431,9 +431,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/BlindPset',
-            ocean_dot_v1alpha_dot_transaction__pb2.BlindPsetRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.BlindPsetResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/BlindPset',
+            ocean_dot_v1_dot_transaction__pb2.BlindPsetRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.BlindPsetResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -448,9 +448,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/SignPset',
-            ocean_dot_v1alpha_dot_transaction__pb2.SignPsetRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.SignPsetResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/SignPset',
+            ocean_dot_v1_dot_transaction__pb2.SignPsetRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.SignPsetResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -465,9 +465,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/Mint',
-            ocean_dot_v1alpha_dot_transaction__pb2.MintRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.MintResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/Mint',
+            ocean_dot_v1_dot_transaction__pb2.MintRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.MintResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -482,9 +482,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/Remint',
-            ocean_dot_v1alpha_dot_transaction__pb2.RemintRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.RemintResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/Remint',
+            ocean_dot_v1_dot_transaction__pb2.RemintRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.RemintResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -499,9 +499,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/Burn',
-            ocean_dot_v1alpha_dot_transaction__pb2.BurnRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.BurnResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/Burn',
+            ocean_dot_v1_dot_transaction__pb2.BurnRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.BurnResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -516,9 +516,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/Transfer',
-            ocean_dot_v1alpha_dot_transaction__pb2.TransferRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.TransferResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/Transfer',
+            ocean_dot_v1_dot_transaction__pb2.TransferRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.TransferResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -533,9 +533,9 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/PegInAddress',
-            ocean_dot_v1alpha_dot_transaction__pb2.PegInAddressRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.PegInAddressResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/PegInAddress',
+            ocean_dot_v1_dot_transaction__pb2.PegInAddressRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.PegInAddressResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -550,8 +550,8 @@ class TransactionService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1alpha.TransactionService/ClaimPegIn',
-            ocean_dot_v1alpha_dot_transaction__pb2.ClaimPegInRequest.SerializeToString,
-            ocean_dot_v1alpha_dot_transaction__pb2.ClaimPegInResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.TransactionService/ClaimPegIn',
+            ocean_dot_v1_dot_transaction__pb2.ClaimPegInRequest.SerializeToString,
+            ocean_dot_v1_dot_transaction__pb2.ClaimPegInResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package ocean.v1alpha;
+package ocean.v1;
 
-import "ocean/v1alpha/types.proto";
+import "ocean/v1/types.proto";
 
 // AccountService is used to manage accounts in HD Wallet.
 // It supports generating addresses, listing utxos and balances for specific account or

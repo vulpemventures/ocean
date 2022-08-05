@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: ocean/v1alpha/transaction.proto
+// source: ocean/v1/transaction.proto
 
-package oceanv1alpha
+package oceanv1
 
 import (
 	context "context"
@@ -72,7 +72,7 @@ func NewTransactionServiceClient(cc grpc.ClientConnInterface) TransactionService
 
 func (c *transactionServiceClient) GetTransaction(ctx context.Context, in *GetTransactionRequest, opts ...grpc.CallOption) (*GetTransactionResponse, error) {
 	out := new(GetTransactionResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/GetTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/GetTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (c *transactionServiceClient) GetTransaction(ctx context.Context, in *GetTr
 
 func (c *transactionServiceClient) SelectUtxos(ctx context.Context, in *SelectUtxosRequest, opts ...grpc.CallOption) (*SelectUtxosResponse, error) {
 	out := new(SelectUtxosResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/SelectUtxos", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/SelectUtxos", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (c *transactionServiceClient) SelectUtxos(ctx context.Context, in *SelectUt
 
 func (c *transactionServiceClient) EstimateFees(ctx context.Context, in *EstimateFeesRequest, opts ...grpc.CallOption) (*EstimateFeesResponse, error) {
 	out := new(EstimateFeesResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/EstimateFees", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/EstimateFees", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (c *transactionServiceClient) EstimateFees(ctx context.Context, in *Estimat
 
 func (c *transactionServiceClient) SignTransaction(ctx context.Context, in *SignTransactionRequest, opts ...grpc.CallOption) (*SignTransactionResponse, error) {
 	out := new(SignTransactionResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/SignTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/SignTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (c *transactionServiceClient) SignTransaction(ctx context.Context, in *Sign
 
 func (c *transactionServiceClient) BroadcastTransaction(ctx context.Context, in *BroadcastTransactionRequest, opts ...grpc.CallOption) (*BroadcastTransactionResponse, error) {
 	out := new(BroadcastTransactionResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/BroadcastTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/BroadcastTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (c *transactionServiceClient) BroadcastTransaction(ctx context.Context, in 
 
 func (c *transactionServiceClient) CreatePset(ctx context.Context, in *CreatePsetRequest, opts ...grpc.CallOption) (*CreatePsetResponse, error) {
 	out := new(CreatePsetResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/CreatePset", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/CreatePset", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (c *transactionServiceClient) CreatePset(ctx context.Context, in *CreatePse
 
 func (c *transactionServiceClient) UpdatePset(ctx context.Context, in *UpdatePsetRequest, opts ...grpc.CallOption) (*UpdatePsetResponse, error) {
 	out := new(UpdatePsetResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/UpdatePset", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/UpdatePset", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (c *transactionServiceClient) UpdatePset(ctx context.Context, in *UpdatePse
 
 func (c *transactionServiceClient) BlindPset(ctx context.Context, in *BlindPsetRequest, opts ...grpc.CallOption) (*BlindPsetResponse, error) {
 	out := new(BlindPsetResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/BlindPset", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/BlindPset", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (c *transactionServiceClient) BlindPset(ctx context.Context, in *BlindPsetR
 
 func (c *transactionServiceClient) SignPset(ctx context.Context, in *SignPsetRequest, opts ...grpc.CallOption) (*SignPsetResponse, error) {
 	out := new(SignPsetResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/SignPset", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/SignPset", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (c *transactionServiceClient) SignPset(ctx context.Context, in *SignPsetReq
 
 func (c *transactionServiceClient) Mint(ctx context.Context, in *MintRequest, opts ...grpc.CallOption) (*MintResponse, error) {
 	out := new(MintResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/Mint", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/Mint", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (c *transactionServiceClient) Mint(ctx context.Context, in *MintRequest, op
 
 func (c *transactionServiceClient) Remint(ctx context.Context, in *RemintRequest, opts ...grpc.CallOption) (*RemintResponse, error) {
 	out := new(RemintResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/Remint", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/Remint", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func (c *transactionServiceClient) Remint(ctx context.Context, in *RemintRequest
 
 func (c *transactionServiceClient) Burn(ctx context.Context, in *BurnRequest, opts ...grpc.CallOption) (*BurnResponse, error) {
 	out := new(BurnResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/Burn", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/Burn", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func (c *transactionServiceClient) Burn(ctx context.Context, in *BurnRequest, op
 
 func (c *transactionServiceClient) Transfer(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*TransferResponse, error) {
 	out := new(TransferResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/Transfer", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/Transfer", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (c *transactionServiceClient) Transfer(ctx context.Context, in *TransferReq
 
 func (c *transactionServiceClient) PegInAddress(ctx context.Context, in *PegInAddressRequest, opts ...grpc.CallOption) (*PegInAddressResponse, error) {
 	out := new(PegInAddressResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/PegInAddress", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/PegInAddress", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +198,7 @@ func (c *transactionServiceClient) PegInAddress(ctx context.Context, in *PegInAd
 
 func (c *transactionServiceClient) ClaimPegIn(ctx context.Context, in *ClaimPegInRequest, opts ...grpc.CallOption) (*ClaimPegInResponse, error) {
 	out := new(ClaimPegInResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1alpha.TransactionService/ClaimPegIn", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ocean.v1.TransactionService/ClaimPegIn", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func _TransactionService_GetTransaction_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/GetTransaction",
+		FullMethod: "/ocean.v1.TransactionService/GetTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).GetTransaction(ctx, req.(*GetTransactionRequest))
@@ -338,7 +338,7 @@ func _TransactionService_SelectUtxos_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/SelectUtxos",
+		FullMethod: "/ocean.v1.TransactionService/SelectUtxos",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).SelectUtxos(ctx, req.(*SelectUtxosRequest))
@@ -356,7 +356,7 @@ func _TransactionService_EstimateFees_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/EstimateFees",
+		FullMethod: "/ocean.v1.TransactionService/EstimateFees",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).EstimateFees(ctx, req.(*EstimateFeesRequest))
@@ -374,7 +374,7 @@ func _TransactionService_SignTransaction_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/SignTransaction",
+		FullMethod: "/ocean.v1.TransactionService/SignTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).SignTransaction(ctx, req.(*SignTransactionRequest))
@@ -392,7 +392,7 @@ func _TransactionService_BroadcastTransaction_Handler(srv interface{}, ctx conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/BroadcastTransaction",
+		FullMethod: "/ocean.v1.TransactionService/BroadcastTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).BroadcastTransaction(ctx, req.(*BroadcastTransactionRequest))
@@ -410,7 +410,7 @@ func _TransactionService_CreatePset_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/CreatePset",
+		FullMethod: "/ocean.v1.TransactionService/CreatePset",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).CreatePset(ctx, req.(*CreatePsetRequest))
@@ -428,7 +428,7 @@ func _TransactionService_UpdatePset_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/UpdatePset",
+		FullMethod: "/ocean.v1.TransactionService/UpdatePset",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).UpdatePset(ctx, req.(*UpdatePsetRequest))
@@ -446,7 +446,7 @@ func _TransactionService_BlindPset_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/BlindPset",
+		FullMethod: "/ocean.v1.TransactionService/BlindPset",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).BlindPset(ctx, req.(*BlindPsetRequest))
@@ -464,7 +464,7 @@ func _TransactionService_SignPset_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/SignPset",
+		FullMethod: "/ocean.v1.TransactionService/SignPset",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).SignPset(ctx, req.(*SignPsetRequest))
@@ -482,7 +482,7 @@ func _TransactionService_Mint_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/Mint",
+		FullMethod: "/ocean.v1.TransactionService/Mint",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).Mint(ctx, req.(*MintRequest))
@@ -500,7 +500,7 @@ func _TransactionService_Remint_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/Remint",
+		FullMethod: "/ocean.v1.TransactionService/Remint",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).Remint(ctx, req.(*RemintRequest))
@@ -518,7 +518,7 @@ func _TransactionService_Burn_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/Burn",
+		FullMethod: "/ocean.v1.TransactionService/Burn",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).Burn(ctx, req.(*BurnRequest))
@@ -536,7 +536,7 @@ func _TransactionService_Transfer_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/Transfer",
+		FullMethod: "/ocean.v1.TransactionService/Transfer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).Transfer(ctx, req.(*TransferRequest))
@@ -554,7 +554,7 @@ func _TransactionService_PegInAddress_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/PegInAddress",
+		FullMethod: "/ocean.v1.TransactionService/PegInAddress",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).PegInAddress(ctx, req.(*PegInAddressRequest))
@@ -572,7 +572,7 @@ func _TransactionService_ClaimPegIn_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1alpha.TransactionService/ClaimPegIn",
+		FullMethod: "/ocean.v1.TransactionService/ClaimPegIn",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransactionServiceServer).ClaimPegIn(ctx, req.(*ClaimPegInRequest))
@@ -584,7 +584,7 @@ func _TransactionService_ClaimPegIn_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TransactionService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ocean.v1alpha.TransactionService",
+	ServiceName: "ocean.v1.TransactionService",
 	HandlerType: (*TransactionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -649,5 +649,5 @@ var TransactionService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "ocean/v1alpha/transaction.proto",
+	Metadata: "ocean/v1/transaction.proto",
 }
