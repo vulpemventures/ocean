@@ -217,7 +217,7 @@ func (w *Wallet) signInput(
 	}
 
 	if ptx.Inputs[inIndex].SigHashType == 0 {
-		if err := signer.AddInSighashType(sighashType, inIndex); err != nil {
+		if err := signer.AddInSighashType(inIndex, sighashType); err != nil {
 			return err
 		}
 	}

@@ -174,7 +174,7 @@ func (w *Wallet) CreatePset(args CreatePsetArgs) (string, error) {
 		return "", err
 	}
 
-	ptx, err := psetv2.New(args.inputs(), args.outputs(), 0)
+	ptx, err := psetv2.New(args.inputs(), args.outputs(), nil)
 	if err != nil {
 		return "", err
 	}
@@ -184,7 +184,7 @@ func (w *Wallet) CreatePset(args CreatePsetArgs) (string, error) {
 		return "", err
 	}
 	for i, in := range args.Inputs {
-		updater.AddInWitnessUtxo(in.prevout(), i)
+		updater.AddInWitnessUtxo(i, in.prevout())
 	}
 
 	return ptx.ToBase64()
@@ -260,7 +260,7 @@ func (w *Wallet) UpdatePset(args UpdatePsetArgs) (string, error) {
 	}
 
 	for i, in := range args.Inputs {
-		updater.AddInWitnessUtxo(in.prevout(), int(nextInputIndex)+i)
+		updater.AddInWitnessUtxo(int(nextInputIndex)+i, in.prevout())
 	}
 
 	if err := updater.AddOutputs(args.outputs(nextInputIndex)); err != nil {

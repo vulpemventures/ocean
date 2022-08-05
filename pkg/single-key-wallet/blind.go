@@ -290,7 +290,7 @@ func (w *Wallet) getOutputIndexesToBlind(
 	}
 
 	for i, out := range ptx.Outputs {
-		if out.IsBlinded() {
+		if out.NeedsBlinding() {
 			if !isOwnedOutput(out.BlinderIndex) {
 				continue
 			}
