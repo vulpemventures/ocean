@@ -7,6 +7,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "net/http/pprof" // #nosec
+
 	log "github.com/sirupsen/logrus"
 	appconfig "github.com/vulpemventures/ocean/internal/app-config"
 	"github.com/vulpemventures/ocean/internal/config"
@@ -38,6 +40,7 @@ var (
 	profilerDir        = filepath.Join(datadir, config.ProfilerLocation)
 	filtersDir         = filepath.Join(scannerDir, "filters")
 	blockHeadersDir    = filepath.Join(scannerDir, "headers")
+	esploraUrl         = config.GetString(config.EsploraUrlKey)
 	tlsExtraIPs        = config.GetStringSlice(config.TLSExtraIPKey)
 	tlsExtraDomains    = config.GetStringSlice(config.TLSExtraDomainKey)
 	statsInterval      = time.Duration(config.GetInt(config.StatsIntervalKey)) * time.Second
@@ -60,9 +63,7 @@ func main() {
 		}
 
 		profilerSvc.Start()
-		defer func() {
-			profilerSvc.Stop()
-		}()
+		defer profilerSvc.Stop()
 	}
 
 	net := network.Name
@@ -75,6 +76,7 @@ func main() {
 		FiltersDatadir:      filtersDir,
 		BlockHeadersDatadir: blockHeadersDir,
 		Peers:               nodePeers,
+		EsploraUrl:          esploraUrl,
 	}
 	serviceCfg := grpc_interface.ServiceConfig{
 		Port:         port,
@@ -100,11 +102,11 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("service: error while initializing")
 	}
-	defer func() {
-		serviceManager.Service.Stop()
-	}()
 
-	serviceManager.Service.Start()
+	if err := serviceManager.Service.Start(); err != nil {
+		log.WithError(err).Fatal("service: error while starting")
+	}
+	defer serviceManager.Service.Stop()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)

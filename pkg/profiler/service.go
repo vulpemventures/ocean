@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -17,12 +18,6 @@ import (
 const (
 	minPort = 1024
 	maxPort = 49151
-
-	byte = 1 << (10 * iota)
-	kilobyte
-	megabyte
-	gigabyte
-	terabyte
 )
 
 // Service opts holds configuration options for the profiler service.
@@ -51,8 +46,9 @@ type ProfilerService struct {
 	opts   ServiceOpts
 	server *http.Server
 	stopFn context.CancelFunc
+	ticker *time.Ticker
 
-	log  func(format string, a ...interface{})
+	log  func(level log.Level, format string, a ...interface{})
 	warn func(err error, format string, a ...interface{})
 }
 
@@ -62,15 +58,23 @@ func NewService(opts ServiceOpts) (*ProfilerService, error) {
 		return nil, err
 	}
 	server := &http.Server{Addr: opts.address()}
-	logFn := func(format string, a ...interface{}) {
+	logFn := func(level log.Level, format string, a ...interface{}) {
 		format = fmt.Sprintf("profiler: %s", format)
-		log.Debugf(format, a...)
+		var logFn func(format string, args ...interface{})
+		switch level {
+		case log.InfoLevel:
+			logFn = log.Infof
+		default:
+			logFn = log.Debugf
+		}
+		logFn(format, a...)
 	}
 	warnFn := func(err error, format string, a ...interface{}) {
 		format = fmt.Sprintf("profiler: %s", format)
 		log.WithError(err).Warnf(format, a...)
 	}
-	return &ProfilerService{opts, server, nil, logFn, warnFn}, nil
+	ticker := time.NewTicker(opts.StatsInterval)
+	return &ProfilerService{opts, server, nil, ticker, logFn, warnFn}, nil
 }
 
 // Start starts the profiler.
@@ -78,9 +82,12 @@ func (s *ProfilerService) Start() error {
 	runtime.SetBlockProfileRate(1)
 	go s.server.ListenAndServe()
 	ctx, cancelStats := context.WithCancel(context.Background())
-	s.enableMemoryStatistics(ctx, s.opts.StatsInterval, s.opts.Datadir)
+	s.enableMemoryStatistics(ctx, s.opts.Datadir)
 	s.stopFn = cancelStats
-	s.log("start at url http://localhost:%d/debug/pprof/", s.opts.Port)
+	s.log(
+		log.InfoLevel,
+		"start at url http://localhost:%d/debug/pprof/", s.opts.Port,
+	)
 	return nil
 }
 
@@ -88,23 +95,19 @@ func (s *ProfilerService) Start() error {
 func (s *ProfilerService) Stop() {
 	s.stopFn()
 	s.server.Shutdown(context.Background())
-	s.log("stop")
+	s.ticker.Stop()
+	s.log(log.InfoLevel, "shutdown")
 }
 
 // enableMemoryStatistics starts a goroutine that periodically logs memory
 // usage of the go process to stdout.
 func (s *ProfilerService) enableMemoryStatistics(
-	ctx context.Context,
-	interval time.Duration,
-	path string,
+	ctx context.Context, path string,
 ) {
-
-	ticker := time.NewTicker(interval)
-
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
+			case <-s.ticker.C:
 				s.printMemoryStatistics()
 				s.printNumOfRoutines()
 			case <-ctx.Done():
@@ -128,6 +131,7 @@ func (s *ProfilerService) printMemoryStatistics() {
 	countFrees := memStats.Frees
 
 	s.log(
+		log.DebugLevel,
 		"total allocated: %.3fGB, heap allocated: %.3fGB, "+
 			"allocated objects count: %v, freed objects count: %v",
 		toGigabytes(bytesTotalAllocated),
@@ -140,18 +144,18 @@ func (s *ProfilerService) printMemoryStatistics() {
 // printNumOfRoutines logs on stdout the number of go routines currently
 // running.
 func (s *ProfilerService) printNumOfRoutines() {
-	log.Debugf("profiler: num of go routines: %v\n", runtime.NumGoroutine())
+	s.log(
+		log.DebugLevel,
+		"num of go routines: %v\n", runtime.NumGoroutine(),
+	)
 }
 
 // dumpPrometheusDefaults writes default Prometheus metrics to the given file
 // path.
 func (s *ProfilerService) dumpPrometheusDefaults(path string) error {
+	filename := filepath.Join(path, time.Now().Format(time.RFC3339))
 	file, err := os.OpenFile(
-		filepath.Join(
-			path,
-			time.Now().Format(time.RFC3339)),
-		os.O_APPEND|os.O_CREATE|os.O_RDWR,
-		0644,
+		filename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644,
 	)
 	if err != nil {
 		return err
@@ -171,10 +175,12 @@ func (s *ProfilerService) dumpPrometheusDefaults(path string) error {
 		}
 	}
 
+	s.log(log.InfoLevel, "dumped Prometheus metrics to file %s", filename)
+
 	return nil
 }
 
 // toGigabytes returns given memory in bytes to gigabytes.
 func toGigabytes(bytes uint64) float64 {
-	return float64(bytes) / gigabyte
+	return float64(bytes) / math.Pow10(9)
 }

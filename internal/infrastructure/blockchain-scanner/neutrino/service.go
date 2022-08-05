@@ -39,6 +39,7 @@ type NodeServiceArgs struct {
 	Network             string
 	FiltersDatadir      string
 	BlockHeadersDatadir string
+	EsploraUrl          string
 	Peers               []string
 }
 
@@ -51,6 +52,9 @@ func (a NodeServiceArgs) validate() error {
 	}
 	if a.BlockHeadersDatadir == "" {
 		return fmt.Errorf("missing block headers datadir")
+	}
+	if a.EsploraUrl == "" {
+		return fmt.Errorf("missing esplora url")
 	}
 	if len(a.Peers) == 0 {
 		return fmt.Errorf("list of peers must not be empty")
@@ -74,8 +78,7 @@ func NewNeutrinoScanner(args NodeServiceArgs) (ports.BlockchainScanner, error) {
 	if err != nil {
 		return nil, err
 	}
-	esploraUrl := esploraUrlFromNetwork(args.Network)
-	blockSvc := blockservice.NewEsploraBlockService(esploraUrl)
+	blockSvc := blockservice.NewEsploraBlockService(args.EsploraUrl)
 	scanners := make(map[string]*scannerService)
 	lock := &sync.RWMutex{}
 	return &service{
@@ -118,7 +121,7 @@ func (s *service) StopWatchForAccount(accountName string) {
 }
 
 func (s *service) GetUtxos(utxoKeys []domain.UtxoKey) ([]*domain.Utxo, error) {
-	baseUrl := esploraUrlFromNetwork(s.nodeConfig.Network)
+	baseUrl := s.nodeConfig.EsploraUrl
 	client := &http.Client{}
 	utxos := make([]*domain.Utxo, 0, len(utxoKeys))
 	for _, key := range utxoKeys {
@@ -211,16 +214,6 @@ func (s *service) removeScanner(accountName string) {
 	defer s.lock.Unlock()
 
 	delete(s.scanners, accountName)
-}
-
-func esploraUrlFromNetwork(net string) string {
-	if net == "nigiri" {
-		return "http://localhost:3001"
-	}
-	if net == "testnet" {
-		return "https://blockstream.info/liquidtestnet/api"
-	}
-	return "https://blockstream.info/liquid/api"
 }
 
 func genesisBlockHashForNetwork(net string) *chainhash.Hash {

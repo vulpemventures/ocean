@@ -98,12 +98,14 @@ func testGetTxChannel(t *testing.T) {
 
 func listenToUtxoEvents(t *testing.T, chEvents chan domain.UtxoEvent) {
 	for event := range chEvents {
+		time.Sleep(time.Millisecond)
 		t.Logf("received event: %+v\n", event)
 	}
 }
 
 func listenToTxEvents(t *testing.T, chEvents chan domain.TransactionEvent) {
 	for event := range chEvents {
+		time.Sleep(time.Millisecond)
 		t.Logf(
 			"received event: {EventType: %s, Transaction: {TxID: %s, Accounts: %v, Confirmed: %t}}\n",
 			event.EventType, event.Transaction.TxID, event.Transaction.GetAccounts(), event.Transaction.IsConfirmed(),

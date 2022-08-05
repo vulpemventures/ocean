@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	log "github.com/sirupsen/logrus"
@@ -92,6 +93,8 @@ func (s *scannerService) watchAddresses(addressesInfo []domain.AddressInfo) {
 func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 	s.log("start listening to incoming reports from node")
 	for r := range chReports {
+		time.Sleep(time.Millisecond)
+
 		if r.Transaction == nil {
 			continue
 		}

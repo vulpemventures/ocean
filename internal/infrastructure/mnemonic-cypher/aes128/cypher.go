@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"fmt"
+	"runtime/debug"
 
 	"golang.org/x/crypto/scrypt"
 )
@@ -16,6 +17,11 @@ func NewAES128Cypher() *Cypher {
 }
 
 func (c *Cypher) Encrypt(mnemonic, password []byte) ([]byte, error) {
+	// Due to https://github.com/golang/go/issues/7168.
+	// This call makes sure that memory is freed in case the GC doesn't do that
+	// right after the encryption/decryption.
+	defer debug.FreeOSMemory()
+
 	if len(mnemonic) == 0 {
 		return nil, fmt.Errorf("missing plaintext mnemonic")
 	}
@@ -48,6 +54,8 @@ func (c *Cypher) Encrypt(mnemonic, password []byte) ([]byte, error) {
 }
 
 func (c *Cypher) Decrypt(encryptedMnemonic, password []byte) ([]byte, error) {
+	defer debug.FreeOSMemory()
+
 	if len(encryptedMnemonic) == 0 {
 		return nil, fmt.Errorf("missing encrypted mnemonic")
 	}

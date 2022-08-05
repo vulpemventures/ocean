@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/ocean/internal/core/domain"
@@ -19,7 +20,7 @@ import (
 //
 // The service registers 3 handlers related to the following wallet events:
 //	* domain.WalletAccountCreated - whenever an account is created, the service initializes a dedicated blockchain scanner and starts listening for its reports.
-//	* domain.WalletAccountAddressesDerived - whenever one or more addresses are derived an account, they are added to the list of addresses watched by the account's scanner.
+//	* domain.WalletAccountAddressesDerived - whenever one or more addresses are derived for an account, they are added to the list of those watched by the account's scanner.
 //	* domain.WalletAccountDeleted - whenever an account is deleted, the relative scanner is stopped and removed.
 //
 // The service guarantees to be always listening to notifications coming from
@@ -242,6 +243,8 @@ func (as *AccountService) listenToUtxoChannel(
 	as.log("start listening to utxo channel for account %s", accountName)
 
 	for utxos := range chUtxos {
+		time.Sleep(time.Millisecond)
+
 		as.log(
 			"received %d utxo(s) from channel for account %s",
 			len(utxos), accountName,
@@ -305,6 +308,8 @@ func (as *AccountService) listenToTxChannel(
 	ctx := context.Background()
 	txRepo := as.repoManager.TransactionRepository()
 	for tx := range chTxs {
+		time.Sleep(time.Millisecond)
+
 		as.log("received new tx %s from channel", tx.TxID)
 
 		gotTx, _ := txRepo.GetTransaction(ctx, tx.TxID)

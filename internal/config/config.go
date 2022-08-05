@@ -55,6 +55,9 @@ const (
 	// RootPathKey is the key to use a custom root path for the wallet,
 	// instead of the default m/84'/[1776|1]' (depending on network).
 	RootPathKey = "ROOT_PATH"
+	// EsploraUrlKey is the key for the esplora block esplorer consumed by the
+	// neutrino blockchain scanner
+	EsploraUrlKey = "ESPLORA_URL"
 
 	// DbLocation is the folder inside the datadir containing db files.
 	DbLocation = "db"
@@ -81,6 +84,7 @@ var (
 	defaultProfilerPort       = 18001
 	defaultStatsInterval      = 600 // 10 minutes
 	defaultUtxoExpiryDuration = 360 // 6 minutes (3 blocks)
+	defaultEsploraUrl         = "https://blockstream.info/liquid/api"
 
 	supportedNetworks = map[string]*network.Network{
 		network.Liquid.Name:  &network.Liquid,
@@ -117,6 +121,7 @@ func init() {
 	vip.SetDefault(ProfilerPortKey, defaultProfilerPort)
 	vip.SetDefault(StatsIntervalKey, defaultStatsInterval)
 	vip.SetDefault(UtxoExpiryDurationKey, defaultUtxoExpiryDuration)
+	vip.SetDefault(EsploraUrlKey, defaultEsploraUrl)
 
 	if err := validate(); err != nil {
 		log.Fatalf("invalid config: %s", err)
