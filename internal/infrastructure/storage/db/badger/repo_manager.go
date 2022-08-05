@@ -112,8 +112,6 @@ func (d *repoManager) Close() {
 
 func (rm *repoManager) listenToWalletEvents() {
 	for event := range rm.walletRepository.chEvents {
-		time.Sleep(time.Millisecond)
-
 		if handler, ok := rm.walletEventHandlers.get(int(event.EventType)); ok {
 			handler.(ports.WalletEventHandler)(event)
 		}
@@ -122,8 +120,6 @@ func (rm *repoManager) listenToWalletEvents() {
 
 func (rm *repoManager) listenToUtxoEvents() {
 	for event := range rm.utxoRepository.chEvents {
-		time.Sleep(time.Millisecond)
-
 		if handler, ok := rm.utxoEventHandlers.get(int(event.EventType)); ok {
 			handler.(ports.UtxoEventHandler)(event)
 		}
@@ -132,8 +128,6 @@ func (rm *repoManager) listenToUtxoEvents() {
 
 func (rm *repoManager) listenToTxEvents() {
 	for event := range rm.txRepository.chEvents {
-		time.Sleep(time.Millisecond)
-
 		if handler, ok := rm.txEventHandlers.get(int(event.EventType)); ok {
 			handler.(ports.TxEventHandler)(event)
 		}
