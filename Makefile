@@ -39,7 +39,7 @@ run: clean
 	export OCEAN_NO_TLS=true; \
 	export OCEAN_STATS_INTERVAL=120; \
 	export OCEAN_ESPLORA_URL=http://localhost:3001; \
-	export OCEAN_NODE_PEERS="localhost:18886"; \
+	export OCEAN_NODE_PEERS=localhost:18886; \
 	export OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
 	go run ./cmd/oceand
 
