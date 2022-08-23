@@ -50,24 +50,6 @@ func NewAccountService(
 
 	svc := &AccountService{repoManager, bcScanner, logFn, warnFn}
 	svc.registerHandlerForWalletEvents()
-
-	w, _ := repoManager.WalletRepository().GetWallet(context.Background())
-	if w == nil {
-		return svc
-	}
-
-	for accountName := range w.AccountKeysByName {
-		accountKey := w.AccountKeysByName[accountName]
-		account := w.AccountsByKey[accountKey]
-		addressesInfo, _ := w.AllDerivedAddressesForAccount(accountName)
-		if len(addressesInfo) > 0 {
-			svc.log("start watching addresses for account %s", accountName)
-			bcScanner.WatchForAccount(accountName, account.BirthdayBlock, addressesInfo)
-		}
-		go svc.listenToUtxoChannel(accountName, bcScanner.GetUtxoChannel(accountName))
-		go svc.listenToTxChannel(accountName, bcScanner.GetTxChannel(accountName))
-	}
-
 	return svc
 }
 
@@ -212,6 +194,28 @@ func (as *AccountService) DeleteAccount(
 }
 
 func (as *AccountService) registerHandlerForWalletEvents() {
+	// Start watching all existing accounts' addresses as soon as wallet is unlocked.
+	as.repoManager.RegisterHandlerForWalletEvent(
+		domain.WalletUnlocked, func(event domain.WalletEvent) {
+			w, _ := as.repoManager.WalletRepository().GetWallet(context.Background())
+			for key, acc := range w.AccountsByKey {
+				fmt.Printf("%s %+v\n", key, acc)
+			}
+
+			for accountName := range w.AccountKeysByName {
+				accountKey := w.AccountKeysByName[accountName]
+				account := w.AccountsByKey[accountKey]
+				addressesInfo, _ := w.AllDerivedAddressesForAccount(accountName)
+				if len(addressesInfo) > 0 {
+					as.log("start watching addresses for account %s", accountName)
+					as.bcScanner.WatchForAccount(accountName, account.BirthdayBlock, addressesInfo)
+				}
+				go as.listenToUtxoChannel(accountName, as.bcScanner.GetUtxoChannel(accountName))
+				go as.listenToTxChannel(accountName, as.bcScanner.GetTxChannel(accountName))
+			}
+		},
+	)
+	// Start watching account as soon as it is created.
 	as.repoManager.RegisterHandlerForWalletEvent(
 		domain.WalletAccountCreated, func(event domain.WalletEvent) {
 			as.bcScanner.WatchForAccount(
@@ -223,6 +227,7 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 			go as.listenToTxChannel(event.AccountName, chTxs)
 		},
 	)
+	// Start watching account address as soon as it's derived.
 	as.repoManager.RegisterHandlerForWalletEvent(
 		domain.WalletAccountAddressesDerived, func(event domain.WalletEvent) {
 			as.bcScanner.WatchForAccount(
@@ -230,6 +235,7 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 			)
 		},
 	)
+	// Stop watching account and all its addresses as soon as it's deleted.
 	as.repoManager.RegisterHandlerForWalletEvent(
 		domain.WalletAccountDeleted, func(event domain.WalletEvent) {
 			as.bcScanner.StopWatchForAccount(event.AccountName)
@@ -281,9 +287,7 @@ func (as *AccountService) listenToUtxoChannel(
 				)
 			}
 			if count > 0 {
-				as.log(
-					"account service: spent %d utxos for account %s", count, accountName,
-				)
+				as.log("spent %d utxos for account %s", count, accountName)
 				continue
 			}
 		}
