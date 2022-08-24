@@ -18,7 +18,7 @@ import (
 
 type scannerService struct {
 	accountName         string
-	svc                 scanner.ScannerService
+	svc                 scanner.Service
 	blindingKeys        map[string][]byte
 	startingBlockHeight uint32
 	chTxs               chan *domain.Transaction
@@ -77,7 +77,7 @@ func (s *scannerService) watchAddresses(addressesInfo []domain.AddressInfo) {
 		}
 
 		s.blindingKeys[info.Script] = info.BlindingKey
-		item, _ := scanner.NewScriptWatchItemFromAddress(info.Address)
+		item, _ := scanner.NewUnspentWatchItemFromAddress(info.Address)
 		s.svc.Watch(
 			scanner.WithWatchItem(item),
 			scanner.WithStartBlock(s.startingBlockHeight),

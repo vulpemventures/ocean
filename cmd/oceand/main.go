@@ -66,13 +66,8 @@ func main() {
 		defer profilerSvc.Stop()
 	}
 
-	net := network.Name
-	if net == "regtest" {
-		net = "nigiri"
-	}
-
 	bcScannerConfig := neutrino_scanner.NodeServiceArgs{
-		Network:             net,
+		Network:             network.Name,
 		FiltersDatadir:      filtersDir,
 		BlockHeadersDatadir: blockHeadersDir,
 		Peers:               nodePeers,
