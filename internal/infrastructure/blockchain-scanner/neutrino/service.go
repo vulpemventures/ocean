@@ -8,13 +8,8 @@ import (
 	"io"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/dgraph-io/badger/v3"
-	"github.com/dgraph-io/badger/v3/options"
-	log "github.com/sirupsen/logrus"
-	"github.com/timshannon/badgerhold/v4"
 	"github.com/vulpemventures/go-elements/transaction"
 	"github.com/vulpemventures/neutrino-elements/pkg/blockservice"
 	"github.com/vulpemventures/neutrino-elements/pkg/node"
@@ -22,6 +17,7 @@ import (
 	"github.com/vulpemventures/neutrino-elements/pkg/repository"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
+	"github.com/xujiajun/nutsdb"
 )
 
 const (
@@ -71,17 +67,23 @@ func NewNeutrinoScanner(args NodeServiceArgs) (ports.BlockchainScanner, error) {
 		return nil, err
 	}
 
-	logger := log.New()
-	filterStore, err := createDb(args.FiltersDatadir, logger)
+	filterStore, err := nutsdb.Open(
+		nutsdb.DefaultOptions,
+		nutsdb.WithDir(args.FiltersDatadir),
+	)
 	if err != nil {
 		return nil, err
 	}
-	headersStore, err := createDb(args.BlockHeadersDatadir, logger)
+	headersStore, err := nutsdb.Open(
+		nutsdb.DefaultOptions,
+		nutsdb.WithDir(args.BlockHeadersDatadir),
+	)
 	if err != nil {
 		return nil, err
 	}
-	filtersDb := newFilterRepo(filterStore)
+	filtersDb := newFiltersRepo(filterStore)
 	headersDb := newHeadersRepo(headersStore)
+
 	nodeSvc, err := node.New(node.NodeConfig{
 		Network:        args.Network,
 		UserAgent:      userAgent,
@@ -108,7 +110,7 @@ func (s *service) Stop() {
 	for _, scanner := range s.scanners {
 		scanner.stop()
 	}
-	s.filtersRepo.(*filterRepo).close()
+	s.filtersRepo.(*filtersRepo).close()
 	s.headersRepo.(*headersRepo).close()
 }
 
@@ -289,42 +291,4 @@ type esploraTxStatus struct {
 	BlockHeight    uint64 `json:"block_height"`
 	BlockHash      string `json:"block_hash"`
 	BlockTimestamp int64  `json:"block_time"`
-}
-
-func createDb(dbDir string, logger badger.Logger) (*badgerhold.Store, error) {
-	isInMemory := len(dbDir) <= 0
-
-	opts := badger.DefaultOptions(dbDir)
-	opts.Logger = logger
-
-	if isInMemory {
-		opts.InMemory = true
-	} else {
-		opts.Compression = options.ZSTD
-	}
-
-	db, err := badgerhold.Open(badgerhold.Options{
-		Encoder:          badgerhold.DefaultEncode,
-		Decoder:          badgerhold.DefaultDecode,
-		SequenceBandwith: 100,
-		Options:          opts,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if !isInMemory {
-		ticker := time.NewTicker(30 * time.Minute)
-
-		go func() {
-			for {
-				<-ticker.C
-				if err := db.Badger().RunValueLogGC(0.5); err != nil && err != badger.ErrNoRewrite {
-					log.Warnf("garbage collector: %s", err)
-				}
-			}
-		}()
-	}
-
-	return db, nil
 }

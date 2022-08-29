@@ -1,59 +1,70 @@
 package neutrino_scanner
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/dgraph-io/badger/v3"
-	"github.com/timshannon/badgerhold/v4"
 	"github.com/vulpemventures/go-elements/block"
 	"github.com/vulpemventures/neutrino-elements/pkg/repository"
+	"github.com/xujiajun/nutsdb"
 )
 
+const headersBucket = "headers"
+
 type headersRepo struct {
-	store *badgerhold.Store
+	store *nutsdb.DB
 }
 
-func NewHeadersRepo(store *badgerhold.Store) repository.BlockHeaderRepository {
+func NewHeadersRepo(store *nutsdb.DB) repository.BlockHeaderRepository {
 	return newHeadersRepo(store)
 }
 
-func newHeadersRepo(store *badgerhold.Store) *headersRepo {
+func newHeadersRepo(store *nutsdb.DB) *headersRepo {
 	return &headersRepo{store}
 }
 
-func (r *headersRepo) ChainTip(ctx context.Context) (*block.Header, error) {
-	query := &badgerhold.Query{}
-	query.SortBy("Height").Reverse().Limit(1)
-	header, err := r.findHeader(ctx, query)
-	if err != nil {
+func (r *headersRepo) ChainTip(context.Context) (*block.Header, error) {
+	var header *block.Header
+	if err := r.store.View(func(tx *nutsdb.Tx) error {
+		entries, err := tx.GetAll(headersBucket)
+		if err != nil {
+			if err == nutsdb.ErrBucketEmpty {
+				return repository.ErrNoBlocksHeaders
+			}
+			return err
+		}
+		if len(entries) <= 0 {
+			return repository.ErrNoBlocksHeaders
+		}
+		for _, e := range entries {
+			h, _ := block.DeserializeHeader(bytes.NewBuffer(e.Value))
+			if header == nil {
+				header = h
+			} else if h.Height > header.Height {
+				header = h
+			}
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
-	if header == nil {
-		return nil, repository.ErrNoBlocksHeaders
-	}
+
 	return header, nil
 }
 
 func (r *headersRepo) GetBlockHeader(
-	ctx context.Context, hash chainhash.Hash,
+	_ context.Context, hash chainhash.Hash,
 ) (*block.Header, error) {
-	header, err := r.getHeader(ctx, hash)
-	if err != nil {
-		return nil, err
-	}
-	if header == nil {
-		return nil, repository.ErrBlockNotFound
-	}
-	return header, nil
+	return r.getHeader(hash)
 }
 
 func (r *headersRepo) GetBlockHashByHeight(
-	ctx context.Context, height uint32,
+	_ context.Context, height uint32,
 ) (*chainhash.Hash, error) {
-	header, err := r.getHeaderByHeight(ctx, height)
+	header, err := r.getHeaderByHeight(height)
 	if err != nil {
 		return nil, err
 	}
@@ -65,14 +76,14 @@ func (r *headersRepo) GetBlockHashByHeight(
 }
 
 func (r *headersRepo) WriteHeaders(
-	ctx context.Context, headers ...block.Header,
+	_ context.Context, headers ...block.Header,
 ) error {
 	for _, header := range headers {
 		hash, err := header.Hash()
 		if err != nil {
 			continue
 		}
-		if err := r.insertHeader(ctx, hash, header); err != nil {
+		if err := r.insertHeader(hash, header); err != nil {
 			return err
 		}
 	}
@@ -86,13 +97,11 @@ func (r *headersRepo) LatestBlockLocator(
 	if err != nil {
 		return nil, err
 	}
-	return r.blockLocatorFromHeader(ctx, tip)
+	return r.blockLocatorFromHeader(tip)
 }
 
-func (r *headersRepo) HasAllAncestors(
-	ctx context.Context, hash chainhash.Hash,
-) (bool, error) {
-	header, err := r.getHeader(ctx, hash)
+func (r *headersRepo) HasAllAncestors(_ context.Context, hash chainhash.Hash) (bool, error) {
+	header, err := r.getHeader(hash)
 	if err != nil {
 		return false, err
 	}
@@ -105,7 +114,7 @@ func (r *headersRepo) HasAllAncestors(
 		if err != nil {
 			return false, err
 		}
-		header, err = r.getHeader(ctx, *prevHash)
+		header, err = r.getHeader(*prevHash)
 		if err != nil {
 			return false, err
 		}
@@ -117,30 +126,32 @@ func (r *headersRepo) HasAllAncestors(
 }
 
 func (r *headersRepo) insertHeader(
-	ctx context.Context, hash chainhash.Hash, header block.Header,
+	hash chainhash.Hash, header block.Header,
 ) error {
-	var err error
-	if ctx.Value("tx") != nil {
-		tx := ctx.Value("tx").(*badger.Txn)
-		err = r.store.TxInsert(tx, hash.String(), header)
-	} else {
-		err = r.store.Insert(hash.String(), header)
-	}
-	if err != nil {
-		if err == badgerhold.ErrKeyExists {
-			return nil //fmt.Errorf("header with hash %s already exists", hash)
-		}
-		return err
-	}
-	return nil
+	buf, _ := header.Serialize()
+	return r.store.Update(func(tx *nutsdb.Tx) error {
+		return tx.Put(headersBucket, hash[:], buf, nutsdb.Persistent)
+	})
 }
 
-func (r *headersRepo) getHeaderByHeight(
-	ctx context.Context, height uint32,
-) (*block.Header, error) {
-	query := badgerhold.Where("Height").Eq(height)
-	header, err := r.findHeader(ctx, query)
-	if err != nil {
+func (r *headersRepo) getHeaderByHeight(height uint32) (*block.Header, error) {
+	var header *block.Header
+	if err := r.store.View(func(tx *nutsdb.Tx) error {
+		entries, err := tx.GetAll(headersBucket)
+		if err != nil {
+			return err
+		}
+		if len(entries) > 0 {
+			for _, e := range entries {
+				h, _ := block.DeserializeHeader(bytes.NewBuffer(e.Value))
+				if h.Height == height {
+					header = h
+					break
+				}
+			}
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 	if header == nil {
@@ -150,52 +161,27 @@ func (r *headersRepo) getHeaderByHeight(
 }
 
 func (r *headersRepo) getHeader(
-	ctx context.Context, hash chainhash.Hash,
+	hash chainhash.Hash,
 ) (*block.Header, error) {
-	var header block.Header
-	var err error
-	if ctx.Value("tx") != nil {
-		tx := ctx.Value("tx").(*badger.Txn)
-		err = r.store.TxGet(tx, hash.String(), &header)
-	} else {
-		err = r.store.Get(hash.String(), &header)
-	}
-	if err != nil {
-		if err == badgerhold.ErrNotFound {
-			return nil, nil
+	var header *block.Header
+	if err := r.store.View(func(tx *nutsdb.Tx) error {
+		e, err := tx.Get(headersBucket, hash[:])
+		if err != nil {
+			if err == nutsdb.ErrKeyNotFound || err == nutsdb.ErrBucketEmpty {
+				return repository.ErrBlockNotFound
+			}
+			return err
 		}
+		header, _ = block.DeserializeHeader(bytes.NewBuffer(e.Value))
+		return nil
+	}); err != nil {
 		return nil, err
 	}
-
-	return &header, nil
-}
-
-func (r *headersRepo) findHeader(
-	ctx context.Context, query *badgerhold.Query,
-) (*block.Header, error) {
-	var header []block.Header
-	var err error
-	if ctx.Value("tx") != nil {
-		tx := ctx.Value("tx").(*badger.Txn)
-		err = r.store.TxFind(tx, &header, query)
-	} else {
-		err = r.store.Find(&header, query)
-	}
-	if err != nil {
-		if err == badgerhold.ErrNotFound {
-			return nil, nil
-		}
-		return nil, err
-	}
-	if len(header) == 0 {
-		return nil, nil
-	}
-
-	return &header[0], nil
+	return header, nil
 }
 
 func (r *headersRepo) blockLocatorFromHeader(
-	ctx context.Context, header *block.Header,
+	header *block.Header,
 ) (blockchain.BlockLocator, error) {
 	var locator blockchain.BlockLocator
 
@@ -214,7 +200,7 @@ func (r *headersRepo) blockLocatorFromHeader(
 	height := header.Height
 	decrement := uint32(1)
 	for height > 0 && len(locator) < wire.MaxBlockLocatorsPerMsg {
-		blockHeader, err := r.getHeaderByHeight(ctx, height)
+		blockHeader, err := r.getHeaderByHeight(height)
 		if err != nil {
 			return nil, err
 		}
