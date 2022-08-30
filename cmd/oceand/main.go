@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	appconfig "github.com/vulpemventures/ocean/internal/app-config"
 	"github.com/vulpemventures/ocean/internal/config"
-	neutrino_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/neutrino"
+	elements_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/elements"
 	"github.com/vulpemventures/ocean/internal/interfaces"
 	grpc_interface "github.com/vulpemventures/ocean/internal/interfaces/grpc"
 	"github.com/vulpemventures/ocean/pkg/profiler"
@@ -44,7 +44,7 @@ var (
 	tlsExtraIPs        = config.GetStringSlice(config.TLSExtraIPKey)
 	tlsExtraDomains    = config.GetStringSlice(config.TLSExtraDomainKey)
 	statsInterval      = time.Duration(config.GetInt(config.StatsIntervalKey)) * time.Second
-	nodePeers          = config.GetStringSlice(config.NodePeersKey)
+	nodeRpcAddr        = config.GetString(config.ElementsNodeRpcAddrKey)
 	utxoExpiryDuration = time.Duration(config.GetInt(config.UtxoExpiryDurationKey))
 	rootPath           = config.GetRootPath()
 )
@@ -66,11 +66,11 @@ func main() {
 		defer profilerSvc.Stop()
 	}
 
-	bcScannerConfig := neutrino_scanner.NodeServiceArgs{
+	bcScannerConfig := elements_scanner.ServiceArgs{
+		RpcAddr:             nodeRpcAddr,
 		Network:             network.Name,
 		FiltersDatadir:      filtersDir,
 		BlockHeadersDatadir: blockHeadersDir,
-		Peers:               nodePeers,
 		EsploraUrl:          esploraUrl,
 	}
 	serviceCfg := grpc_interface.ServiceConfig{
