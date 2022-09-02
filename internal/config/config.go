@@ -79,7 +79,7 @@ const (
 var (
 	vip *viper.Viper
 
-	defaultDatadir            = btcutil.AppDataDir("ocean-wallet", false)
+	defaultDatadir            = btcutil.AppDataDir("oceand", false)
 	defaultDbType             = "badger"
 	defaultBcScannerType      = "elements"
 	defaultPort               = 18000

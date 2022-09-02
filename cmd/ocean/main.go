@@ -15,7 +15,7 @@ var (
 	commit  = "none"
 	date    = "unknown"
 
-	walletDatadir = btcutil.AppDataDir("ocean-wallet", false)
+	walletDatadir = btcutil.AppDataDir("oceand", false)
 	initialState  = map[string]string{
 		"rpcserver":     "localhost:18000",
 		"no_tls":        strconv.FormatBool(false),
