@@ -72,12 +72,10 @@ func (i Input) prevout() *transaction.TxOutput {
 		nonce = make([]byte, 1)
 	}
 	return &transaction.TxOutput{
-		Asset:           asset,
-		Value:           value,
-		Script:          i.Script,
-		Nonce:           nonce,
-		RangeProof:      i.RangeProof,
-		SurjectionProof: i.SurjectionProof,
+		Asset:  asset,
+		Value:  value,
+		Script: i.Script,
+		Nonce:  nonce,
 	}
 }
 
@@ -184,7 +182,11 @@ func (w *Wallet) CreatePset(args CreatePsetArgs) (string, error) {
 		return "", err
 	}
 	for i, in := range args.Inputs {
-		updater.AddInWitnessUtxo(i, in.prevout())
+		prevout := in.prevout()
+		updater.AddInWitnessUtxo(i, prevout)
+		if prevout.IsConfidential() {
+			updater.AddInUtxoRangeProof(i, in.RangeProof)
+		}
 	}
 
 	return ptx.ToBase64()
@@ -260,7 +262,12 @@ func (w *Wallet) UpdatePset(args UpdatePsetArgs) (string, error) {
 	}
 
 	for i, in := range args.Inputs {
-		updater.AddInWitnessUtxo(int(nextInputIndex)+i, in.prevout())
+		prevout := in.prevout()
+		inIndex := int(nextInputIndex) + i
+		updater.AddInWitnessUtxo(inIndex, prevout)
+		if prevout.IsConfidential() {
+			updater.AddInUtxoRangeProof(inIndex, in.RangeProof)
+		}
 	}
 
 	if err := updater.AddOutputs(args.outputs(nextInputIndex)); err != nil {

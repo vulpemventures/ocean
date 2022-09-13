@@ -1,5 +1,5 @@
 # first image used to build the sources
-FROM golang:1.17-buster AS builder
+FROM golang:1.18-buster AS builder
 
 ARG VERSION
 ARG COMMIT
@@ -7,37 +7,41 @@ ARG DATE
 ARG TARGETOS
 ARG TARGETARCH
 
-
-WORKDIR /oceand
+WORKDIR /app
 
 COPY . .
 RUN go mod download
 
-RUN CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="-X 'main.Version=${COMMIT}' -X 'main.Commit=${COMMIT}' -X 'main.Date=${COMMIT}'" -o oceand-linux cmd/oceand/main.go
-RUN go build -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${COMMIT}' -X 'main.date=${DATE}'" -o ocean cmd/ocean/*
-
-WORKDIR /build
-
-RUN cp /oceand/oceand-linux .
-RUN cp /oceand/ocean .
+RUN CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="-X 'main.Version=${COMMIT}' -X 'main.Commit=${COMMIT}' -X 'main.Date=${COMMIT}'" -o bin/oceand cmd/oceand/main.go
+RUN go build -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${COMMIT}' -X 'main.date=${DATE}'" -o bin/ocean cmd/ocean/*
 
 # Second image, running the oceand executable
-FROM debian:buster
+FROM debian:buster-slim
+
+# $USER name, and data $DIR to be used in the `final` image
+ARG USER=ocean
+ARG DIR=/home/ocean
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
-COPY --from=builder /build/oceand-linux /
-COPY --from=builder /build/ocean /
+COPY --from=builder /app/bin/* /usr/local/bin/
 
-RUN install /ocean /bin
-# Prevents `VOLUME $HOME/.oceand/` being created as owned by `root`
-RUN useradd -ms /bin/bash user
-USER user
-RUN mkdir -p "$HOME/.oceand/"
+# NOTE: Default GID == UID == 1000
+RUN adduser --disabled-password \
+            --home "$DIR/" \
+            --gecos "" \
+            "$USER"
+USER $USER
+
+# Prevents `VOLUME $DIR/.oceand/` being created as owned by `root`
+RUN mkdir -p "$DIR/.oceand/"
+
+# Expose volume containing all `tdexd` data
+VOLUME $DIR/.oceand/
 
 # Expose ports of grpc server and profiler
 EXPOSE 18000
 EXPOSE 18001
 
-CMD /oceand-linux
+ENTRYPOINT [ "oceand" ]
 

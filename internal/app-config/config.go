@@ -2,38 +2,19 @@ package appconfig
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/network"
+	"github.com/vulpemventures/ocean/internal/config"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"github.com/vulpemventures/ocean/internal/core/ports"
+	elements_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/elements"
 	neutrino_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/neutrino"
 	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/inmemory"
 	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
-
-var (
-	supportedRepoManagers = supportedType{
-		"badger":   {},
-		"inmemory": {},
-	}
-	supportedBcScanners = supportedType{
-		"neutrino": {},
-	}
-)
-
-type supportedType map[string]struct{}
-
-func (t supportedType) String() string {
-	types := make([]string, 0, len(t))
-	for tt := range t {
-		types = append(types, tt)
-	}
-	return strings.Join(types, " | ")
-}
 
 // AppConfig is the struct holding all configuration options for
 // every application service (wallet, account, transaction and notification).
@@ -79,19 +60,19 @@ func (c *AppConfig) Validate() error {
 	if len(c.RepoManagerType) == 0 {
 		return fmt.Errorf("missing repo manager type")
 	}
-	if _, ok := supportedRepoManagers[c.RepoManagerType]; !ok {
+	if _, ok := config.SupportedDbs[c.RepoManagerType]; !ok {
 		return fmt.Errorf(
 			"repo manager type not supported, must be one of: %s",
-			supportedRepoManagers,
+			config.SupportedDbs,
 		)
 	}
 	if len(c.BlockchainScannerType) == 0 {
 		return fmt.Errorf("missing blockchain scanner type")
 	}
-	if _, ok := supportedBcScanners[c.BlockchainScannerType]; !ok {
+	if _, ok := config.SupportedBcScanners[c.BlockchainScannerType]; !ok {
 		return fmt.Errorf(
 			"blockchain scanner type not supported, must be one of: %s",
-			supportedBcScanners,
+			config.SupportedBcScanners,
 		)
 	}
 	if _, err := c.repoManager(); err != nil {
@@ -180,6 +161,23 @@ func (c *AppConfig) bcScanner() (ports.BlockchainScanner, error) {
 			)
 		}
 		bcs, err := neutrino_scanner.NewNeutrinoScanner(args)
+		if err != nil {
+			return nil, err
+		}
+		c.bcs = bcs
+		return c.bcs, nil
+	case "elements":
+		if c.BlockchainScannerConfig == nil {
+			return nil, fmt.Errorf("missing blockchain scanner config args")
+		}
+		args, ok := c.BlockchainScannerConfig.(elements_scanner.ServiceArgs)
+		if !ok {
+			return nil, fmt.Errorf(
+				"invalid blockchain scanner config type, must be " +
+					"elements_scanner.ServiceArgs",
+			)
+		}
+		bcs, err := elements_scanner.NewElementsScanner(args)
 		if err != nil {
 			return nil, err
 		}

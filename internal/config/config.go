@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/spf13/viper"
@@ -49,6 +50,9 @@ const (
 	// NodePeersKey is the key to customize the list of peers the embedded SPV
 	// node will connect to when started
 	NodePeersKey = "NODE_PEERS"
+	// ElementsNodeRpcAddrKey is the key to set the rpc address of the node to connect
+	// to when using elements-node-based blockchain scanner.
+	ElementsNodeRpcAddrKey = "NODE_RPC_ADDR"
 	// UtxoExpiryDurationKey is the key to customize the waiting time for one or
 	// more previously locked utxos to be unlocked if not yet spent.
 	UtxoExpiryDurationKey = "UTXO_EXPIRY_DURATION_IN_SECONDS"
@@ -75,9 +79,9 @@ const (
 var (
 	vip *viper.Viper
 
-	defaultDatadir            = btcutil.AppDataDir("ocean-wallet", false)
+	defaultDatadir            = btcutil.AppDataDir("oceand", false)
 	defaultDbType             = "badger"
-	defaultBcScannerType      = "neutrino"
+	defaultBcScannerType      = "elements"
 	defaultPort               = 18000
 	defaultLogLevel           = 4
 	defaultNetwork            = network.Liquid.Name
@@ -91,17 +95,18 @@ var (
 		network.Testnet.Name: &network.Testnet,
 		network.Regtest.Name: &network.Regtest,
 	}
-	supportedDbs = map[string]struct{}{
-		"badger":   {},
-		"inmemory": {},
-	}
-	supportedBcScanners = map[string]struct{}{
-		"neutrino": {},
-	}
 	coinTypeByNetwork = map[string]int{
 		network.Liquid.Name:  1776,
 		network.Testnet.Name: 1,
 		network.Regtest.Name: 1,
+	}
+	SupportedDbs = supportedType{
+		"badger":   {},
+		"inmemory": {},
+	}
+	SupportedBcScanners = supportedType{
+		"neutrino": {},
+		"elements": {},
 	}
 )
 
@@ -166,23 +171,22 @@ func validate() error {
 	}
 
 	dbType := GetString(DatabaseTypeKey)
-	if _, ok := supportedDbs[dbType]; !ok {
-		dbTypes := make([]string, 0, len(supportedDbs))
-		for t := range supportedDbs {
-			dbTypes = append(dbTypes, t)
-		}
-		return fmt.Errorf("unsupported database type, must be one of %v", dbTypes)
+	if _, ok := SupportedDbs[dbType]; !ok {
+		return fmt.Errorf("unsupported database type, must be one of %s", SupportedDbs)
 	}
 
 	bcScannerType := GetString(BlockchainScannerTypeKey)
-	if _, ok := supportedBcScanners[bcScannerType]; !ok {
-		bcScannerTypes := make([]string, 0, len(supportedBcScanners))
-		for t := range supportedBcScanners {
-			bcScannerTypes = append(bcScannerTypes, t)
-		}
+	if _, ok := SupportedBcScanners[bcScannerType]; !ok {
 		return fmt.Errorf(
-			"unsupported blockchain scanner type, must be one of %v", bcScannerTypes,
+			"unsupported blockchain scanner type, must be one of %s", SupportedBcScanners,
 		)
+	}
+
+	if bcScannerType == "neutrino" {
+		nodePeers := GetStringSlice(NodePeersKey)
+		if len(nodePeers) == 0 {
+			return fmt.Errorf("node peers list must not be empty")
+		}
 	}
 
 	port := GetInt(PortKey)
@@ -192,11 +196,6 @@ func validate() error {
 		if port == profilerPort {
 			return fmt.Errorf("port and profiler port must not be equal")
 		}
-	}
-
-	nodePeers := GetStringSlice(NodePeersKey)
-	if len(nodePeers) == 0 {
-		return fmt.Errorf("node peers list must not be empty")
 	}
 
 	return nil
@@ -284,4 +283,14 @@ func makeDirectoryIfNotExists(path string) error {
 		return os.MkdirAll(path, os.ModeDir|0755)
 	}
 	return nil
+}
+
+type supportedType map[string]struct{}
+
+func (t supportedType) String() string {
+	types := make([]string, 0, len(t))
+	for tt := range t {
+		types = append(types, tt)
+	}
+	return strings.Join(types, " | ")
 }
