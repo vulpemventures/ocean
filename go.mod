@@ -16,8 +16,8 @@ require (
 	github.com/stretchr/testify v1.7.2
 	github.com/timshannon/badgerhold/v4 v4.0.2
 	github.com/vulpemventures/go-bip39 v1.0.2
-	github.com/vulpemventures/go-elements v0.4.0-rc.2
-	github.com/vulpemventures/neutrino-elements v0.1.2
+	github.com/vulpemventures/go-elements v0.4.0
+	github.com/vulpemventures/neutrino-elements v0.1.3
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
 	google.golang.org/grpc v1.46.2
