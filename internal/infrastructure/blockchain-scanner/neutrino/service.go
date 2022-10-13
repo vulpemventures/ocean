@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
 	"io"
 	"net/http"
 	"sync"
@@ -110,6 +111,15 @@ func (s *service) Stop() {
 	}
 	s.filtersRepo.(*filterRepo).close()
 	s.headersRepo.(*headersRepo).close()
+}
+
+func (s *service) WatchAddressesForAccount(
+	accountName string,
+	startingBlockHeight uint32,
+	addresses []domain.AddressInfo,
+) <-chan scanner.Report {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (s *service) GetUtxoChannel(accountName string) chan []*domain.Utxo {

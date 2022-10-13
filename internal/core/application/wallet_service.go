@@ -2,8 +2,14 @@ package application
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"github.com/vulpemventures/go-elements/confidential"
+	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
@@ -166,6 +172,171 @@ func (ws *WalletService) RestoreWallet(
 	return ws.repoManager.WalletRepository().CreateWallet(ctx, newWallet)
 }
 
+func (ws *WalletService) restore(
+	wallet domain.Wallet,
+	numOfAccounts int,
+	numOfAddressesPerAccount int,
+	birthdayBlock uint32,
+	recoveryWindow int,
+) ([]domain.Utxo, error) {
+	result := make([]domain.Utxo, 0)
+accountLoop:
+	for i := 0; i < numOfAccounts; i++ {
+		accountName := strconv.Itoa(i + 1)
+		account, err := wallet.CreateAccount(accountName, birthdayBlock)
+		if err != nil {
+			return nil, err
+		}
+
+		accountAddresses := make([]domain.AddressInfo, 0, 100)
+		blindingKeyPerScript := make(map[string][]byte)
+		loopExternal := true
+		loopInternal := true
+		externalAddrNotFoundDelta := 0
+		internalAddrNotFoundDelta := 0
+		addressLoopCount := 1
+	addressLoop:
+		for ii := 0; ii < numOfAddressesPerAccount; i++ {
+			if loopExternal {
+				externalAddresses, err := wallet.DeriveNextExternalAddressForAccount(accountName)
+				if err != nil {
+					return nil, err
+				}
+
+				blindingKeyPerScript[externalAddresses.Script] = externalAddresses.BlindingKey
+				accountAddresses = append(accountAddresses, *externalAddresses)
+			}
+
+			if loopInternal {
+				internalAddresses, err := wallet.DeriveNextExternalAddressForAccount(accountName)
+				if err != nil {
+					return nil, err
+				}
+
+				blindingKeyPerScript[internalAddresses.Script] = internalAddresses.BlindingKey
+				accountAddresses = append(accountAddresses, *internalAddresses)
+			}
+		}
+
+		report := ws.bcScanner.WatchAddressesForAccount(
+			accountName,
+			birthdayBlock,
+			accountAddresses,
+		)
+
+		chainLastIndex := make(map[int]int)
+		select {
+		case r := <-report:
+			if derivationPath, ok := account.DerivationPathByScript[hex.EncodeToString(r.Request.Item.Bytes())]; ok {
+				path := strings.Split(derivationPath, "/")
+				chainStr := path[1]
+				chain, err := strconv.Atoi(chainStr)
+				if err != nil {
+					return nil, err
+				}
+
+				indexStr := path[2]
+				index, err := strconv.Atoi(indexStr)
+				if err != nil {
+					return nil, err
+				}
+
+				if lastIndex, ok := chainLastIndex[chain]; !ok {
+					chainLastIndex[chain] = index
+				} else {
+					if index > lastIndex {
+						chainLastIndex[chain] = index
+					}
+				}
+			}
+
+			newUtxos, err := getUtxos(r, accountName, blindingKeyPerScript)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, newUtxos...)
+
+			//we would need to refactor scanner in order to know if scanning is done
+			//till that we set timeout
+		case <-time.After(20 * time.Second):
+			goto accountLoop
+		}
+
+		externalAddrNotFoundDelta += addressLoopCount*numOfAddressesPerAccount - chainLastIndex[domain.ExternalChain]
+		internalAddrNotFoundDelta += addressLoopCount*numOfAddressesPerAccount - chainLastIndex[domain.InternalChain]
+		loopExternal = externalAddrNotFoundDelta < recoveryWindow
+		loopInternal = internalAddrNotFoundDelta < recoveryWindow
+		addressLoopCount++
+		if loopInternal || loopExternal {
+			goto addressLoop
+		}
+	}
+
+	return result, nil
+}
+
+func getUtxos(
+	r scanner.Report,
+	accountName string,
+	blindingKeyPerScript map[string][]byte,
+) ([]domain.Utxo, error) {
+	result := make([]domain.Utxo, 0)
+	tx := r.Transaction
+	txid := tx.TxHash().String()
+	var blockHash string
+	var blockHeight uint64
+	if r.BlockHash != nil {
+		blockHash = r.BlockHash.String()
+		blockHeight = uint64(r.BlockHeight)
+	}
+
+	for i, out := range tx.Outputs {
+		if len(out.Script) == 0 {
+			continue
+		}
+
+		script := hex.EncodeToString(out.Script)
+		blindingKey, ok := blindingKeyPerScript[script]
+		if !ok {
+			continue
+		}
+
+		revealed, err := confidential.UnblindOutputWithKey(out, blindingKey)
+		if err != nil {
+			return nil, err
+		}
+
+		var assetCommitment, valueCommitment []byte
+		if out.IsConfidential() {
+			valueCommitment, assetCommitment = out.Value, out.Asset
+		}
+
+		result = append(result, domain.Utxo{
+			UtxoKey: domain.UtxoKey{
+				TxID: txid,
+				VOut: uint32(i),
+			},
+			Value:           revealed.Value,
+			Asset:           assetFromBytes(revealed.Asset),
+			ValueCommitment: valueCommitment,
+			AssetCommitment: assetCommitment,
+			ValueBlinder:    revealed.ValueBlindingFactor,
+			AssetBlinder:    revealed.AssetBlindingFactor,
+			Script:          out.Script,
+			Nonce:           out.Nonce,
+			RangeProof:      out.RangeProof,
+			SurjectionProof: out.SurjectionProof,
+			AccountName:     accountName,
+			ConfirmedStatus: domain.UtxoStatus{
+				BlockHeight: blockHeight,
+				BlockHash:   blockHash,
+			},
+		})
+	}
+
+	return result, nil
+}
+
 func (ws *WalletService) GetStatus(_ context.Context) WalletStatus {
 	return WalletStatus{
 		IsInitialized: ws.isInitialized(),
@@ -256,4 +427,8 @@ func (ws *WalletService) isSynced() bool {
 	defer ws.lock.RUnlock()
 
 	return ws.synced
+}
+
+func assetFromBytes(buf []byte) string {
+	return hex.EncodeToString(elementsutil.ReverseBytes(buf))
 }

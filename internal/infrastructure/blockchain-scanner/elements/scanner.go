@@ -23,6 +23,7 @@ type scannerService struct {
 	startingBlockHeight uint32
 	chTxs               chan *domain.Transaction
 	chUtxos             chan []*domain.Utxo
+	chReport            <-chan scanner.Report
 	lock                *sync.RWMutex
 
 	log  func(format string, a ...interface{})
@@ -51,11 +52,13 @@ func newScannerSvc(
 		startingBlockHeight: startingBlockHeight,
 		chTxs:               make(chan *domain.Transaction, 10),
 		chUtxos:             make(chan []*domain.Utxo, 10),
+		chReport:            make(chan scanner.Report),
 		lock:                &sync.RWMutex{},
 		log:                 logFn,
 		warn:                warnFn,
 	}
 	chReports, _ := scannerSvc.svc.Start()
+	scannerSvc.chReport = chReports
 	go scannerSvc.listenToReports(chReports)
 	return scannerSvc
 }

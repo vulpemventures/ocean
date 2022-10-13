@@ -3,6 +3,7 @@ package elements_scanner
 import (
 	"context"
 	"fmt"
+	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -76,6 +77,17 @@ func NewElementsScanner(args ServiceArgs) (ports.BlockchainScanner, error) {
 func (s *service) Start() {}
 
 func (s *service) Stop() {}
+
+func (s *service) WatchAddressesForAccount(
+	accountName string,
+	startingBlockHeight uint32,
+	addresses []domain.AddressInfo,
+) <-chan scanner.Report {
+	scannerSvc := s.getOrCreateScanner(accountName, startingBlockHeight)
+	scannerSvc.watchAddresses(addresses)
+
+	return scannerSvc.chReport
+}
 
 func (s *service) GetUtxoChannel(accountName string) chan []*domain.Utxo {
 	scannerSvc := s.getOrCreateScanner(accountName, 0)

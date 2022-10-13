@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	externalChain = 0
-	internalChain = 1
+	ExternalChain = 0
+	InternalChain = 1
 )
 
 var (
@@ -279,7 +279,7 @@ func (w *Wallet) DeleteAccount(accountName string) error {
 func (w *Wallet) DeriveNextExternalAddressForAccount(
 	accountName string,
 ) (*AddressInfo, error) {
-	return w.deriveNextAddressForAccount(accountName, externalChain)
+	return w.deriveNextAddressForAccount(accountName, ExternalChain)
 }
 
 // DeriveNextInternalAddressForAccount returns all useful info about the next
@@ -287,7 +287,7 @@ func (w *Wallet) DeriveNextExternalAddressForAccount(
 func (w *Wallet) DeriveNextInternalAddressForAccount(
 	accountName string,
 ) (*AddressInfo, error) {
-	return w.deriveNextAddressForAccount(accountName, internalChain)
+	return w.deriveNextAddressForAccount(accountName, InternalChain)
 }
 
 // AllDerivedAddressesForAccount returns info about all derived receiving and
@@ -337,7 +337,7 @@ func (w *Wallet) deriveNextAddressForAccount(
 	})
 
 	addressIndex := account.NextExternalIndex
-	if chainIndex == internalChain {
+	if chainIndex == InternalChain {
 		addressIndex = account.NextInternalIndex
 	}
 	derivationPath := fmt.Sprintf(
@@ -358,7 +358,7 @@ func (w *Wallet) deriveNextAddressForAccount(
 	})
 
 	account.addDerivationPath(hex.EncodeToString(script), derivationPath)
-	if chainIndex == internalChain {
+	if chainIndex == InternalChain {
 		account.incrementInternalIndex()
 	} else {
 		account.incrementExternalIndex()
@@ -396,7 +396,7 @@ func (w *Wallet) allDerivedAddressesForAccount(
 	for i := 0; i < int(account.NextExternalIndex); i++ {
 		derivationPath := fmt.Sprintf(
 			"%d'/%d/%d",
-			account.Info.Key.Index, externalChain, i,
+			account.Info.Key.Index, ExternalChain, i,
 		)
 		addr, script, err := ww.DeriveConfidentialAddress(wallet.DeriveConfidentialAddressArgs{
 			DerivationPath: derivationPath,
@@ -420,7 +420,7 @@ func (w *Wallet) allDerivedAddressesForAccount(
 		for i := 0; i < int(account.NextInternalIndex); i++ {
 			derivationPath := fmt.Sprintf(
 				"%d'/%d/%d",
-				account.Info.Key.Index, internalChain, i,
+				account.Info.Key.Index, InternalChain, i,
 			)
 			addr, script, err := ww.DeriveConfidentialAddress(wallet.DeriveConfidentialAddressArgs{
 				DerivationPath: derivationPath,
