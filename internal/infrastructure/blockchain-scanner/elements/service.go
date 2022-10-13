@@ -1,8 +1,10 @@
 package elements_scanner
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"github.com/btcsuite/btcd/btcutil/gcs/builder"
 	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
 	"sync"
 
@@ -197,6 +199,64 @@ func (s *service) GetBlockHash(height uint32) ([]byte, error) {
 	return hash.CloneBytes(), nil
 }
 
+func (s *service) SearchTransactionsForOutputScripts(
+	outputScripts [][]byte,
+	startingBlockHeight uint32,
+) ([]transaction.Transaction, error) {
+	result := make([]transaction.Transaction, 0)
+	nextHeight := startingBlockHeight
+	chainTip, err := s.headersRepo.ChainTip(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	for nextHeight <= chainTip.Height {
+		var blockHash *chainhash.Hash
+		if nextHeight == 0 {
+			blockHash = genesisBlockHashForNetwork(s.args.Network)
+		} else {
+			blockHash, err = s.headersRepo.GetBlockHashByHeight(context.Background(), nextHeight)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		matched, err := s.blockFilterMatches(outputScripts, blockHash)
+		if err != nil {
+			return nil, err
+		}
+
+		foundIndexes := make(map[int]bool)
+		if matched {
+			txs, fi, err := s.extractBlockMatches(blockHash, outputScripts)
+			if err != nil {
+				return nil, err
+			}
+
+			result = append(result, txs...)
+			foundIndexes = fi
+		}
+
+		if len(foundIndexes) < len(outputScripts) {
+			tmpScripts := make([][]byte, 0)
+			for i, v := range outputScripts {
+				if !foundIndexes[i] {
+					tmpScripts = append(tmpScripts, v)
+				}
+			}
+			outputScripts = tmpScripts
+		}
+
+		nextHeight++
+		chainTip, err = s.headersRepo.ChainTip(context.Background())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
 func (s *service) getOrCreateScanner(
 	accountName string, startingBlock uint32,
 ) *scannerService {
@@ -228,4 +288,62 @@ func genesisBlockHashForNetwork(net string) *chainhash.Hash {
 	genesis := protocol.GetCheckpoints(magic)[0]
 	h, _ := chainhash.NewHashFromStr(genesis)
 	return h
+}
+
+func (s *service) blockFilterMatches(items [][]byte, blockHash *chainhash.Hash) (bool, error) {
+	filterToFetchKey := repository.FilterKey{
+		BlockHash:  blockHash.CloneBytes(),
+		FilterType: repository.RegularFilter,
+	}
+
+	filter, err := s.filtersRepo.GetFilter(context.Background(), filterToFetchKey)
+	if err != nil {
+		if err == repository.ErrFilterNotFound {
+			return false, nil
+		}
+		return false, err
+	}
+
+	gcsFilter, err := filter.GcsFilter()
+	if err != nil {
+		return false, err
+	}
+
+	key := builder.DeriveKey(blockHash)
+	matched, err := gcsFilter.MatchAny(key, items)
+	if err != nil {
+		return false, err
+	}
+
+	return matched, nil
+}
+
+func (s *service) extractBlockMatches(
+	blockHash *chainhash.Hash,
+	outputScripts [][]byte,
+) ([]transaction.Transaction, map[int]bool, error) {
+	result := make([]transaction.Transaction, 0)
+	resultIndexes := make(map[int]bool)
+	block, err := s.blockSvc.GetBlock(blockHash)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for index, v := range outputScripts {
+		for _, tx := range block.TransactionsData.Transactions {
+			found := false
+			for _, txOutput := range tx.Outputs {
+				if bytes.Equal(v, txOutput.Script) {
+					found = true
+					resultIndexes[index] = true
+					break
+				}
+			}
+			if found {
+				result = append(result, *tx)
+			}
+		}
+	}
+
+	return result, resultIndexes, nil
 }
