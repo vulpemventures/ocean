@@ -120,12 +120,12 @@ func accountDeriveAddresses(cmd *cobra.Command, _ []string) error {
 	ctx := context.Background()
 	var reply protoreflect.ProtoMessage
 	if !changeAddresses {
-		reply, err = client.DeriveAddress(ctx, &pb.DeriveAddressRequest{
+		reply, err = client.DeriveAddresses(ctx, &pb.DeriveAddressesRequest{
 			AccountName:    accountName,
 			NumOfAddresses: numOfAddresses,
 		})
 	} else {
-		reply, err = client.DeriveChangeAddress(ctx, &pb.DeriveChangeAddressRequest{
+		reply, err = client.DeriveChangeAddresses(ctx, &pb.DeriveChangeAddressesRequest{
 			AccountName:    accountName,
 			NumOfAddresses: numOfAddresses,
 		})

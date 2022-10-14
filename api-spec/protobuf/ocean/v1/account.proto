@@ -17,11 +17,11 @@ service AccountService {
   // SetAccountTemplate sets the template for the account used to generate new addresses.
   rpc SetAccountTemplate(SetAccountTemplateRequest) returns (SetAccountTemplateResponse);
 
-  // DeriveAddress generates new address(es) for the account.
-  rpc DeriveAddress(DeriveAddressRequest) returns (DeriveAddressResponse);
+  // DeriveAddresses generates new address(es) for the account.
+  rpc DeriveAddresses(DeriveAddressesRequest) returns (DeriveAddressesResponse);
 
-  // DeriveChangeAddress generates new change address(es) for the account.
-  rpc DeriveChangeAddress(DeriveChangeAddressRequest) returns (DeriveChangeAddressResponse);
+  // DeriveChangeAddresses generates new change address(es) for the account.
+  rpc DeriveChangeAddresses(DeriveChangeAddressesRequest) returns (DeriveChangeAddressesResponse);
 
   // ListAddresses returns all derived addresses for the account.
   rpc ListAddresses(ListAddressesRequest) returns (ListAddressesResponse);
@@ -50,6 +50,8 @@ message CreateAccountBIP44Response{
   uint32 account_index = 2;
   // Xpub.
   string xpub = 3;
+  // Derivation path
+  string derivation_path = 4;
 }
 
 message CreateAccountCustomRequest{
@@ -73,23 +75,23 @@ message SetAccountTemplateRequest {
 }
 message SetAccountTemplateResponse {}
 
-message DeriveAddressRequest{
+message DeriveAddressesRequest{
   // Account name.
   string account_name = 1;
   // The number of addresses to generate.
   uint64 num_of_addresses = 2;
 }
-message DeriveAddressResponse{
+message DeriveAddressesResponse{
   repeated string addresses = 1;
 }
 
-message DeriveChangeAddressRequest{
+message DeriveChangeAddressesRequest{
   // Account name.
   string account_name = 1;
   // The number of addresses to generate.
   uint64 num_of_addresses = 2;
 }
-message DeriveChangeAddressResponse{
+message DeriveChangeAddressesResponse{
   repeated string addresses = 1;
 }
 

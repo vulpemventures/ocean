@@ -12,6 +12,7 @@ import (
 )
 
 func TestAccountService(t *testing.T) {
+	domain.MnemonicStore = newInMemoryMnemonicStore()
 	mockedBcScanner := newMockedBcScanner()
 	mockedBcScanner.On("GetLatestBlock").Return(birthdayBlockHash, birthdayBlockHeight, nil)
 	repoManager, err := newRepoManagerForAccountService()
@@ -20,7 +21,7 @@ func TestAccountService(t *testing.T) {
 
 	svc := application.NewAccountService(repoManager, mockedBcScanner)
 
-	addresses, err := svc.DeriveAddressForAccount(ctx, accountName, 0)
+	addresses, err := svc.DeriveAddressesForAccount(ctx, accountName, 0)
 	require.Error(t, err)
 	require.Nil(t, addresses)
 
@@ -35,11 +36,11 @@ func TestAccountService(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, addresses)
 
-	addresses, err = svc.DeriveAddressForAccount(ctx, accountName, 2)
+	addresses, err = svc.DeriveAddressesForAccount(ctx, accountName, 2)
 	require.NoError(t, err)
 	require.Len(t, addresses, 2)
 
-	changeAddresses, err := svc.DeriveChangeAddressForAccount(ctx, accountName, 0)
+	changeAddresses, err := svc.DeriveChangeAddressesForAccount(ctx, accountName, 0)
 	require.NoError(t, err)
 	require.Len(t, changeAddresses, 1)
 

@@ -32,15 +32,15 @@ class AccountServiceStub(object):
                 request_serializer=ocean_dot_v1_dot_account__pb2.SetAccountTemplateRequest.SerializeToString,
                 response_deserializer=ocean_dot_v1_dot_account__pb2.SetAccountTemplateResponse.FromString,
                 )
-        self.DeriveAddress = channel.unary_unary(
-                '/ocean.v1.AccountService/DeriveAddress',
-                request_serializer=ocean_dot_v1_dot_account__pb2.DeriveAddressRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1_dot_account__pb2.DeriveAddressResponse.FromString,
+        self.DeriveAddresses = channel.unary_unary(
+                '/ocean.v1.AccountService/DeriveAddresses',
+                request_serializer=ocean_dot_v1_dot_account__pb2.DeriveAddressesRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.DeriveAddressesResponse.FromString,
                 )
-        self.DeriveChangeAddress = channel.unary_unary(
-                '/ocean.v1.AccountService/DeriveChangeAddress',
-                request_serializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressRequest.SerializeToString,
-                response_deserializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressResponse.FromString,
+        self.DeriveChangeAddresses = channel.unary_unary(
+                '/ocean.v1.AccountService/DeriveChangeAddresses',
+                request_serializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressesRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressesResponse.FromString,
                 )
         self.ListAddresses = channel.unary_unary(
                 '/ocean.v1.AccountService/ListAddresses',
@@ -91,15 +91,15 @@ class AccountServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def DeriveAddress(self, request, context):
-        """DeriveAddress generates new address(es) for the account.
+    def DeriveAddresses(self, request, context):
+        """DeriveAddresses generates new address(es) for the account.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def DeriveChangeAddress(self, request, context):
-        """DeriveChangeAddress generates new change address(es) for the account.
+    def DeriveChangeAddresses(self, request, context):
+        """DeriveChangeAddresses generates new change address(es) for the account.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -154,15 +154,15 @@ def add_AccountServiceServicer_to_server(servicer, server):
                     request_deserializer=ocean_dot_v1_dot_account__pb2.SetAccountTemplateRequest.FromString,
                     response_serializer=ocean_dot_v1_dot_account__pb2.SetAccountTemplateResponse.SerializeToString,
             ),
-            'DeriveAddress': grpc.unary_unary_rpc_method_handler(
-                    servicer.DeriveAddress,
-                    request_deserializer=ocean_dot_v1_dot_account__pb2.DeriveAddressRequest.FromString,
-                    response_serializer=ocean_dot_v1_dot_account__pb2.DeriveAddressResponse.SerializeToString,
+            'DeriveAddresses': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeriveAddresses,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.DeriveAddressesRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.DeriveAddressesResponse.SerializeToString,
             ),
-            'DeriveChangeAddress': grpc.unary_unary_rpc_method_handler(
-                    servicer.DeriveChangeAddress,
-                    request_deserializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressRequest.FromString,
-                    response_serializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressResponse.SerializeToString,
+            'DeriveChangeAddresses': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeriveChangeAddresses,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressesRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.DeriveChangeAddressesResponse.SerializeToString,
             ),
             'ListAddresses': grpc.unary_unary_rpc_method_handler(
                     servicer.ListAddresses,
@@ -249,7 +249,7 @@ class AccountService(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def DeriveAddress(request,
+    def DeriveAddresses(request,
             target,
             options=(),
             channel_credentials=None,
@@ -259,14 +259,14 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/DeriveAddress',
-            ocean_dot_v1_dot_account__pb2.DeriveAddressRequest.SerializeToString,
-            ocean_dot_v1_dot_account__pb2.DeriveAddressResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/DeriveAddresses',
+            ocean_dot_v1_dot_account__pb2.DeriveAddressesRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.DeriveAddressesResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def DeriveChangeAddress(request,
+    def DeriveChangeAddresses(request,
             target,
             options=(),
             channel_credentials=None,
@@ -276,9 +276,9 @@ class AccountService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/DeriveChangeAddress',
-            ocean_dot_v1_dot_account__pb2.DeriveChangeAddressRequest.SerializeToString,
-            ocean_dot_v1_dot_account__pb2.DeriveChangeAddressResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/DeriveChangeAddresses',
+            ocean_dot_v1_dot_account__pb2.DeriveChangeAddressesRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.DeriveChangeAddressesResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

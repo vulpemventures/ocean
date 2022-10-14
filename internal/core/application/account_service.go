@@ -69,7 +69,7 @@ func (as *AccountService) CreateAccountBIP44(
 	return (*AccountInfo)(accountInfo), nil
 }
 
-func (as *AccountService) DeriveAddressForAccount(
+func (as *AccountService) DeriveAddressesForAccount(
 	ctx context.Context, accountName string, numOfAddresses uint64,
 ) (AddressesInfo, error) {
 	if numOfAddresses == 0 {
@@ -84,7 +84,7 @@ func (as *AccountService) DeriveAddressForAccount(
 	return AddressesInfo(addressesInfo), nil
 }
 
-func (as *AccountService) DeriveChangeAddressForAccount(
+func (as *AccountService) DeriveChangeAddressesForAccount(
 	ctx context.Context, accountName string, numOfAddresses uint64,
 ) (AddressesInfo, error) {
 	if numOfAddresses == 0 {
