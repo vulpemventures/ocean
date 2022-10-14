@@ -87,8 +87,7 @@ type SignPsetArgs struct {
 }
 
 func (a SignPsetArgs) validate() error {
-	ptx, err := psetv2.NewPsetFromBase64(a.PsetBase64)
-	if err != nil {
+	if _, err := psetv2.NewPsetFromBase64(a.PsetBase64); err != nil {
 		return err
 	}
 	if len(a.DerivationPathMap) <= 0 {
@@ -108,18 +107,6 @@ func (a SignPsetArgs) validate() error {
 			return fmt.Errorf(
 				"invalid derivation path '%s' for script '%s': %v",
 				path, script, err,
-			)
-		}
-	}
-
-	for i, in := range ptx.Inputs {
-		script := in.GetUtxo().Script
-		_, ok := a.DerivationPathMap[hex.EncodeToString(script)]
-		if !ok {
-			return fmt.Errorf(
-				"derivation path not found in list for input %d with script '%s'",
-				i,
-				hex.EncodeToString(script),
 			)
 		}
 	}
@@ -146,10 +133,12 @@ func (w *Wallet) SignPset(args SignPsetArgs) (string, error) {
 
 	ptx, _ := psetv2.NewPsetFromBase64(args.PsetBase64)
 	for i, in := range ptx.Inputs {
-		path := args.DerivationPathMap[hex.EncodeToString(in.WitnessUtxo.Script)]
-		err := w.signInput(ptx, i, path, args.sighashType())
-		if err != nil {
-			return "", err
+		path, ok := args.DerivationPathMap[hex.EncodeToString(in.GetUtxo().Script)]
+		if ok {
+			err := w.signInput(ptx, i, path, args.sighashType())
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
@@ -232,7 +221,7 @@ func (w *Wallet) signInput(
 	}
 
 	pay, err := payment.FromScript(
-		input.WitnessUtxo.Script, nil, nil,
+		input.GetUtxo().Script, nil, nil,
 	)
 	if err != nil {
 		return err
@@ -245,7 +234,7 @@ func (w *Wallet) signInput(
 	}
 
 	hashForSignature := unsingedTx.HashForWitnessV0(
-		inIndex, script, ptx.Inputs[inIndex].WitnessUtxo.Value, input.SigHashType,
+		inIndex, script, ptx.Inputs[inIndex].GetUtxo().Value, input.SigHashType,
 	)
 
 	signature := ecdsa.Sign(prvkey, hashForSignature[:])
