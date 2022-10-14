@@ -44,6 +44,8 @@ type BlockchainScanner interface {
 	// BroadcastTransaction sends the given raw tx (in hex string) over the
 	// network in order to be included in a later block of the Liquid blockchain.
 	BroadcastTransaction(txHex string) (string, error)
+	// FindTransactionsForOutputScripts returns the list of txs per block that have at least
+	//one output with the given script.
 	FindTransactionsForOutputScripts(
 		outputScripts [][]byte,
 		startingBlockHeight uint32,
