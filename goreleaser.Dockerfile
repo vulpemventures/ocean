@@ -9,8 +9,8 @@ COPY . .
 RUN set -ex \
   && if [ "${TARGETPLATFORM}" = "linux/amd64" ]; then export TARGETPLATFORM=amd64; fi \
   && if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then export TARGETPLATFORM=arm64; fi \
-  && mv ocean /usr/local/bin/tdex \
-  && mv "oceand-linux-$TARGETPLATFORM" /usr/local/bin/tdexd
+  && mv ocean /usr/local/bin/ocean \
+  && mv "oceand-linux-$TARGETPLATFORM" /usr/local/bin/oceand
 
 
 # $USER name, and data $DIR to be used in the `final` image

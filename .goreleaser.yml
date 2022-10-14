@@ -68,7 +68,7 @@ builds:
     goarch:
       - amd64
       - arm64
-    binary: ocean-darwin
+    binary: ocean
 
 ## flag the semver v**.**.**-<tag>.* as pre-release on Github
 release:
