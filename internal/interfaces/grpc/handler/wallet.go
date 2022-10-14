@@ -73,7 +73,12 @@ func (w *wallet) Unlock(
 func (w *wallet) Lock(
 	ctx context.Context, req *pb.LockRequest,
 ) (*pb.LockResponse, error) {
-	if err := w.appSvc.Lock(ctx); err != nil {
+	password, err := parsePassword(req.GetPassword())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if err := w.appSvc.Lock(ctx, password); err != nil {
 		return nil, err
 	}
 

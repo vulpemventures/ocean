@@ -62,7 +62,10 @@ message UnlockRequest{
 }
 message UnlockResponse{}
 
-message LockRequest{}
+message LockRequest{
+  // The password to lock the wallet.
+  string password = 1;
+}
 message LockResponse{}
 
 message ChangePasswordRequest{

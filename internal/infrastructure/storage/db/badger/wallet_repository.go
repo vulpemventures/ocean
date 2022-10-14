@@ -44,7 +44,6 @@ func newWalletRepository(store *badgerhold.Store) *walletRepository {
 func (r *walletRepository) CreateWallet(
 	ctx context.Context, wallet *domain.Wallet,
 ) error {
-	wallet.Lock()
 	if err := r.insertWallet(ctx, wallet); err != nil {
 		return err
 	}
@@ -83,10 +82,14 @@ func (r *walletRepository) UnlockWallet(
 	return nil
 }
 
-func (r *walletRepository) LockWallet(ctx context.Context) error {
+func (r *walletRepository) LockWallet(
+	ctx context.Context, password string,
+) error {
 	if err := r.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
-			w.Lock()
+			if err := w.Lock(password); err != nil {
+				return nil, err
+			}
 			return w, nil
 		},
 	); err != nil {

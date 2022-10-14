@@ -53,7 +53,7 @@ type WalletRepository interface {
 	UnlockWallet(ctx context.Context, password string) error
 	// LockkWallet updates the status of the Wallet to "locked".
 	// Generates a WalletLocked event if successfull.
-	LockWallet(ctx context.Context) error
+	LockWallet(ctx context.Context, password string) error
 	// UpdateWallet allows to make multiple changes to the Wallet in a
 	// transactional way.
 	UpdateWallet(

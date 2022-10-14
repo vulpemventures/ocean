@@ -63,7 +63,7 @@ func (ws *WalletService) GenSeed(ctx context.Context) ([]string, error) {
 }
 
 func (ws *WalletService) CreateWallet(
-	ctx context.Context, mnemonic []string, passpharse string,
+	ctx context.Context, mnemonic []string, passphrase string,
 ) (err error) {
 	defer func() {
 		if err == nil {
@@ -82,13 +82,13 @@ func (ws *WalletService) CreateWallet(
 	}
 
 	newWallet, err := domain.NewWallet(
-		mnemonic, passpharse, ws.rootPath, ws.network.Name,
+		mnemonic, passphrase, ws.rootPath, ws.network.Name,
 		birthdayBlockHeight, nil,
 	)
 	if err != nil {
 		return
 	}
-	newWallet.Lock()
+	newWallet.Lock(passphrase)
 
 	return ws.repoManager.WalletRepository().CreateWallet(ctx, newWallet)
 }
@@ -109,7 +109,9 @@ func (ws *WalletService) Unlock(
 	return ws.repoManager.WalletRepository().UnlockWallet(ctx, password)
 }
 
-func (ws *WalletService) Lock(ctx context.Context) (err error) {
+func (ws *WalletService) Lock(
+	ctx context.Context, password string,
+) (err error) {
 	if !ws.isUnlocked() {
 		return nil
 	}
@@ -120,7 +122,7 @@ func (ws *WalletService) Lock(ctx context.Context) (err error) {
 		}
 	}()
 
-	return ws.repoManager.WalletRepository().LockWallet(ctx)
+	return ws.repoManager.WalletRepository().LockWallet(ctx, password)
 }
 
 func (ws *WalletService) ChangePassword(
