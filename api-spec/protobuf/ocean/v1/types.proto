@@ -39,6 +39,20 @@ message Input {
   // Previous tx output index.
   uint32 index = 2;
 }
+
+message UnblindedInput {
+  // Index of the pset input.
+  uint32 index = 1;
+  // Revealed prevout asset.
+  string asset = 2;
+  // Revealed prevout amount.
+  uint64 amount = 3;
+  // Prevout asset blinder.
+  string asset_blinder = 4;
+  // Prevout amount blinder.
+  string amount_blinder = 5;
+}
+
 message Output {
   // Asset hash.
   string asset = 1;
@@ -46,6 +60,10 @@ message Output {
   uint64 amount = 2;
   // Address to send funds to.
   string address = 3;
+  // ScriptPubkey to send funds to (alternative to address).
+  string script = 4;
+  // Blinding public key to make output confidential (alternative to address).
+  string blinding_pubkey = 5;
 }
 
 message Utxos {
@@ -58,6 +76,7 @@ message Utxos {
 message UtxoStatus {
   string txid = 1;
   BlockDetails block_info = 2;
+  string txhex = 3;
 }
 
 message Utxo {

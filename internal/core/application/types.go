@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
@@ -115,17 +116,30 @@ func (u UtxoKeys) String() string {
 
 type Input domain.UtxoKey
 
+type UnblindedInput struct {
+	Index         uint32
+	Amount        uint64
+	Asset         string
+	AmountBlinder string
+	AssetBlinder  string
+}
+
 type Output struct {
-	Asset   string
-	Amount  uint64
-	Address string
+	Asset        string
+	Amount       uint64
+	Script       []byte
+	BlindingKey  []byte
+	BlinderIndex uint32
 }
 
 func (o Output) Validate() error {
 	if err := validateAsset(o.Asset); err != nil {
 		return err
 	}
-	if err := validateAddress(o.Address); err != nil {
+	if err := validateScript(o.Script); err != nil {
+		return err
+	}
+	if err := validateBlindingKey(o.BlindingKey); err != nil {
 		return err
 	}
 	return nil
@@ -148,9 +162,7 @@ func (o Outputs) totalAmountByAsset() map[string]uint64 {
 func (o Outputs) toWalletOutputs() []wallet.Output {
 	outs := make([]wallet.Output, 0, len(o))
 	for _, out := range o {
-		outs = append(outs, wallet.Output{
-			Amount: out.Amount, Asset: out.Asset, Address: out.Address,
-		})
+		outs = append(outs, wallet.Output(out))
 	}
 	return outs
 }
@@ -169,11 +181,22 @@ func validateAsset(asset string) error {
 	return nil
 }
 
-func validateAddress(addr string) error {
-	if addr == "" {
+func validateScript(script []byte) error {
+	if len(script) == 0 {
 		return nil
 	}
-	_, err := address.ToOutputScript(addr)
+	_, err := address.ParseScript(script)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateBlindingKey(key []byte) error {
+	if len(key) == 0 {
+		return nil
+	}
+	_, err := btcec.ParsePubKey(key)
 	if err != nil {
 		return err
 	}

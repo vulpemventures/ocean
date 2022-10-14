@@ -177,8 +177,14 @@ func (t *transaction) BlindPset(
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	extraUnblindedIns, err := parseUnblindedInputs(req.GetExtraUnblindedInputs())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
-	blindedPtx, err := t.appSvc.BlindPset(ctx, ptx, nil, req.GetLastBlinder())
+	blindedPtx, err := t.appSvc.BlindPset(
+		ctx, ptx, extraUnblindedIns, req.GetLastBlinder(),
+	)
 	if err != nil {
 		return nil, err
 	}

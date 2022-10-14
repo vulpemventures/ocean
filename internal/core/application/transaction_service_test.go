@@ -1,11 +1,13 @@
 package application_test
 
 import (
+	"encoding/hex"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
@@ -16,8 +18,14 @@ import (
 var (
 	coinSelectionStrategy = application.CoinSelectionStrategySmallestSubset
 	receiverAddress       = "el1qqd926hzqpdeh33jkd2acujjvxwuyfnxpcnve7ts5rvv8w57wku53n8zumkc5ya9jejmejs92xu6gac38kup6u6yta3u4njavl"
+	receiverAddrInfo, _   = address.FromConfidential(receiverAddress)
 	outputs               = []application.Output{
-		{Asset: regtest.AssetID, Amount: 1000000, Address: receiverAddress},
+		{
+			Asset:       regtest.AssetID,
+			Amount:      1000000,
+			Script:      receiverAddrInfo.Script,
+			BlindingKey: receiverAddrInfo.BlindingKey,
+		},
 	}
 	utxoExpiryDuration = 2 * time.Minute
 )
@@ -58,11 +66,11 @@ func testExternalTransaction(t *testing.T) {
 				DeriveNextInternalAddressesForAccount(ctx, accountName, 1)
 			require.NoError(t, err)
 			require.Len(t, addrInfo, 1)
-
+			script, _ := hex.DecodeString(addrInfo[0].Script)
 			outputs = append(outputs, application.Output{
-				Asset:   regtest.AssetID,
-				Amount:  change,
-				Address: addrInfo[0].Address,
+				Asset:  regtest.AssetID,
+				Amount: change,
+				Script: script,
 			})
 		}
 
