@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/btcsuite/btcd/btcutil/gcs/builder"
-	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -79,17 +78,6 @@ func NewElementsScanner(args ServiceArgs) (ports.BlockchainScanner, error) {
 func (s *service) Start() {}
 
 func (s *service) Stop() {}
-
-func (s *service) WatchAddressesForAccount(
-	accountName string,
-	startingBlockHeight uint32,
-	addresses []domain.AddressInfo,
-) <-chan scanner.Report {
-	scannerSvc := s.getOrCreateScanner(accountName, startingBlockHeight)
-	scannerSvc.watchAddresses(addresses)
-
-	return scannerSvc.chReport
-}
 
 func (s *service) GetUtxoChannel(accountName string) chan []*domain.Utxo {
 	scannerSvc := s.getOrCreateScanner(accountName, 0)
@@ -199,15 +187,16 @@ func (s *service) GetBlockHash(height uint32) ([]byte, error) {
 	return hash.CloneBytes(), nil
 }
 
-func (s *service) SearchTransactionsForOutputScripts(
+func (s *service) FindTransactionsForOutputScripts(
 	outputScripts [][]byte,
 	startingBlockHeight uint32,
-) ([]transaction.Transaction, error) {
-	result := make([]transaction.Transaction, 0)
+) (map[ports.BlockInfo][]transaction.Transaction, [][]byte, error) {
+	result := make(map[ports.BlockInfo][]transaction.Transaction)
+	usedScripts := make([][]byte, 0)
 	nextHeight := startingBlockHeight
 	chainTip, err := s.headersRepo.ChainTip(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for nextHeight <= chainTip.Height {
@@ -217,44 +206,45 @@ func (s *service) SearchTransactionsForOutputScripts(
 		} else {
 			blockHash, err = s.headersRepo.GetBlockHashByHeight(context.Background(), nextHeight)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 
 		matched, err := s.blockFilterMatches(outputScripts, blockHash)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		foundIndexes := make(map[int]bool)
 		if matched {
-			txs, fi, err := s.extractBlockMatches(blockHash, outputScripts)
+			txs, matchedScripts, notMatchedScripts, err := s.extractBlockMatches(blockHash, outputScripts)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
-			result = append(result, txs...)
-			foundIndexes = fi
-		}
+			result[ports.BlockInfo{
+				Hash:   blockHash.String(),
+				Height: nextHeight,
+			}] = txs
 
-		if len(foundIndexes) < len(outputScripts) {
-			tmpScripts := make([][]byte, 0)
-			for i, v := range outputScripts {
-				if !foundIndexes[i] {
-					tmpScripts = append(tmpScripts, v)
-				}
+			if len(notMatchedScripts) > 0 {
+				outputScripts = notMatchedScripts
+			} else {
+				break
 			}
-			outputScripts = tmpScripts
+
+			if len(matchedScripts) > 0 {
+				usedScripts = append(usedScripts, matchedScripts...)
+			}
 		}
 
 		nextHeight++
 		chainTip, err = s.headersRepo.ChainTip(context.Background())
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	return result, nil
+	return result, usedScripts, nil
 }
 
 func (s *service) getOrCreateScanner(
@@ -321,29 +311,30 @@ func (s *service) blockFilterMatches(items [][]byte, blockHash *chainhash.Hash) 
 func (s *service) extractBlockMatches(
 	blockHash *chainhash.Hash,
 	outputScripts [][]byte,
-) ([]transaction.Transaction, map[int]bool, error) {
+) ([]transaction.Transaction, [][]byte, [][]byte, error) {
 	result := make([]transaction.Transaction, 0)
-	resultIndexes := make(map[int]bool)
+	matched := make([][]byte, 0)
+	notMatched := make([][]byte, 0)
 	block, err := s.blockSvc.GetBlock(blockHash)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	for index, v := range outputScripts {
+	for _, v := range outputScripts {
+		found := false
 		for _, tx := range block.TransactionsData.Transactions {
-			found := false
 			for _, txOutput := range tx.Outputs {
 				if bytes.Equal(v, txOutput.Script) {
 					found = true
-					resultIndexes[index] = true
+					matched = append(matched, v)
 					break
 				}
 			}
-			if found {
-				result = append(result, *tx)
-			}
+		}
+		if !found {
+			notMatched = append(notMatched, v)
 		}
 	}
 
-	return result, resultIndexes, nil
+	return result, matched, notMatched, nil
 }

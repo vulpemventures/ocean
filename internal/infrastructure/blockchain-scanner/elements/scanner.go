@@ -25,7 +25,6 @@ type scannerService struct {
 	chUtxos             chan []*domain.Utxo
 	chReport            <-chan scanner.Report
 	lock                *sync.RWMutex
-	genesisHash         *chainhash.Hash
 
 	log  func(format string, a ...interface{})
 	warn func(err error, format string, a ...interface{})
@@ -55,7 +54,6 @@ func newScannerSvc(
 		chUtxos:             make(chan []*domain.Utxo, 10),
 		chReport:            make(chan scanner.Report),
 		lock:                &sync.RWMutex{},
-		genesisHash:         genesisHash,
 		log:                 logFn,
 		warn:                warnFn,
 	}

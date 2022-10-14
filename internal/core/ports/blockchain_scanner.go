@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
+	"github.com/vulpemventures/go-elements/transaction"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 )
 
@@ -44,10 +44,13 @@ type BlockchainScanner interface {
 	// BroadcastTransaction sends the given raw tx (in hex string) over the
 	// network in order to be included in a later block of the Liquid blockchain.
 	BroadcastTransaction(txHex string) (string, error)
-
-	WatchAddressesForAccount(
-		accountName string,
+	FindTransactionsForOutputScripts(
+		outputScripts [][]byte,
 		startingBlockHeight uint32,
-		addresses []domain.AddressInfo,
-	) <-chan scanner.Report
+	) (map[BlockInfo][]transaction.Transaction, [][]byte, error)
+}
+
+type BlockInfo struct {
+	Hash   string
+	Height uint32
 }

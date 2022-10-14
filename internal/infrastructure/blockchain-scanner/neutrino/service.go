@@ -1,11 +1,12 @@
 package neutrino_scanner
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
+	"github.com/btcsuite/btcd/btcutil/gcs/builder"
 	"io"
 	"net/http"
 	"sync"
@@ -30,14 +31,15 @@ const (
 )
 
 type service struct {
-	nodeConfig NodeServiceArgs
-	nodeSvc    node.NodeService
-	blockSvc   blockservice.BlockService
-	scanners   map[string]*scannerService
-
+	nodeConfig  NodeServiceArgs
+	nodeSvc     node.NodeService
+	blockSvc    blockservice.BlockService
+	scanners    map[string]*scannerService
 	filtersRepo repository.FilterRepository
+
 	headersRepo repository.BlockHeaderRepository
 	lock        *sync.RWMutex
+	network     string
 }
 
 type NodeServiceArgs struct {
@@ -96,7 +98,14 @@ func NewNeutrinoScanner(args NodeServiceArgs) (ports.BlockchainScanner, error) {
 	scanners := make(map[string]*scannerService)
 	lock := &sync.RWMutex{}
 	return &service{
-		args, nodeSvc, blockSvc, scanners, filtersDb, headersDb, lock,
+		nodeConfig:  args,
+		nodeSvc:     nodeSvc,
+		blockSvc:    blockSvc,
+		scanners:    scanners,
+		filtersRepo: filtersDb,
+		headersRepo: headersDb,
+		lock:        lock,
+		network:     args.Network,
 	}, nil
 }
 
@@ -113,13 +122,64 @@ func (s *service) Stop() {
 	s.headersRepo.(*headersRepo).close()
 }
 
-func (s *service) WatchAddressesForAccount(
-	accountName string,
+func (s *service) FindTransactionsForOutputScripts(
+	outputScripts [][]byte,
 	startingBlockHeight uint32,
-	addresses []domain.AddressInfo,
-) <-chan scanner.Report {
-	//TODO implement me
-	panic("implement me")
+) (map[ports.BlockInfo][]transaction.Transaction, [][]byte, error) {
+	result := make(map[ports.BlockInfo][]transaction.Transaction)
+	usedScripts := make([][]byte, 0)
+	nextHeight := startingBlockHeight
+	chainTip, err := s.headersRepo.ChainTip(context.Background())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for nextHeight <= chainTip.Height {
+		var blockHash *chainhash.Hash
+		if nextHeight == 0 {
+			blockHash = genesisBlockHashForNetwork(s.network)
+		} else {
+			blockHash, err = s.headersRepo.GetBlockHashByHeight(context.Background(), nextHeight)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+
+		matched, err := s.blockFilterMatches(outputScripts, blockHash)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if matched {
+			txs, matchedScripts, notMatchedScripts, err := s.extractBlockMatches(blockHash, outputScripts)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			result[ports.BlockInfo{
+				Hash:   blockHash.String(),
+				Height: nextHeight,
+			}] = txs
+
+			if len(notMatchedScripts) > 0 {
+				outputScripts = notMatchedScripts
+			} else {
+				break
+			}
+
+			if len(matchedScripts) > 0 {
+				usedScripts = append(usedScripts, matchedScripts...)
+			}
+		}
+
+		nextHeight++
+		chainTip, err = s.headersRepo.ChainTip(context.Background())
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return result, usedScripts, nil
 }
 
 func (s *service) GetUtxoChannel(accountName string) chan []*domain.Utxo {
@@ -337,4 +397,63 @@ func createDb(dbDir string, logger badger.Logger) (*badgerhold.Store, error) {
 	}
 
 	return db, nil
+}
+
+func (s *service) blockFilterMatches(items [][]byte, blockHash *chainhash.Hash) (bool, error) {
+	filterToFetchKey := repository.FilterKey{
+		BlockHash:  blockHash.CloneBytes(),
+		FilterType: repository.RegularFilter,
+	}
+
+	filter, err := s.filtersRepo.GetFilter(context.Background(), filterToFetchKey)
+	if err != nil {
+		if err == repository.ErrFilterNotFound {
+			return false, nil
+		}
+		return false, err
+	}
+
+	gcsFilter, err := filter.GcsFilter()
+	if err != nil {
+		return false, err
+	}
+
+	key := builder.DeriveKey(blockHash)
+	matched, err := gcsFilter.MatchAny(key, items)
+	if err != nil {
+		return false, err
+	}
+
+	return matched, nil
+}
+
+func (s *service) extractBlockMatches(
+	blockHash *chainhash.Hash,
+	outputScripts [][]byte,
+) ([]transaction.Transaction, [][]byte, [][]byte, error) {
+	result := make([]transaction.Transaction, 0)
+	matched := make([][]byte, 0)
+	notMatched := make([][]byte, 0)
+	block, err := s.blockSvc.GetBlock(blockHash)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	for _, v := range outputScripts {
+		found := false
+		for _, tx := range block.TransactionsData.Transactions {
+			for _, txOutput := range tx.Outputs {
+				if bytes.Equal(v, txOutput.Script) {
+					found = true
+					matched = append(matched, v)
+					break
+				}
+			}
+		}
+		if !found {
+			notMatched = append(notMatched, v)
+		}
+	}
+
+	return result, matched, notMatched, nil
 }

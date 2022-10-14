@@ -5,17 +5,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/vulpemventures/go-elements/confidential"
-	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
-
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
+	"github.com/vulpemventures/go-elements/transaction"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
 	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
+	"strconv"
+	"strings"
+	"sync"
 )
 
 // WalletService is responsible for operations related to the managment of the
@@ -174,29 +172,33 @@ func (ws *WalletService) RestoreWallet(
 
 func (ws *WalletService) restore(
 	wallet domain.Wallet,
-	numOfAccounts int,
+	accountGap int,
+	addressGap int,
 	numOfAddressesPerAccount int,
 	birthdayBlock uint32,
-	recoveryWindow int,
 ) ([]domain.Utxo, error) {
 	result := make([]domain.Utxo, 0)
-accountLoop:
-	for i := 0; i < numOfAccounts; i++ {
-		accountName := strconv.Itoa(i + 1)
+	accountCounter := 1
+	consecutiveAccountsWithoutUtxos := 0
+	for {
+		accountHaveUtxos := false
+		accountName := strconv.Itoa(accountCounter)
 		account, err := wallet.CreateAccount(accountName, birthdayBlock)
 		if err != nil {
 			return nil, err
 		}
 
-		accountAddresses := make([]domain.AddressInfo, 0, 100)
+		accountAddresses := make([]domain.AddressInfo, 0)
+		outputScripts := make([][]byte, 0)
 		blindingKeyPerScript := make(map[string][]byte)
+		chainLastIndex := make(map[int]int)
 		loopExternal := true
 		loopInternal := true
 		externalAddrNotFoundDelta := 0
 		internalAddrNotFoundDelta := 0
 		addressLoopCount := 1
 	addressLoop:
-		for ii := 0; ii < numOfAddressesPerAccount; i++ {
+		for ii := 0; ii < numOfAddressesPerAccount; ii++ {
 			if loopExternal {
 				externalAddresses, err := wallet.DeriveNextExternalAddressForAccount(accountName)
 				if err != nil {
@@ -205,6 +207,11 @@ accountLoop:
 
 				blindingKeyPerScript[externalAddresses.Script] = externalAddresses.BlindingKey
 				accountAddresses = append(accountAddresses, *externalAddresses)
+				script, err := hex.DecodeString(externalAddresses.Script)
+				if err != nil {
+					return nil, err
+				}
+				outputScripts = append(outputScripts, script)
 			}
 
 			if loopInternal {
@@ -215,19 +222,35 @@ accountLoop:
 
 				blindingKeyPerScript[internalAddresses.Script] = internalAddresses.BlindingKey
 				accountAddresses = append(accountAddresses, *internalAddresses)
+				script, err := hex.DecodeString(internalAddresses.Script)
+				if err != nil {
+					return nil, err
+				}
+				outputScripts = append(outputScripts, script)
 			}
 		}
 
-		report := ws.bcScanner.WatchAddressesForAccount(
-			accountName,
+		txsPerBlock, matchedScripts, err := ws.bcScanner.FindTransactionsForOutputScripts(
+			outputScripts,
 			birthdayBlock,
-			accountAddresses,
 		)
+		if err != nil {
+			return nil, err
+		}
 
-		chainLastIndex := make(map[int]int)
-		select {
-		case r := <-report:
-			if derivationPath, ok := account.DerivationPathByScript[hex.EncodeToString(r.Request.Item.Bytes())]; ok {
+		for block, txs := range txsPerBlock {
+			for _, tx := range txs {
+				newUtxos, err := getUtxos(block, tx, accountName, blindingKeyPerScript)
+				if err != nil {
+					return nil, err
+				}
+				result = append(result, newUtxos...)
+				accountHaveUtxos = true
+			}
+		}
+
+		for _, v := range matchedScripts {
+			if derivationPath, ok := account.DerivationPathByScript[hex.EncodeToString(v)]; ok {
 				path := strings.Split(derivationPath, "/")
 				chainStr := path[1]
 				chain, err := strconv.Atoi(chainStr)
@@ -249,26 +272,26 @@ accountLoop:
 					}
 				}
 			}
-
-			newUtxos, err := getUtxos(r, accountName, blindingKeyPerScript)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, newUtxos...)
-
-			//we would need to refactor scanner in order to know if scanning is done
-			//till that we set timeout
-		case <-time.After(20 * time.Second):
-			goto accountLoop
 		}
 
 		externalAddrNotFoundDelta += addressLoopCount*numOfAddressesPerAccount - chainLastIndex[domain.ExternalChain]
 		internalAddrNotFoundDelta += addressLoopCount*numOfAddressesPerAccount - chainLastIndex[domain.InternalChain]
-		loopExternal = externalAddrNotFoundDelta < recoveryWindow
-		loopInternal = internalAddrNotFoundDelta < recoveryWindow
+		loopExternal = externalAddrNotFoundDelta < addressGap
+		loopInternal = internalAddrNotFoundDelta < addressGap
 		addressLoopCount++
 		if loopInternal || loopExternal {
 			goto addressLoop
+		}
+
+		accountCounter++
+		if !accountHaveUtxos {
+			consecutiveAccountsWithoutUtxos++
+		} else {
+			consecutiveAccountsWithoutUtxos = 0
+		}
+
+		if consecutiveAccountsWithoutUtxos > accountGap {
+			break
 		}
 	}
 
@@ -276,19 +299,13 @@ accountLoop:
 }
 
 func getUtxos(
-	r scanner.Report,
+	block ports.BlockInfo,
+	tx transaction.Transaction,
 	accountName string,
 	blindingKeyPerScript map[string][]byte,
 ) ([]domain.Utxo, error) {
 	result := make([]domain.Utxo, 0)
-	tx := r.Transaction
 	txid := tx.TxHash().String()
-	var blockHash string
-	var blockHeight uint64
-	if r.BlockHash != nil {
-		blockHash = r.BlockHash.String()
-		blockHeight = uint64(r.BlockHeight)
-	}
 
 	for i, out := range tx.Outputs {
 		if len(out.Script) == 0 {
@@ -328,8 +345,8 @@ func getUtxos(
 			SurjectionProof: out.SurjectionProof,
 			AccountName:     accountName,
 			ConfirmedStatus: domain.UtxoStatus{
-				BlockHeight: blockHeight,
-				BlockHash:   blockHash,
+				BlockHeight: uint64(block.Height),
+				BlockHash:   block.Hash,
 			},
 		})
 	}
