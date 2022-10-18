@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -30,7 +29,6 @@ var (
 	passwordHash      = "b8affdb68657a0417b09a02dd209585480f5a920"
 	newPasswordHash   = "b34d0f1bcefa7d25beefec121165c765c41550f7"
 	birthdayBlock     = uint32(1)
-	lock              = &sync.Mutex{}
 )
 
 func TestMain(m *testing.M) {
@@ -232,9 +230,6 @@ func TestWalletAccount(t *testing.T) {
 }
 
 func newTestWallet() (*domain.Wallet, error) {
-	lock.Lock()
-	defer lock.Unlock()
-
 	return domain.NewWallet(mnemonic, password, rootPath, regtest, birthdayBlock, nil)
 }
 
