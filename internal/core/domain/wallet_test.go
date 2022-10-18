@@ -43,8 +43,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewWallet(t *testing.T) {
-	t.Parallel()
-
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
@@ -83,8 +81,6 @@ func TestNewWallet(t *testing.T) {
 	})
 
 	t.Run("invalid", func(t *testing.T) {
-		t.Parallel()
-
 		tests := []struct {
 			mnemonic      []string
 			password      string
@@ -109,8 +105,6 @@ func TestNewWallet(t *testing.T) {
 }
 
 func TestLockUnlock(t *testing.T) {
-	t.Parallel()
-
 	w, err := newTestWallet()
 	require.NoError(t, err)
 
@@ -127,8 +121,6 @@ func TestLockUnlock(t *testing.T) {
 }
 
 func TestChangePassword(t *testing.T) {
-	t.Parallel()
-
 	w, err := newTestWallet()
 	require.NoError(t, err)
 
@@ -143,8 +135,6 @@ func TestChangePassword(t *testing.T) {
 }
 
 func TestWalletAccount(t *testing.T) {
-	t.Parallel()
-
 	w, err := newTestWallet()
 	require.NoError(t, err)
 
