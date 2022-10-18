@@ -212,9 +212,9 @@ func parseUtxoEventType(eventType domain.UtxoEventType) pb.UtxoEventType {
 	}
 }
 
-func parseBlockHash(hash string) ([]byte, error) {
+func parseBlockHash(hash string, net string) ([]byte, error) {
 	if len(hash) == 0 {
-		return nil, fmt.Errorf("missing block hash")
+		return genesisBlockHashForNetwork(net).CloneBytes(), nil
 	}
 
 	h, err := chainhash.NewHashFromStr(hash)

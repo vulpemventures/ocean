@@ -25,31 +25,30 @@ var (
 	date    string
 
 	// Config from env vars.
-	dbType                   = config.GetString(config.DatabaseTypeKey)
-	bcScannerType            = config.GetString(config.BlockchainScannerTypeKey)
-	logLevel                 = config.GetInt(config.LogLevelKey)
-	datadir                  = config.GetDatadir()
-	port                     = config.GetInt(config.PortKey)
-	profilerPort             = config.GetInt(config.ProfilerPortKey)
-	network                  = config.GetNetwork()
-	noTLS                    = config.GetBool(config.NoTLSKey)
-	noProfiler               = config.GetBool(config.NoProfilerKey)
-	dbDir                    = filepath.Join(datadir, config.DbLocation)
-	tlsDir                   = filepath.Join(datadir, config.TLSLocation)
-	scannerDir               = filepath.Join(datadir, config.ScannerLocation)
-	profilerDir              = filepath.Join(datadir, config.ProfilerLocation)
-	filtersDir               = filepath.Join(scannerDir, "filters")
-	blockHeadersDir          = filepath.Join(scannerDir, "headers")
-	esploraUrl               = config.GetString(config.EsploraUrlKey)
-	tlsExtraIPs              = config.GetStringSlice(config.TLSExtraIPKey)
-	tlsExtraDomains          = config.GetStringSlice(config.TLSExtraDomainKey)
-	statsInterval            = time.Duration(config.GetInt(config.StatsIntervalKey)) * time.Second
-	nodeRpcAddr              = config.GetString(config.ElementsNodeRpcAddrKey)
-	utxoExpiryDuration       = time.Duration(config.GetInt(config.UtxoExpiryDurationKey))
-	rootPath                 = config.GetRootPath()
-	accountGap               = config.GetInt(config.RestoreWalletAccountGapKey)
-	addressGap               = config.GetInt(config.RestoreWalletAddressGapKey)
-	numOfAddressesPerAccount = config.GetInt(config.RestoreWalletNumOfAddressesPerAccountKey)
+	dbType             = config.GetString(config.DatabaseTypeKey)
+	bcScannerType      = config.GetString(config.BlockchainScannerTypeKey)
+	logLevel           = config.GetInt(config.LogLevelKey)
+	datadir            = config.GetDatadir()
+	port               = config.GetInt(config.PortKey)
+	profilerPort       = config.GetInt(config.ProfilerPortKey)
+	network            = config.GetNetwork()
+	noTLS              = config.GetBool(config.NoTLSKey)
+	noProfiler         = config.GetBool(config.NoProfilerKey)
+	dbDir              = filepath.Join(datadir, config.DbLocation)
+	tlsDir             = filepath.Join(datadir, config.TLSLocation)
+	scannerDir         = filepath.Join(datadir, config.ScannerLocation)
+	profilerDir        = filepath.Join(datadir, config.ProfilerLocation)
+	filtersDir         = filepath.Join(scannerDir, "filters")
+	blockHeadersDir    = filepath.Join(scannerDir, "headers")
+	esploraUrl         = config.GetString(config.EsploraUrlKey)
+	tlsExtraIPs        = config.GetStringSlice(config.TLSExtraIPKey)
+	tlsExtraDomains    = config.GetStringSlice(config.TLSExtraDomainKey)
+	statsInterval      = time.Duration(config.GetInt(config.StatsIntervalKey)) * time.Second
+	nodeRpcAddr        = config.GetString(config.ElementsNodeRpcAddrKey)
+	utxoExpiryDuration = time.Duration(config.GetInt(config.UtxoExpiryDurationKey))
+	rootPath           = config.GetRootPath()
+	accountGap         = config.GetInt(config.RestoreWalletAccountGapKey)
+	addressGap         = config.GetInt(config.RestoreWalletAddressGapKey)
 )
 
 func main() {
@@ -84,19 +83,18 @@ func main() {
 		ExtraDomains: tlsExtraDomains,
 	}
 	appCfg := &appconfig.AppConfig{
-		Version:                  version,
-		Commit:                   commit,
-		Date:                     date,
-		RootPath:                 rootPath,
-		Network:                  network,
-		UtxoExpiryDuration:       utxoExpiryDuration * time.Second,
-		RepoManagerType:          dbType,
-		BlockchainScannerType:    bcScannerType,
-		RepoManagerConfig:        dbDir,
-		BlockchainScannerConfig:  bcScannerConfig,
-		AccountGap:               accountGap,
-		AddressGap:               addressGap,
-		NumOfAddressesPerAccount: numOfAddressesPerAccount,
+		Version:                 version,
+		Commit:                  commit,
+		Date:                    date,
+		RootPath:                rootPath,
+		Network:                 network,
+		UtxoExpiryDuration:      utxoExpiryDuration * time.Second,
+		RepoManagerType:         dbType,
+		BlockchainScannerType:   bcScannerType,
+		RepoManagerConfig:       dbDir,
+		BlockchainScannerConfig: bcScannerConfig,
+		AccountGap:              accountGap,
+		AddressGap:              addressGap,
 	}
 
 	serviceManager, err := interfaces.NewGrpcServiceManager(serviceCfg, appCfg)

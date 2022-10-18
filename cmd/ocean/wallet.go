@@ -99,10 +99,9 @@ func init() {
 
 	walletRestoreCmd.Flags().StringVar(&mnemonic, "mnemonic", "", "space separated word list as wallet seed")
 	walletRestoreCmd.Flags().StringVar(&password, "password", "", "encryption password")
-	walletRestoreCmd.Flags().StringVar(&birthdayBlockHash, "birthday-block-hash", "", "block hash of the birthday block")
+	walletRestoreCmd.Flags().StringVar(&birthdayBlockHash, "birthday-block", "", "block hash of the birthday block")
 	walletRestoreCmd.MarkFlagRequired("mnemonic")
 	walletRestoreCmd.MarkFlagRequired("password")
-	walletRestoreCmd.MarkFlagRequired("birthday-block-hash")
 
 	walletCmd.AddCommand(
 		walletGenSeedCmd, walletCreateCmd, walletUnlockCmd, walletLockCmd,

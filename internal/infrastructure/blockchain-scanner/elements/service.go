@@ -192,6 +192,7 @@ func (s *service) FindTransactionsForOutputScripts(
 	startingBlockHeight uint32,
 ) (map[ports.BlockInfo][]transaction.Transaction, [][]byte, error) {
 	result := make(map[ports.BlockInfo][]transaction.Transaction)
+	outpuScriptLength := len(outputScripts)
 	usedScripts := make([][]byte, 0)
 	nextHeight := startingBlockHeight
 	chainTip, err := s.headersRepo.ChainTip(context.Background())
@@ -228,12 +229,14 @@ func (s *service) FindTransactionsForOutputScripts(
 
 			if len(notMatchedScripts) > 0 {
 				outputScripts = notMatchedScripts
-			} else {
-				break
 			}
 
 			if len(matchedScripts) > 0 {
 				usedScripts = append(usedScripts, matchedScripts...)
+			}
+
+			if outpuScriptLength == len(usedScripts) {
+				break
 			}
 		}
 

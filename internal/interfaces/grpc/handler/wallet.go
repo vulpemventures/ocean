@@ -2,6 +2,8 @@ package grpc_handler
 
 import (
 	"context"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/vulpemventures/neutrino-elements/pkg/protocol"
 	"strings"
 
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
@@ -11,14 +13,17 @@ import (
 )
 
 type wallet struct {
+	net    string
 	appSvc *application.WalletService
 }
 
 func NewWalletHandler(
 	appSvc *application.WalletService,
+	net string,
 ) pb.WalletServiceServer {
 	return &wallet{
 		appSvc: appSvc,
+		net:    net,
 	}
 }
 
@@ -112,7 +117,7 @@ func (w *wallet) RestoreWallet(
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	birthdayBlock, err := parseBlockHash(req.GetBirthdayBlockHash())
+	birthdayBlock, err := parseBlockHash(req.GetBirthdayBlockHash(), w.net)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -156,4 +161,11 @@ func (w *wallet) GetInfo(ctx context.Context, _ *pb.GetInfoRequest) (*pb.GetInfo
 			Date:    info.BuildInfo.Date,
 		},
 	}, nil
+}
+
+func genesisBlockHashForNetwork(net string) *chainhash.Hash {
+	magic := protocol.Networks[net]
+	genesis := protocol.GetCheckpoints(magic)[0]
+	h, _ := chainhash.NewHashFromStr(genesis)
+	return h
 }

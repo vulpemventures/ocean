@@ -90,7 +90,10 @@ func (s *service) start() (*grpc.Server, error) {
 
 	grpcServer := grpc.NewServer(grpcConfig...)
 
-	walletHandler := grpc_handler.NewWalletHandler(s.appConfig.WalletService())
+	walletHandler := grpc_handler.NewWalletHandler(
+		s.appConfig.WalletService(),
+		s.appConfig.Network.Name,
+	)
 	pb.RegisterWalletServiceServer(grpcServer, walletHandler)
 
 	s.log("registered wallet handler on public interface")
