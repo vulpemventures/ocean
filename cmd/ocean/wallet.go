@@ -14,10 +14,11 @@ var (
 	datadir   = btcutil.AppDataDir("ocean-cli", false)
 	statePath = filepath.Join(datadir, "state.json")
 
-	mnemonic    string
-	password    string
-	oldPassword string
-	newPassword string
+	mnemonic          string
+	password          string
+	oldPassword       string
+	newPassword       string
+	birthdayBlockHash string
 
 	walletGenSeedCmd = &cobra.Command{
 		Use:   "genseed",
@@ -66,6 +67,13 @@ var (
 			"if it's initialized, in sync or unlocked",
 		RunE: walletStatus,
 	}
+	walletRestoreCmd = &cobra.Command{
+		Use:   "restore",
+		Short: "restore a wallet from a mnemonic",
+		Long: "this command lets you restore a wallet from a mnemonic, " +
+			"encrypted with your choosen password",
+		RunE: walletRestore,
+	}
 	walletCmd = &cobra.Command{
 		Use:   "wallet",
 		Short: "interact with ocean wallet interface",
@@ -89,9 +97,16 @@ func init() {
 	walletChangePwdCmd.MarkFlagRequired("old-password")
 	walletChangePwdCmd.MarkFlagRequired("new-password")
 
+	walletRestoreCmd.Flags().StringVar(&mnemonic, "mnemonic", "", "space separated word list as wallet seed")
+	walletRestoreCmd.Flags().StringVar(&password, "password", "", "encryption password")
+	walletRestoreCmd.Flags().StringVar(&birthdayBlockHash, "birthday-block-hash", "", "block hash of the birthday block")
+	walletRestoreCmd.MarkFlagRequired("mnemonic")
+	walletRestoreCmd.MarkFlagRequired("password")
+	walletRestoreCmd.MarkFlagRequired("birthday-block-hash")
+
 	walletCmd.AddCommand(
 		walletGenSeedCmd, walletCreateCmd, walletUnlockCmd, walletLockCmd,
-		walletChangePwdCmd, walletInfoCmd, walletStatusCmd,
+		walletChangePwdCmd, walletInfoCmd, walletStatusCmd, walletRestoreCmd,
 	)
 }
 
@@ -264,5 +279,27 @@ func walletStatus(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println(jsonReply)
+	return nil
+}
+
+func walletRestore(cmd *cobra.Command, args []string) error {
+	client, cleanup, err := getWalletClient()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	if _, err := client.RestoreWallet(
+		context.Background(), &pb.RestoreWalletRequest{
+			Mnemonic:          mnemonic,
+			Password:          password,
+			BirthdayBlockHash: birthdayBlockHash,
+		},
+	); err != nil {
+		printErr(err)
+		return nil
+	}
+
+	fmt.Println("wallet restored")
 	return nil
 }

@@ -34,6 +34,9 @@ var (
 	buildInfo           = application.BuildInfo{
 		Version: "test", Commit: "none", Date: "unknown",
 	}
+	accountGap          = 5
+	addressGap          = 150
+	numOfAddrPerAccount = 100
 )
 
 func TestMain(m *testing.M) {
@@ -66,6 +69,7 @@ func testInitWalletFromScratch(t *testing.T) {
 
 		svc := application.NewWalletService(
 			repoManager, mockedBcScanner, rootPath, regtest, buildInfo,
+			accountGap, addressGap, numOfAddrPerAccount,
 		)
 
 		status := svc.GetStatus(ctx)
@@ -131,6 +135,7 @@ func testInitWalletFromRestart(t *testing.T) {
 
 		svc := application.NewWalletService(
 			repoManager, mockedBcScanner, rootPath, regtest, buildInfo,
+			accountGap, addressGap, numOfAddrPerAccount,
 		)
 
 		status := svc.GetStatus(ctx)

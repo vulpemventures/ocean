@@ -30,11 +30,14 @@ import (
 // unlocking of the wallet (for example, check how the grpc service uses this
 // feature).
 type WalletService struct {
-	repoManager ports.RepoManager
-	bcScanner   ports.BlockchainScanner
-	rootPath    string
-	network     *network.Network
-	buildInfo   BuildInfo
+	repoManager              ports.RepoManager
+	bcScanner                ports.BlockchainScanner
+	rootPath                 string
+	network                  *network.Network
+	buildInfo                BuildInfo
+	accountGap               int
+	addressGap               int
+	numOfAddressesPerAccount int
 
 	initialized bool
 	unlocked    bool
@@ -45,14 +48,18 @@ type WalletService struct {
 func NewWalletService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
 	rootPath string, net *network.Network, buildInfo BuildInfo,
+	accountGap int, addressGap int, numOfAddressesPerAccount int,
 ) *WalletService {
 	ws := &WalletService{
-		repoManager: repoManager,
-		bcScanner:   bcScanner,
-		rootPath:    rootPath,
-		network:     net,
-		buildInfo:   buildInfo,
-		lock:        &sync.RWMutex{},
+		repoManager:              repoManager,
+		bcScanner:                bcScanner,
+		rootPath:                 rootPath,
+		network:                  net,
+		buildInfo:                buildInfo,
+		lock:                     &sync.RWMutex{},
+		accountGap:               accountGap,
+		addressGap:               addressGap,
+		numOfAddressesPerAccount: numOfAddressesPerAccount,
 	}
 	w, _ := ws.repoManager.WalletRepository().GetWallet(context.Background())
 	if w != nil {
@@ -153,11 +160,14 @@ func (ws *WalletService) RestoreWallet(
 		}
 	}()
 
+	if ws.isInitialized() {
+		return fmt.Errorf("wallet is already initialized")
+	}
+
 	birthdayBlockHeight, err := ws.bcScanner.GetBlockHeight(birthdayBlockHash)
 	if err != nil {
 		return
 	}
-	// TODO: implement restoration
 
 	newWallet, err := domain.NewWallet(
 		mnemonic, passpharse, ws.rootPath, ws.network.Name,
@@ -167,17 +177,40 @@ func (ws *WalletService) RestoreWallet(
 		return
 	}
 
-	return ws.repoManager.WalletRepository().CreateWallet(ctx, newWallet)
+	if err := newWallet.Unlock(passpharse); err != nil {
+		return err
+	}
+
+	utxos, err := ws.restore(
+		newWallet,
+		ws.accountGap,
+		ws.addressGap,
+		ws.numOfAddressesPerAccount,
+		birthdayBlockHeight,
+	)
+	if err != nil {
+		return err
+	}
+
+	if _, err := ws.repoManager.UtxoRepository().AddUtxos(ctx, utxos); err != nil {
+		return err
+	}
+
+	if err := ws.repoManager.WalletRepository().CreateWallet(ctx, newWallet); err != nil {
+		return err
+	}
+
+	return ws.Unlock(ctx, passpharse)
 }
 
 func (ws *WalletService) restore(
-	wallet domain.Wallet,
+	wallet *domain.Wallet,
 	accountGap int,
 	addressGap int,
 	numOfAddressesPerAccount int,
 	birthdayBlock uint32,
-) ([]domain.Utxo, error) {
-	result := make([]domain.Utxo, 0)
+) ([]*domain.Utxo, error) {
+	result := make([]*domain.Utxo, 0)
 	accountCounter := 1
 	consecutiveAccountsWithoutUtxos := 0
 	for {
@@ -189,9 +222,9 @@ func (ws *WalletService) restore(
 		}
 
 		accountAddresses := make([]domain.AddressInfo, 0)
+		chainLastIndex := make(map[int]int)
 		outputScripts := make([][]byte, 0)
 		blindingKeyPerScript := make(map[string][]byte)
-		chainLastIndex := make(map[int]int)
 		loopExternal := true
 		loopInternal := true
 		externalAddrNotFoundDelta := 0
@@ -215,7 +248,7 @@ func (ws *WalletService) restore(
 			}
 
 			if loopInternal {
-				internalAddresses, err := wallet.DeriveNextExternalAddressForAccount(accountName)
+				internalAddresses, err := wallet.DeriveNextInternalAddressForAccount(accountName)
 				if err != nil {
 					return nil, err
 				}
@@ -280,6 +313,11 @@ func (ws *WalletService) restore(
 		loopInternal = internalAddrNotFoundDelta < addressGap
 		addressLoopCount++
 		if loopInternal || loopExternal {
+			accountAddresses = make([]domain.AddressInfo, 0)
+			chainLastIndex = make(map[int]int)
+			outputScripts = make([][]byte, 0)
+			blindingKeyPerScript = make(map[string][]byte)
+
 			goto addressLoop
 		}
 
@@ -303,8 +341,8 @@ func getUtxos(
 	tx transaction.Transaction,
 	accountName string,
 	blindingKeyPerScript map[string][]byte,
-) ([]domain.Utxo, error) {
-	result := make([]domain.Utxo, 0)
+) ([]*domain.Utxo, error) {
+	result := make([]*domain.Utxo, 0)
 	txid := tx.TxHash().String()
 
 	for i, out := range tx.Outputs {
@@ -328,7 +366,7 @@ func getUtxos(
 			valueCommitment, assetCommitment = out.Value, out.Asset
 		}
 
-		result = append(result, domain.Utxo{
+		result = append(result, &domain.Utxo{
 			UtxoKey: domain.UtxoKey{
 				TxID: txid,
 				VOut: uint32(i),

@@ -3,6 +3,7 @@ package grpc_handler
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/vulpemventures/ocean/internal/core/application"
@@ -215,12 +216,15 @@ func parseBlockHash(hash string) ([]byte, error) {
 	if len(hash) == 0 {
 		return nil, fmt.Errorf("missing block hash")
 	}
-	buf, err := hex.DecodeString(hash)
+
+	h, err := chainhash.NewHashFromStr(hash)
 	if err != nil {
-		return nil, fmt.Errorf("invalid block hash format")
+		return nil, err
 	}
-	if len(buf) != 32 {
+
+	hashBytes := h.CloneBytes()
+	if len(hashBytes) != 32 {
 		return nil, fmt.Errorf("invalid block hash length")
 	}
-	return buf, nil
+	return hashBytes, nil
 }

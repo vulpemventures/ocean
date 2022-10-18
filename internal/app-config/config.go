@@ -33,9 +33,12 @@ type AppConfig struct {
 	Commit  string
 	Date    string
 
-	RootPath           string
-	Network            *network.Network
-	UtxoExpiryDuration time.Duration
+	RootPath                 string
+	Network                  *network.Network
+	UtxoExpiryDuration       time.Duration
+	AccountGap               int
+	AddressGap               int
+	NumOfAddressesPerAccount int
 
 	RepoManagerType         string
 	BlockchainScannerType   string
@@ -197,6 +200,7 @@ func (c *AppConfig) walletService() *application.WalletService {
 	bcs, _ := c.bcScanner()
 	c.walletSvc = application.NewWalletService(
 		rm, bcs, c.RootPath, c.Network, c.buildInfo(),
+		c.AccountGap, c.AddressGap, c.NumOfAddressesPerAccount,
 	)
 	return c.walletSvc
 }

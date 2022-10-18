@@ -3,6 +3,8 @@ package application_test
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"github.com/vulpemventures/go-elements/transaction"
+	"github.com/vulpemventures/ocean/internal/core/ports"
 	"math/big"
 	"strings"
 	"sync"
@@ -28,7 +30,17 @@ func newMockedBcScanner() *mockBcScanner {
 }
 
 func (m *mockBcScanner) Start() {}
-func (m *mockBcScanner) Stop()  {}
+
+func (m *mockBcScanner) Stop() {}
+
+func (m *mockBcScanner) FindTransactionsForOutputScripts(
+	outputScripts [][]byte,
+	startingBlockHeight uint32,
+) (map[ports.BlockInfo][]transaction.Transaction, [][]byte, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *mockBcScanner) WatchForAccount(
 	accountName string, staringBlock uint32, addrInfo []domain.AddressInfo,
 ) {

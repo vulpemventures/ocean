@@ -327,6 +327,7 @@ func (s *service) extractBlockMatches(
 				if bytes.Equal(v, txOutput.Script) {
 					found = true
 					matched = append(matched, v)
+					result = append(result, *tx)
 					break
 				}
 			}

@@ -62,6 +62,17 @@ const (
 	// EsploraUrlKey is the key for the esplora block esplorer consumed by the
 	// neutrino blockchain scanner
 	EsploraUrlKey = "ESPLORA_URL"
+	// RestoreWalletAccountGapKey defines the max number of consecutive unused accounts
+	//that cause the restoration to stop.
+	RestoreWalletAccountGapKey = "RESTORE_WALLET_ACCOUNT_GAP"
+	// RestoreWalletAddressGapKey defines the max number of consecutive unused addresses
+	//that cause the restoration to stop for one account.
+	RestoreWalletAddressGapKey = "RESTORE_WALLET_ADDRESS_GAP"
+	// RestoreWalletNumOfAddressesPerAccountKey defines the number of addresses to be
+	//generated per account during one iteration of the restoration. This is used to
+	//avoid generating too many addresses at once and in combination with the address gap
+	//it can be used to control when the restoration stops.
+	RestoreWalletNumOfAddressesPerAccountKey = "RESTORE_WALLET_NUM_OF_ADDRESSES_PER_ACCOUNT"
 
 	// DbLocation is the folder inside the datadir containing db files.
 	DbLocation = "db"
@@ -127,6 +138,9 @@ func init() {
 	vip.SetDefault(StatsIntervalKey, defaultStatsInterval)
 	vip.SetDefault(UtxoExpiryDurationKey, defaultUtxoExpiryDuration)
 	vip.SetDefault(EsploraUrlKey, defaultEsploraUrl)
+	vip.SetDefault(RestoreWalletAccountGapKey, 5)
+	vip.SetDefault(RestoreWalletAddressGapKey, 150)
+	vip.SetDefault(RestoreWalletNumOfAddressesPerAccountKey, 100)
 
 	if err := validate(); err != nil {
 		log.Fatalf("invalid config: %s", err)
