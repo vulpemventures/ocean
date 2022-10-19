@@ -218,6 +218,10 @@ func (ws *WalletService) RestoreWallet(
 	return ws.Unlock(ctx, passpharse)
 }
 
+// restore is used to find utxos for a given chain.
+//It will try to recover utxos for all accounts and addresses up to the given gap.
+//accountGap is the number which defines after how many consecutive accounts, with no utxos, we should stop scanning.
+//addressGap is the number which defines after how many consecutive addresses, with no utxos, for each account we should stop scanning.
 func (ws *WalletService) restore(
 	w *domain.Wallet,
 	accountGap int,
