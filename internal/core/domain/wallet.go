@@ -260,6 +260,23 @@ func (w *Wallet) GetAccount(accountName string) (*Account, error) {
 	return w.getAccount(accountName)
 }
 
+// GetOrCreateAccount will create new or return existing account.
+func (w *Wallet) GetOrCreateAccount(
+	accountName string,
+	birthdayBlock uint32,
+) (*Account, error) {
+	account, err := w.getAccount(accountName)
+	if err != nil {
+		if err == ErrAccountNotFound {
+			return w.CreateAccount(accountName, birthdayBlock)
+		}
+
+		return nil, err
+	}
+
+	return account, nil
+}
+
 // DeleteAccount safely removes an Account and all related stored info from the
 // Wallet.
 func (w *Wallet) DeleteAccount(accountName string) error {

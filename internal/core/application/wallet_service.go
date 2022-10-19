@@ -167,25 +167,51 @@ func (ws *WalletService) RestoreWallet(
 		return
 	}
 
-	restoredWallet, utxos, err := ws.restore(
-		ws.accountGap,
-		ws.addressGap,
-		birthdayBlockHeight,
-		mnemonic,
-		passpharse,
+	if birthdayBlockHeight == 0 {
+		birthdayBlockHeight = 1
+	}
+	w, err := domain.NewWallet(
+		mnemonic, passpharse, ws.rootPath, ws.network.Name,
+		birthdayBlockHeight, nil,
 	)
 	if err != nil {
 		return err
 	}
 
-	if err := restoredWallet.Unlock(passpharse); err != nil {
+	allUtxos := make([]*domain.Utxo, 0)
+
+	internalUtxos, err := ws.restore(
+		w,
+		ws.accountGap,
+		ws.addressGap,
+		birthdayBlockHeight,
+		domain.InternalChain,
+	)
+	if err != nil {
 		return err
 	}
-	if _, err := ws.repoManager.UtxoRepository().AddUtxos(ctx, utxos); err != nil {
+	allUtxos = append(allUtxos, internalUtxos...)
+
+	externalUtxos, err := ws.restore(
+		w,
+		ws.accountGap,
+		ws.addressGap,
+		birthdayBlockHeight,
+		domain.ExternalChain,
+	)
+	if err != nil {
+		return err
+	}
+	allUtxos = append(allUtxos, externalUtxos...)
+
+	if err := w.Unlock(passpharse); err != nil {
+		return err
+	}
+	if _, err := ws.repoManager.UtxoRepository().AddUtxos(ctx, allUtxos); err != nil {
 		return err
 	}
 
-	if err := ws.repoManager.WalletRepository().CreateWallet(ctx, restoredWallet); err != nil {
+	if err := ws.repoManager.WalletRepository().CreateWallet(ctx, w); err != nil {
 		return err
 	}
 
@@ -193,139 +219,51 @@ func (ws *WalletService) RestoreWallet(
 }
 
 func (ws *WalletService) restore(
+	w *domain.Wallet,
 	accountGap int,
 	addressGap int,
 	birthdayBlock uint32,
-	mnemonic []string,
-	passpharse string,
-) (*domain.Wallet, []*domain.Utxo, error) {
-	wallet, err := domain.NewWallet(
-		mnemonic, passpharse, ws.rootPath, ws.network.Name,
-		birthdayBlock, nil,
-	)
-	if err != nil {
-		return nil, nil, err
+	chain int,
+) ([]*domain.Utxo, error) {
+	if chain != domain.InternalChain && chain != domain.ExternalChain {
+		return nil, fmt.Errorf("invalid chain")
 	}
 
 	result := make([]*domain.Utxo, 0)
-
-	numOfAddressesPerAccount := addressGap
 	accountCounter := 1
 	consecutiveAccountsWithoutUtxos := 0
 	for {
-		accountHaveUtxos := false
 		accountName := fmt.Sprintf("account_%d", accountCounter)
-		account, err := wallet.CreateAccount(accountName, birthdayBlock)
+		account, err := w.GetOrCreateAccount(accountName, birthdayBlock)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
-		accountAddresses := make([]domain.AddressInfo, 0)
-		chainLastIndex := make(map[int]int)
-		outputScripts := make([][]byte, 0)
-		blindingKeyPerScript := make(map[string][]byte)
-		loopExternal := true
-		loopInternal := true
-		externalAddrNotFoundDelta := 0
-		internalAddrNotFoundDelta := 0
-		externalAddressesCount := 0
-		internalAddressesCount := 0
-	addressLoop:
-		for ii := 0; ii < numOfAddressesPerAccount; ii++ {
-			if loopExternal {
-				externalAddresses, err := wallet.DeriveNextExternalAddressForAccount(accountName)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				externalAddressesCount++
-				blindingKeyPerScript[externalAddresses.Script] = externalAddresses.BlindingKey
-				accountAddresses = append(accountAddresses, *externalAddresses)
-				script, err := hex.DecodeString(externalAddresses.Script)
-				if err != nil {
-					return nil, nil, err
-				}
-				outputScripts = append(outputScripts, script)
-			}
-
-			if loopInternal {
-				internalAddresses, err := wallet.DeriveNextInternalAddressForAccount(accountName)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				internalAddressesCount++
-				blindingKeyPerScript[internalAddresses.Script] = internalAddresses.BlindingKey
-				accountAddresses = append(accountAddresses, *internalAddresses)
-				script, err := hex.DecodeString(internalAddresses.Script)
-				if err != nil {
-					return nil, nil, err
-				}
-				outputScripts = append(outputScripts, script)
-			}
-		}
-
-		txsPerBlock, matchedScripts, err := ws.bcScanner.FindTransactionsForOutputScripts(
-			outputScripts,
+		numOfAddressesPerAccount := addressGap
+		chainLastIndex := 0
+		addrNotFoundDelta := 0
+		addressesCount := 0
+		utxos, err := ws.findUtxosRecursivelyUntilGap(
+			w,
+			account,
+			accountName,
 			birthdayBlock,
+			chain,
+			addressGap,
+			numOfAddressesPerAccount,
+			addressesCount,
+			chainLastIndex,
+			addrNotFoundDelta,
 		)
 		if err != nil {
-			return nil, nil, err
-		}
-
-		for block, txs := range txsPerBlock {
-			for _, tx := range txs {
-				newUtxos, err := getUtxos(block, tx, accountName, blindingKeyPerScript)
-				if err != nil {
-					return nil, nil, err
-				}
-				result = append(result, newUtxos...)
-				accountHaveUtxos = true
-			}
-		}
-
-		for _, v := range matchedScripts {
-			if derivationPath, ok := account.DerivationPathByScript[hex.EncodeToString(v)]; ok {
-				path := strings.Split(derivationPath, "/")
-				chainStr := path[1]
-				chain, err := strconv.Atoi(chainStr)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				indexStr := path[2]
-				index, err := strconv.Atoi(indexStr)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				if index > chainLastIndex[chain] {
-					chainLastIndex[chain] = index
-				}
-			}
-		}
-
-		externalAddrNotFoundDelta = externalAddressesCount - chainLastIndex[domain.ExternalChain]
-		internalAddrNotFoundDelta = internalAddressesCount - chainLastIndex[domain.InternalChain]
-		numOfAddressesPerAccount = addressGap - externalAddrNotFoundDelta
-		if externalAddrNotFoundDelta < internalAddrNotFoundDelta {
-			numOfAddressesPerAccount = addressGap - internalAddrNotFoundDelta
-		}
-
-		loopExternal = externalAddrNotFoundDelta < addressGap
-		loopInternal = internalAddrNotFoundDelta < addressGap
-		if loopInternal || loopExternal {
-			accountAddresses = make([]domain.AddressInfo, 0)
-			outputScripts = make([][]byte, 0)
-			blindingKeyPerScript = make(map[string][]byte)
-
-			goto addressLoop
+			return nil, err
 		}
 
 		accountCounter++
-		if !accountHaveUtxos {
+		if len(utxos) == 0 {
 			consecutiveAccountsWithoutUtxos++
 		} else {
+			result = append(result, utxos...)
 			consecutiveAccountsWithoutUtxos = 0
 		}
 
@@ -334,7 +272,158 @@ func (ws *WalletService) restore(
 		}
 	}
 
-	return wallet, result, nil
+	return result, nil
+}
+
+func (ws *WalletService) findUtxosRecursivelyUntilGap(
+	w *domain.Wallet,
+	account *domain.Account,
+	accountName string,
+	birthdayBlock uint32,
+	chain int,
+	addressGap int,
+	numOfAddressesPerAccount int,
+	addressesCount int,
+	chainLastIndex int,
+	addrNotFoundDelta int,
+) ([]*domain.Utxo, error) {
+	result := make([]*domain.Utxo, 0)
+	outputScripts, blindingKeyPerScript, err := generateScriptsAndBlindingKeys(
+		w,
+		accountName,
+		chain,
+		numOfAddressesPerAccount,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	addressesCount += len(outputScripts)
+
+	newUtxos, matchedScripts, err := ws.findUtxosForOutputScripts(
+		accountName,
+		birthdayBlock,
+		outputScripts,
+		blindingKeyPerScript,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(newUtxos) > 0 {
+		result = append(result, newUtxos...)
+	}
+
+	for _, v := range matchedScripts {
+		if derivationPath, ok := account.DerivationPathByScript[hex.EncodeToString(v)]; ok {
+			path := strings.Split(derivationPath, "/")
+
+			indexStr := path[2]
+			index, err := strconv.Atoi(indexStr)
+			if err != nil {
+				return nil, err
+			}
+
+			if index > chainLastIndex {
+				chainLastIndex = index
+			}
+		}
+	}
+
+	addrNotFoundDelta = addressesCount - chainLastIndex
+	numOfAddressesPerAccount = addressGap - addrNotFoundDelta
+	if numOfAddressesPerAccount > 0 {
+		utxos, err := ws.findUtxosRecursivelyUntilGap(
+			w,
+			account,
+			accountName,
+			birthdayBlock,
+			chain,
+			addressGap,
+			numOfAddressesPerAccount,
+			addressesCount,
+			chainLastIndex,
+			addrNotFoundDelta,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, utxos...)
+		return result, nil
+	}
+
+	return result, nil
+}
+
+func (ws *WalletService) findUtxosForOutputScripts(
+	accountName string,
+	birthdayBlock uint32,
+	outputScripts [][]byte,
+	blindingKeyPerScript map[string][]byte,
+) ([]*domain.Utxo, [][]byte, error) {
+	result := make([]*domain.Utxo, 0)
+	txsPerBlock, matchedScripts, err := ws.bcScanner.FindTransactionsForOutputScripts(
+		outputScripts,
+		birthdayBlock,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for b, txs := range txsPerBlock {
+		for _, tx := range txs {
+			newUtxos, err := getUtxos(b, tx, accountName, blindingKeyPerScript)
+			if err != nil {
+				return nil, nil, err
+			}
+			result = append(result, newUtxos...)
+		}
+	}
+
+	return result, matchedScripts, nil
+}
+
+func generateScriptsAndBlindingKeys(
+	w *domain.Wallet,
+	accountName string,
+	chain int,
+	numOfAddressesPerAccount int,
+) ([][]byte, map[string][]byte, error) {
+	outputScripts := make([][]byte, 0)
+	blindingKeyPerScript := make(map[string][]byte)
+
+	for ii := 0; ii < numOfAddressesPerAccount; ii++ {
+		if chain == domain.ExternalChain {
+			externalAddresses, err := w.DeriveNextExternalAddressForAccount(accountName)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			blindingKeyPerScript[externalAddresses.Script] = externalAddresses.BlindingKey
+			script, err := hex.DecodeString(externalAddresses.Script)
+			if err != nil {
+				return nil, nil, err
+			}
+			outputScripts = append(outputScripts, script)
+		}
+
+		if chain == domain.InternalChain {
+			internalAddresses, err := w.DeriveNextInternalAddressForAccount(accountName)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			blindingKeyPerScript[internalAddresses.Script] = internalAddresses.BlindingKey
+			script, err := hex.DecodeString(internalAddresses.Script)
+			if err != nil {
+				return nil, nil, err
+			}
+			outputScripts = append(outputScripts, script)
+		}
+	}
+
+	return outputScripts, blindingKeyPerScript, nil
 }
 
 func getUtxos(
