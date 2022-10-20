@@ -2,7 +2,6 @@ package inmemory
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/vulpemventures/ocean/internal/core/domain"
@@ -60,10 +59,6 @@ func (r *utxoRepository) GetUtxosByKey(
 			continue
 		}
 		utxos = append(utxos, u)
-	}
-
-	if len(utxos) == 0 {
-		return nil, fmt.Errorf("no utxos found with given keys")
 	}
 
 	return utxos, nil

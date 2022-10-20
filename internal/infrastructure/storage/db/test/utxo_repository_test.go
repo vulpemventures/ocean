@@ -98,7 +98,7 @@ func testGetUtxos(t *testing.T, repo domain.UtxoRepository) {
 
 		otherKeys := []domain.UtxoKey{randomKey()}
 		utxos, err = repo.GetUtxosByKey(ctx, otherKeys)
-		require.Error(t, err)
+		require.NoError(t, err)
 		require.Empty(t, utxos)
 
 		allKeys := append(utxoKeys, otherKeys...)

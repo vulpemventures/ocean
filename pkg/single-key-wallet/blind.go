@@ -81,16 +81,15 @@ func (w *Wallet) BlindPsetWithOwnedInputs(
 	}
 
 	outputIndexesToBlind := w.getOutputIndexesToBlind(ptx, inputIndexes)
+	ownedInputs, err := blindingGenerator.UnblindInputs(ptx, inputIndexes)
+	if err != nil {
+		return "", err
+	}
 	outBlindArgs, err := blindingGenerator.BlindOutputs(
 		ptx, outputIndexesToBlind, nil,
 	)
 	if err != nil {
 		return "", err
-	}
-
-	ownedInputs := make([]psetv2.OwnedInput, 0, len(ownedInputsByIndex))
-	for i := 0; i < len(ownedInputIndexes); i++ {
-		ownedInputs = append(ownedInputs, ownedInputsByIndex[uint32(i)])
 	}
 
 	blinder, err := psetv2.NewBlinder(
