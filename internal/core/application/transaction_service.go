@@ -240,6 +240,9 @@ func (ts *TransactionService) CreatePset(
 	if err != nil {
 		return "", err
 	}
+	if len(walletInputs) == 0 {
+		return "", fmt.Errorf("no utxos found with given keys")
+	}
 
 	return w.CreatePset(wallet.CreatePsetArgs{
 		Inputs:  walletInputs,
@@ -258,6 +261,9 @@ func (ts *TransactionService) UpdatePset(
 	walletInputs, err := ts.getLockedInputs(ctx, inputs)
 	if err != nil {
 		return "", err
+	}
+	if len(walletInputs) == 0 {
+		return "", fmt.Errorf("no utxos found with given keys")
 	}
 
 	return w.UpdatePset(wallet.UpdatePsetArgs{
@@ -692,9 +698,6 @@ func (ts *TransactionService) getLockedInputs(
 	utxos, err := ts.repoManager.UtxoRepository().GetUtxosByKey(ctx, keys)
 	if err != nil {
 		return nil, err
-	}
-	if len(utxos) == 0 {
-		return nil, fmt.Errorf("no utxos found with given keys")
 	}
 
 	w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)
