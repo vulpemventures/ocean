@@ -785,7 +785,7 @@ func (ts *TransactionService) findLockedInputs(
 func (ts *TransactionService) getExternalInputs(
 	walletIns []wallet.Input, allIns Inputs,
 ) ([]wallet.Input, error) {
-	externalInputKeys := make([]domain.UtxoKey, 0)
+	externalUtxos := make([]domain.Utxo, 0)
 	for _, key := range allIns {
 		isExternalInput := true
 		for _, in := range walletIns {
@@ -796,15 +796,18 @@ func (ts *TransactionService) getExternalInputs(
 			if !isExternalInput {
 				continue
 			}
-			externalInputKeys = append(externalInputKeys, domain.UtxoKey(key))
+			externalUtxos = append(externalUtxos, domain.Utxo{
+				UtxoKey: domain.UtxoKey(key),
+				Script:  in.Script,
+			})
 		}
 	}
 
-	if len(externalInputKeys) == 0 {
+	if len(externalUtxos) == 0 {
 		return nil, nil
 	}
 
-	utxos, err := ts.bcScanner.GetUtxos(externalInputKeys)
+	utxos, err := ts.bcScanner.GetUtxos(externalUtxos)
 	if err != nil {
 		return nil, err
 	}

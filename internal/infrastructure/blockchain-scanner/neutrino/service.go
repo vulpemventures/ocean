@@ -135,11 +135,12 @@ func (s *service) StopWatchForAccount(accountName string) {
 	s.removeScanner(accountName)
 }
 
-func (s *service) GetUtxos(utxoKeys []domain.UtxoKey) ([]*domain.Utxo, error) {
+func (s *service) GetUtxos(utxoList []domain.Utxo) ([]*domain.Utxo, error) {
 	baseUrl := s.nodeConfig.EsploraUrl
 	client := &http.Client{}
-	utxos := make([]*domain.Utxo, 0, len(utxoKeys))
-	for _, key := range utxoKeys {
+	utxos := make([]*domain.Utxo, 0, len(utxoList))
+	for _, u := range utxoList {
+		key := u.UtxoKey
 		url := fmt.Sprintf("%s/tx/%s", baseUrl, key.TxID)
 		resp, err := client.Get(url)
 		if err != nil {
