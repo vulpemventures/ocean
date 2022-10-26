@@ -49,7 +49,6 @@ func (r *walletRepository) CreateWallet(
 		return ErrWalletAlreadyExisting
 	}
 
-	wallet.Lock()
 	r.store.wallet = wallet
 
 	go r.publishEvent(domain.WalletEvent{
@@ -90,10 +89,14 @@ func (r *walletRepository) UnlockWallet(
 	return nil
 }
 
-func (r *walletRepository) LockWallet(ctx context.Context) error {
+func (r *walletRepository) LockWallet(
+	ctx context.Context, password string,
+) error {
 	if err := r.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
-			w.Lock()
+			if err := w.Lock(password); err != nil {
+				return nil, err
+			}
 			return w, nil
 		},
 	); err != nil {

@@ -43,7 +43,6 @@ func TestMain(m *testing.M) {
 	mockedMnemonicCypher.On("Decrypt", h2b(encryptedMnemonic), []byte(newPassword)).Return([]byte(strings.Join(mnemonic, " ")), nil)
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("invalid password"))
 	domain.MnemonicCypher = mockedMnemonicCypher
-	domain.MnemonicStore = newInMemoryMnemonicStore()
 
 	os.Exit(m.Run())
 }
@@ -56,6 +55,7 @@ func TestWalletService(t *testing.T) {
 
 func testInitWalletFromScratch(t *testing.T) {
 	t.Run("init_wallet_from_scratch", func(t *testing.T) {
+		domain.MnemonicStore = newInMemoryMnemonicStore()
 		mockedBcScanner := newMockedBcScanner()
 		mockedBcScanner.On("GetLatestBlock").Return(birthdayBlockHash, birthdayBlockHeight, nil)
 		mockedBcScanner.On("GetBlockHash", mock.Anything).Return(birthdayBlockHash, nil)
@@ -123,6 +123,7 @@ func testInitWalletFromScratch(t *testing.T) {
 
 func testInitWalletFromRestart(t *testing.T) {
 	t.Run("init_wallet_from_restart", func(t *testing.T) {
+		domain.MnemonicStore = newInMemoryMnemonicStore()
 		mockedBcScanner := newMockedBcScanner()
 		mockedBcScanner.On("GetBlockHash", mock.Anything).Return(birthdayBlockHash, nil)
 		repoManager, err := newRepoManagerForExistingWallet()
@@ -255,7 +256,6 @@ func newRepoManagerForExistingWallet() (ports.RepoManager, error) {
 	if err != nil {
 		return nil, err
 	}
-	wallet.Lock()
 
 	if err := rm.WalletRepository().CreateWallet(ctx, wallet); err != nil {
 		return nil, err

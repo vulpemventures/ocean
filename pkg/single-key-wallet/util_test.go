@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"math/big"
 
+	"github.com/vulpemventures/go-elements/address"
 	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
@@ -30,10 +31,12 @@ func randomInputs(num int) []wallet.Input {
 func randomOutputs(num int) []wallet.Output {
 	outs := make([]wallet.Output, 0, num)
 	for i := 0; i < num; i++ {
+		addr, _ := address.FromConfidential(testAddresses[i%3])
 		outs = append(outs, wallet.Output{
-			Asset:   randomHex(32),
-			Amount:  randomValue(),
-			Address: testAddresses[i%3],
+			Asset:       randomHex(32),
+			Amount:      randomValue(),
+			Script:      addr.Script,
+			BlindingKey: addr.BlindingKey,
 		})
 	}
 

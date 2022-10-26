@@ -100,8 +100,6 @@ func NewWallet(
 		return nil, err
 	}
 
-	MnemonicStore.Set(strMnemonic)
-
 	accountsByKey := make(map[string]*Account)
 	accountKeysByIndex := make(map[uint32]string)
 	accountKeysByName := make(map[string]string)
@@ -160,11 +158,17 @@ func (w *Wallet) GetMasterBlindingKey() (string, error) {
 }
 
 // Lock locks the Wallet by wiping the plaintext mnemonic from its store.
-func (w *Wallet) Lock() {
+func (w *Wallet) Lock(password string) error {
 	if w.IsLocked() {
-		return
+		return nil
 	}
+
+	if !w.isValidPassword(password) {
+		return ErrWalletInvalidPassword
+	}
+
 	MnemonicStore.Unset()
+	return nil
 }
 
 // Unlock attempts to decrypt the encrypted mnemonic with the provided

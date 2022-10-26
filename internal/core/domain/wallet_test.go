@@ -43,8 +43,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewWallet(t *testing.T) {
-	t.Parallel()
-
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
@@ -60,7 +58,10 @@ func TestNewWallet(t *testing.T) {
 		require.Empty(t, w.AccountsByKey)
 		require.Equal(t, 0, int(w.NextAccountIndex))
 		require.True(t, w.IsInitialized())
-		require.False(t, w.IsLocked())
+		require.True(t, w.IsLocked())
+
+		err = w.Unlock(password)
+		require.NoError(t, err)
 
 		m, err := w.GetMnemonic()
 		require.NoError(t, err)
@@ -70,7 +71,12 @@ func TestNewWallet(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, masterBlingingKey, masterKey)
 
-		w.Lock()
+		err = w.Lock("wrong password")
+		require.EqualError(t, err, domain.ErrWalletInvalidPassword.Error())
+		require.False(t, w.IsLocked())
+
+		err = w.Lock(password)
+		require.NoError(t, err)
 		require.True(t, w.IsLocked())
 
 		m, err = w.GetMnemonic()
@@ -109,15 +115,14 @@ func TestNewWallet(t *testing.T) {
 }
 
 func TestLockUnlock(t *testing.T) {
-	t.Parallel()
-
 	w, err := newTestWallet()
 	require.NoError(t, err)
 
 	err = w.Unlock(password)
 	require.NoError(t, err)
 
-	w.Lock()
+	err = w.Lock(password)
+	require.NoError(t, err)
 
 	err = w.Unlock(wrongPassword)
 	require.Error(t, err)
@@ -127,15 +132,17 @@ func TestLockUnlock(t *testing.T) {
 }
 
 func TestChangePassword(t *testing.T) {
-	t.Parallel()
-
 	w, err := newTestWallet()
+	require.NoError(t, err)
+
+	err = w.Unlock(password)
 	require.NoError(t, err)
 
 	err = w.ChangePassword(password, newPassword)
 	require.EqualError(t, domain.ErrWalletUnlocked, err.Error())
 
-	w.Lock()
+	err = w.Lock(password)
+	require.NoError(t, err)
 
 	err = w.ChangePassword(password, newPassword)
 	require.NoError(t, err)
@@ -143,12 +150,11 @@ func TestChangePassword(t *testing.T) {
 }
 
 func TestWalletAccount(t *testing.T) {
-	t.Parallel()
-
 	w, err := newTestWallet()
 	require.NoError(t, err)
 
-	w.Lock()
+	err = w.Lock(password)
+	require.NoError(t, err)
 
 	accountName := "test1"
 	account, err := w.CreateAccount(accountName, 0)
@@ -169,7 +175,8 @@ func TestWalletAccount(t *testing.T) {
 	require.Equal(t, "m/84'/1'/0'", account.Info.DerivationPath)
 	require.NotEmpty(t, account.Info.Xpub)
 
-	w.Lock()
+	err = w.Lock(password)
+	require.NoError(t, err)
 
 	gotAccount, err := w.GetAccount(accountName)
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())
@@ -181,7 +188,8 @@ func TestWalletAccount(t *testing.T) {
 	require.NoError(t, err)
 	require.Exactly(t, *account, *gotAccount)
 
-	w.Lock()
+	err = w.Lock(password)
+	require.NoError(t, err)
 
 	allAddrInfo, err := w.AllDerivedAddressesForAccount(accountName)
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())
@@ -193,7 +201,8 @@ func TestWalletAccount(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, allAddrInfo)
 
-	w.Lock()
+	err = w.Lock(password)
+	require.NoError(t, err)
 
 	addrInfo, err := w.DeriveNextExternalAddressForAccount(accountName)
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())
@@ -215,7 +224,8 @@ func TestWalletAccount(t *testing.T) {
 	require.Len(t, allAddrInfo, 1)
 	require.Exactly(t, *addrInfo, allAddrInfo[0])
 
-	w.Lock()
+	err = w.Lock(password)
+	require.NoError(t, err)
 
 	err = w.DeleteAccount(accountName)
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())

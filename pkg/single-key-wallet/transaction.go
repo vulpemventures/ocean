@@ -3,6 +3,7 @@ package wallet
 import (
 	"fmt"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/psetv2"
@@ -85,11 +86,7 @@ func (i Input) scriptType() int {
 
 // Output is the data structure representing an output to be added to a partial
 // transaction, therefore inclusing asset, amount and address.
-type Output struct {
-	Asset   string
-	Amount  uint64
-	Address string
-}
+type Output psetv2.OutputArgs
 
 func (o Output) validate() error {
 	if o.Asset == "" {
@@ -102,20 +99,25 @@ func (o Output) validate() error {
 	if len(asset) != 33 {
 		return ErrOutputInvalidAsset
 	}
-	if o.Address != "" {
-		if _, err := address.IsConfidential(o.Address); err != nil {
-			return err
+	if len(o.Script) > 0 {
+		if _, err := address.ParseScript(o.Script); err != nil {
+			return ErrOutputInvalidScript
+		}
+	}
+	if len(o.BlindingKey) > 0 {
+		if _, err := btcec.ParsePubKey(o.BlindingKey); err != nil {
+			return ErrOutputInvalidBlindingKey
 		}
 	}
 	return nil
 }
 
+func (o Output) isConfidential() bool {
+	return len(o.BlindingKey) > 0
+}
+
 func (o Output) scriptSize() int {
-	if o.Address == "" {
-		return 0
-	}
-	script, _ := address.ToOutputScript(o.Address)
-	return varSliceSerializeSize(script)
+	return varSliceSerializeSize(o.Script)
 }
 
 type CreatePsetArgs struct {
@@ -134,8 +136,7 @@ func (a CreatePsetArgs) validate() error {
 		if err := out.validate(); err != nil {
 			return fmt.Errorf("invalid output %d: %s", i, err)
 		}
-		isConfidential, _ := address.IsConfidential(out.Address)
-		if isConfidential && len(a.Inputs) == 0 {
+		if out.isConfidential() && len(a.Inputs) == 0 {
 			return ErrMissingInputs
 		}
 	}
@@ -157,11 +158,7 @@ func (a CreatePsetArgs) inputs() []psetv2.InputArgs {
 func (a CreatePsetArgs) outputs() []psetv2.OutputArgs {
 	outs := make([]psetv2.OutputArgs, 0, len(a.Outputs))
 	for _, out := range a.Outputs {
-		outs = append(outs, psetv2.OutputArgs{
-			Amount:  out.Amount,
-			Asset:   out.Asset,
-			Address: out.Address,
-		})
+		outs = append(outs, psetv2.OutputArgs(out))
 	}
 	return outs
 }
@@ -234,12 +231,8 @@ func (a UpdatePsetArgs) inputs() []psetv2.InputArgs {
 func (a UpdatePsetArgs) outputs(blinderIndex uint32) []psetv2.OutputArgs {
 	outs := make([]psetv2.OutputArgs, 0, len(a.Outputs))
 	for _, out := range a.Outputs {
-		outs = append(outs, psetv2.OutputArgs{
-			Amount:       out.Amount,
-			Asset:        out.Asset,
-			Address:      out.Address,
-			BlinderIndex: blinderIndex,
-		})
+		out.BlinderIndex = blinderIndex
+		outs = append(outs, psetv2.OutputArgs(out))
 	}
 	return outs
 }

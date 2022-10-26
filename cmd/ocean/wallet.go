@@ -84,6 +84,9 @@ func init() {
 	walletUnlockCmd.Flags().StringVar(&password, "password", "", "encryption password")
 	walletUnlockCmd.MarkFlagRequired("password")
 
+	walletLockCmd.Flags().StringVar(&password, "password", "", "encryption password")
+	walletLockCmd.MarkFlagRequired("password")
+
 	walletChangePwdCmd.Flags().StringVar(&oldPassword, "old-password", "", "current password")
 	walletChangePwdCmd.Flags().StringVar(&newPassword, "new-password", "", "new password")
 	walletChangePwdCmd.MarkFlagRequired("old-password")
@@ -190,7 +193,9 @@ func walletLock(cmd *cobra.Command, args []string) error {
 	defer cleanup()
 
 	if _, err := client.Lock(
-		context.Background(), &pb.LockRequest{},
+		context.Background(), &pb.LockRequest{
+			Password: password,
+		},
 	); err != nil {
 		printErr(err)
 		return nil

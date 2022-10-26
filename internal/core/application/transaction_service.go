@@ -9,6 +9,7 @@ import (
 
 	"github.com/btcsuite/btcd/txscript"
 	log "github.com/sirupsen/logrus"
+	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/go-elements/psetv2"
@@ -239,6 +240,9 @@ func (ts *TransactionService) CreatePset(
 	if err != nil {
 		return "", err
 	}
+	if len(walletInputs) == 0 {
+		return "", fmt.Errorf("no utxos found with given keys")
+	}
 
 	return w.CreatePset(wallet.CreatePsetArgs{
 		Inputs:  walletInputs,
@@ -258,6 +262,9 @@ func (ts *TransactionService) UpdatePset(
 	if err != nil {
 		return "", err
 	}
+	if len(walletInputs) == 0 {
+		return "", fmt.Errorf("no utxos found with given keys")
+	}
 
 	return w.UpdatePset(wallet.UpdatePsetArgs{
 		PsetBase64: ptx,
@@ -267,8 +274,8 @@ func (ts *TransactionService) UpdatePset(
 }
 
 func (ts *TransactionService) BlindPset(
-	ctx context.Context, ptx string, extraBlindingKeys map[string][]byte,
-	lastBlinder bool,
+	ctx context.Context,
+	ptx string, extraUnblindedInputs []UnblindedInput, lastBlinder bool,
 ) (string, error) {
 	w, err := ts.getWallet(ctx)
 	if err != nil {
@@ -280,11 +287,37 @@ func (ts *TransactionService) BlindPset(
 		return "", err
 	}
 
+	pset, _ := psetv2.NewPsetFromBase64(ptx)
+	for i, in := range extraUnblindedInputs {
+		psetIn := pset.Inputs[i]
+		prevout := psetIn.GetUtxo()
+		// Blinders are serialized as transaction ids.
+		assetBlinder, _ := elementsutil.TxIDToBytes(in.AssetBlinder)
+		valueBlinder, _ := elementsutil.TxIDToBytes(in.AmountBlinder)
+		var valueCommitment, assetCommitment, nonce []byte
+		if prevout.IsConfidential() {
+			valueCommitment, assetCommitment, nonce =
+				prevout.Value, prevout.Asset, prevout.Nonce
+		}
+		walletInputs[in.Index] = wallet.Input{
+			TxID:            elementsutil.TxIDFromBytes(psetIn.PreviousTxid),
+			TxIndex:         psetIn.PreviousTxIndex,
+			Value:           in.Amount,
+			Asset:           in.Asset,
+			Script:          prevout.Script,
+			ValueBlinder:    valueBlinder,
+			AssetBlinder:    assetBlinder,
+			ValueCommitment: valueCommitment,
+			AssetCommitment: assetCommitment,
+			Nonce:           nonce,
+			RangeProof:      psetIn.UtxoRangeProof,
+		}
+	}
+
 	return w.BlindPsetWithOwnedInputs(
 		wallet.BlindPsetWithOwnedInputsArgs{
 			PsetBase64:         ptx,
 			OwnedInputsByIndex: walletInputs,
-			ExtraBlindingKeys:  extraBlindingKeys,
 			LastBlinder:        lastBlinder,
 		},
 	)
@@ -382,10 +415,13 @@ func (ts *TransactionService) Transfer(
 
 		i := 0
 		for asset, amount := range changeByAsset {
+			script, _ := hex.DecodeString(addressesInfo[i].Script)
+			addr, _ := address.FromConfidential(addressesInfo[i].Address)
 			changeOutputs = append(changeOutputs, wallet.Output{
-				Asset:   asset,
-				Amount:  amount,
-				Address: addressesInfo[i].Address,
+				Asset:       asset,
+				Amount:      amount,
+				Script:      script,
+				BlindingKey: addr.BlindingKey,
 			})
 			i++
 		}
@@ -465,10 +501,12 @@ func (ts *TransactionService) Transfer(
 				if err != nil {
 					return "", err
 				}
+				script, _ := hex.DecodeString(addrInfo[0].Script)
 				changeOutputs = append(changeOutputs, wallet.Output{
-					Amount:  change,
-					Asset:   targetAsset,
-					Address: addrInfo[0].Address,
+					Amount:      change,
+					Asset:       targetAsset,
+					Script:      script,
+					BlindingKey: addrInfo[0].BlindingKey,
 				})
 			}
 
@@ -660,9 +698,6 @@ func (ts *TransactionService) getLockedInputs(
 	utxos, err := ts.repoManager.UtxoRepository().GetUtxosByKey(ctx, keys)
 	if err != nil {
 		return nil, err
-	}
-	if len(utxos) == 0 {
-		return nil, fmt.Errorf("no utxos found with given keys")
 	}
 
 	w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)

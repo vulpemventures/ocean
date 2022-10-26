@@ -56,9 +56,6 @@ func (r *utxoRepository) GetUtxosByKey(
 		}
 	}
 
-	if len(utxos) == 0 {
-		return nil, fmt.Errorf("no utxos found with given keys")
-	}
 	return utxos, nil
 }
 

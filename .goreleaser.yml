@@ -68,7 +68,7 @@ builds:
     goarch:
       - amd64
       - arm64
-    binary: ocean-darwin
+    binary: ocean
 
 ## flag the semver v**.**.**-<tag>.* as pre-release on Github
 release:
@@ -76,7 +76,6 @@ release:
 
 checksum:
   name_template: "checksums.txt"
-
 
 snapshot:
   name_template: "{{ .Tag }}-next"
@@ -111,7 +110,10 @@ dockers:
         # push always either release or prerelease with a docker tag with the semver only
     skip_push: "false"
     use: buildx
-    dockerfile: Dockerfile
+    ids:
+      - ocean
+      - oceand-linux-amd64
+    dockerfile: goreleaser.Dockerfile
     # GOOS of the built binaries/packages that should be used.
     goos: linux
     # GOARCH of the built binaries/packages that should be used.
@@ -128,21 +130,16 @@ dockers:
       - "--build-arg=COMMIT={{.Commit}}"
       - "--build-arg=DATE={{.Date}}"
 
-    extra_files:
-      - go.mod
-      - go.sum
-      - internal
-      - pkg
-      - cmd
-      - api-spec
-
   # arm64
   - image_templates:
       - "ghcr.io/vulpemventures/oceand:{{ .Tag }}-arm64v8"
         # push always either release or prerelease with a docker tag with the semver only
     skip_push: "false"
     use: buildx
-    dockerfile: Dockerfile
+    ids:
+      - ocean
+      - oceand-linux-arm64
+    dockerfile: goreleaser.Dockerfile
     # GOOS of the built binaries/packages that should be used.
     goos: linux
     # GOARCH of the built binaries/packages that should be used.
@@ -158,14 +155,6 @@ dockers:
       - "--build-arg=VERSION={{.Version}}"
       - "--build-arg=COMMIT={{.Commit}}"
       - "--build-arg=DATE={{.Date}}"
-
-    extra_files:
-      - go.mod
-      - go.sum
-      - internal
-      - pkg
-      - cmd
-      - api-spec
 
 docker_manifests:
   - name_template: ghcr.io/vulpemventures/oceand:{{ .Tag }}

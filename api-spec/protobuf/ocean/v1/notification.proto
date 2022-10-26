@@ -35,22 +35,24 @@ service NotificationService {
 
 message TransactionNotificationsRequest{}
 message TransactionNotificationsResponse{
-  // Account names.
-  repeated string account_names = 1;
-  // Txid of transaction.
-  string txid = 2;
   // Tx event type.
-  TxEventType event_type = 3;
+  TxEventType event_type = 1;
+  // Account names.
+  repeated string account_names = 2;
+  // Tx in hex format.
+  string txhex = 3;
+  // Txid of transaction.
+  string txid = 4;
   // Details of the block including the tx.
-  BlockDetails block_details = 4;
+  BlockDetails block_details = 5;
 }
 
 message UtxosNotificationsRequest{}
 message UtxosNotificationsResponse{
-  // List of utxos for which occured the event.
-  repeated Utxo utxos = 1;
   // The event's type occured for the utxos.
-  UtxoEventType event_type = 2;
+  UtxoEventType event_type = 1;
+  // List of utxos for which occured the event.
+  repeated Utxo utxos = 2;
 }
 
 message AddWebhookRequest {

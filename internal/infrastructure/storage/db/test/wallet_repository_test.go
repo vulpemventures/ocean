@@ -40,7 +40,6 @@ func TestMain(m *testing.M) {
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, []byte(newPassword)).Return([]byte(strings.Join(mnemonic, " ")), nil)
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("invalid password"))
 	domain.MnemonicCypher = mockedMnemonicCypher
-	domain.MnemonicStore = newInMemoryMnemonicStore()
 
 	os.Exit(m.Run())
 }
@@ -61,6 +60,7 @@ func TestWalletRepository(t *testing.T) {
 
 	for name, repo := range repositories {
 		t.Run(name, func(t *testing.T) {
+			domain.MnemonicStore = newInMemoryMnemonicStore()
 			testWalletRepository(t, repo)
 		})
 	}

@@ -42,6 +42,7 @@ func (n notification) TransactionNotifications(
 			}
 			if err := stream.Send(&pb.TransactionNotificationsResponse{
 				AccountNames: e.Transaction.GetAccounts(),
+				Txhex:        e.Transaction.TxHex,
 				Txid:         e.Transaction.TxID,
 				BlockDetails: blockDetails,
 				EventType:    parseTxEventType(e.EventType),

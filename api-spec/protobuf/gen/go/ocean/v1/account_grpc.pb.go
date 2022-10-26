@@ -28,10 +28,10 @@ type AccountServiceClient interface {
 	CreateAccountCustom(ctx context.Context, in *CreateAccountCustomRequest, opts ...grpc.CallOption) (*CreateAccountCustomResponse, error)
 	// SetAccountTemplate sets the template for the account used to generate new addresses.
 	SetAccountTemplate(ctx context.Context, in *SetAccountTemplateRequest, opts ...grpc.CallOption) (*SetAccountTemplateResponse, error)
-	// DeriveAddress generates new address(es) for the account.
-	DeriveAddress(ctx context.Context, in *DeriveAddressRequest, opts ...grpc.CallOption) (*DeriveAddressResponse, error)
-	// DeriveChangeAddress generates new change address(es) for the account.
-	DeriveChangeAddress(ctx context.Context, in *DeriveChangeAddressRequest, opts ...grpc.CallOption) (*DeriveChangeAddressResponse, error)
+	// DeriveAddresses generates new address(es) for the account.
+	DeriveAddresses(ctx context.Context, in *DeriveAddressesRequest, opts ...grpc.CallOption) (*DeriveAddressesResponse, error)
+	// DeriveChangeAddresses generates new change address(es) for the account.
+	DeriveChangeAddresses(ctx context.Context, in *DeriveChangeAddressesRequest, opts ...grpc.CallOption) (*DeriveChangeAddressesResponse, error)
 	// ListAddresses returns all derived addresses for the account.
 	ListAddresses(ctx context.Context, in *ListAddressesRequest, opts ...grpc.CallOption) (*ListAddressesResponse, error)
 	// Balance returns the balance for the account, or for specific list of
@@ -80,18 +80,18 @@ func (c *accountServiceClient) SetAccountTemplate(ctx context.Context, in *SetAc
 	return out, nil
 }
 
-func (c *accountServiceClient) DeriveAddress(ctx context.Context, in *DeriveAddressRequest, opts ...grpc.CallOption) (*DeriveAddressResponse, error) {
-	out := new(DeriveAddressResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/DeriveAddress", in, out, opts...)
+func (c *accountServiceClient) DeriveAddresses(ctx context.Context, in *DeriveAddressesRequest, opts ...grpc.CallOption) (*DeriveAddressesResponse, error) {
+	out := new(DeriveAddressesResponse)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/DeriveAddresses", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountServiceClient) DeriveChangeAddress(ctx context.Context, in *DeriveChangeAddressRequest, opts ...grpc.CallOption) (*DeriveChangeAddressResponse, error) {
-	out := new(DeriveChangeAddressResponse)
-	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/DeriveChangeAddress", in, out, opts...)
+func (c *accountServiceClient) DeriveChangeAddresses(ctx context.Context, in *DeriveChangeAddressesRequest, opts ...grpc.CallOption) (*DeriveChangeAddressesResponse, error) {
+	out := new(DeriveChangeAddressesResponse)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/DeriveChangeAddresses", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -144,10 +144,10 @@ type AccountServiceServer interface {
 	CreateAccountCustom(context.Context, *CreateAccountCustomRequest) (*CreateAccountCustomResponse, error)
 	// SetAccountTemplate sets the template for the account used to generate new addresses.
 	SetAccountTemplate(context.Context, *SetAccountTemplateRequest) (*SetAccountTemplateResponse, error)
-	// DeriveAddress generates new address(es) for the account.
-	DeriveAddress(context.Context, *DeriveAddressRequest) (*DeriveAddressResponse, error)
-	// DeriveChangeAddress generates new change address(es) for the account.
-	DeriveChangeAddress(context.Context, *DeriveChangeAddressRequest) (*DeriveChangeAddressResponse, error)
+	// DeriveAddresses generates new address(es) for the account.
+	DeriveAddresses(context.Context, *DeriveAddressesRequest) (*DeriveAddressesResponse, error)
+	// DeriveChangeAddresses generates new change address(es) for the account.
+	DeriveChangeAddresses(context.Context, *DeriveChangeAddressesRequest) (*DeriveChangeAddressesResponse, error)
 	// ListAddresses returns all derived addresses for the account.
 	ListAddresses(context.Context, *ListAddressesRequest) (*ListAddressesResponse, error)
 	// Balance returns the balance for the account, or for specific list of
@@ -174,11 +174,11 @@ func (UnimplementedAccountServiceServer) CreateAccountCustom(context.Context, *C
 func (UnimplementedAccountServiceServer) SetAccountTemplate(context.Context, *SetAccountTemplateRequest) (*SetAccountTemplateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetAccountTemplate not implemented")
 }
-func (UnimplementedAccountServiceServer) DeriveAddress(context.Context, *DeriveAddressRequest) (*DeriveAddressResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeriveAddress not implemented")
+func (UnimplementedAccountServiceServer) DeriveAddresses(context.Context, *DeriveAddressesRequest) (*DeriveAddressesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeriveAddresses not implemented")
 }
-func (UnimplementedAccountServiceServer) DeriveChangeAddress(context.Context, *DeriveChangeAddressRequest) (*DeriveChangeAddressResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeriveChangeAddress not implemented")
+func (UnimplementedAccountServiceServer) DeriveChangeAddresses(context.Context, *DeriveChangeAddressesRequest) (*DeriveChangeAddressesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeriveChangeAddresses not implemented")
 }
 func (UnimplementedAccountServiceServer) ListAddresses(context.Context, *ListAddressesRequest) (*ListAddressesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAddresses not implemented")
@@ -258,38 +258,38 @@ func _AccountService_SetAccountTemplate_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_DeriveAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeriveAddressRequest)
+func _AccountService_DeriveAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeriveAddressesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).DeriveAddress(ctx, in)
+		return srv.(AccountServiceServer).DeriveAddresses(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1.AccountService/DeriveAddress",
+		FullMethod: "/ocean.v1.AccountService/DeriveAddresses",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).DeriveAddress(ctx, req.(*DeriveAddressRequest))
+		return srv.(AccountServiceServer).DeriveAddresses(ctx, req.(*DeriveAddressesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_DeriveChangeAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeriveChangeAddressRequest)
+func _AccountService_DeriveChangeAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeriveChangeAddressesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).DeriveChangeAddress(ctx, in)
+		return srv.(AccountServiceServer).DeriveChangeAddresses(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ocean.v1.AccountService/DeriveChangeAddress",
+		FullMethod: "/ocean.v1.AccountService/DeriveChangeAddresses",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).DeriveChangeAddress(ctx, req.(*DeriveChangeAddressRequest))
+		return srv.(AccountServiceServer).DeriveChangeAddresses(ctx, req.(*DeriveChangeAddressesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -386,12 +386,12 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AccountService_SetAccountTemplate_Handler,
 		},
 		{
-			MethodName: "DeriveAddress",
-			Handler:    _AccountService_DeriveAddress_Handler,
+			MethodName: "DeriveAddresses",
+			Handler:    _AccountService_DeriveAddresses_Handler,
 		},
 		{
-			MethodName: "DeriveChangeAddress",
-			Handler:    _AccountService_DeriveChangeAddress_Handler,
+			MethodName: "DeriveChangeAddresses",
+			Handler:    _AccountService_DeriveChangeAddresses_Handler,
 		},
 		{
 			MethodName: "ListAddresses",

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/vulpemventures/go-elements/address"
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"github.com/vulpemventures/ocean/internal/core/domain"
@@ -121,10 +122,27 @@ func parseInputs(ins []*pb.Input) ([]application.Input, error) {
 func parseOutputs(outs []*pb.Output) ([]application.Output, error) {
 	outputs := make([]application.Output, 0, len(outs))
 	for _, out := range outs {
+		var script, blindKey []byte
+		if addr := out.GetAddress(); addr != "" {
+			isConf, err := address.IsConfidential(addr)
+			if err != nil {
+				return nil, err
+			}
+			if isConf {
+				res, _ := address.FromConfidential(addr)
+				script, blindKey = res.Script, res.BlindingKey
+			} else {
+				script, _ = address.ToOutputScript(addr)
+			}
+		} else {
+			script, _ = hex.DecodeString(out.GetScript())
+			blindKey, _ = hex.DecodeString(out.GetBlindingPubkey())
+		}
 		output := application.Output{
-			Asset:   out.GetAsset(),
-			Amount:  out.GetAmount(),
-			Address: out.GetAddress(),
+			Asset:       out.GetAsset(),
+			Amount:      out.GetAmount(),
+			Script:      script,
+			BlindingKey: blindKey,
 		}
 		if err := output.Validate(); err != nil {
 			return nil, err
@@ -223,4 +241,38 @@ func parseBlockHash(hash string) ([]byte, error) {
 		return nil, fmt.Errorf("invalid block hash length")
 	}
 	return buf, nil
+}
+
+func parseUnblindedInputs(
+	list []*pb.UnblindedInput,
+) ([]application.UnblindedInput, error) {
+	ins := make([]application.UnblindedInput, 0, len(list))
+	for _, l := range list {
+		if l.GetAsset() == "" {
+			return nil, fmt.Errorf("missing unblinded input asset")
+		}
+		if _, err := parseAsset(l.GetAsset()); err != nil {
+			return nil, fmt.Errorf("invalid unblinded input asset")
+		}
+		if l.GetAmountBlinder() == "" {
+			return nil, fmt.Errorf("missing unblinded input amount blinder")
+		}
+		if _, err := parseAsset(l.GetAmountBlinder()); err != nil {
+			return nil, fmt.Errorf("invalid unblinded input amount blinder")
+		}
+		if l.GetAssetBlinder() == "" {
+			return nil, fmt.Errorf("missing unblinded input asset blinder")
+		}
+		if _, err := parseAsset(l.GetAssetBlinder()); err != nil {
+			return nil, fmt.Errorf("invalid unblinded input asset blinder")
+		}
+		ins = append(ins, application.UnblindedInput{
+			Index:         l.GetIndex(),
+			Amount:        l.GetAmount(),
+			Asset:         l.GetAsset(),
+			AmountBlinder: l.GetAmountBlinder(),
+			AssetBlinder:  l.GetAssetBlinder(),
+		})
+	}
+	return ins, nil
 }

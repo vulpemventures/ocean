@@ -154,7 +154,11 @@ message UpdatePsetResponse{
 message BlindPsetRequest{
   // The partial transaction with inputs/outputs to blind.
   string pset = 1;
+  // Whether blinding as last blinder.
   bool last_blinder = 2;
+  // Optional list of unblinded data related to existing pset inputs in order
+  // to make the wallet blind also outputs it wouldn't own otherwise.
+  repeated UnblindedInput extra_unblinded_inputs = 3;
 }
 message BlindPsetResponse{
   // Updated partial transaction with blinded inputs/outputs in base64 format.

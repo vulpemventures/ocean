@@ -14,9 +14,7 @@ type account struct {
 }
 
 func NewAccountHandler(appSvc *application.AccountService) pb.AccountServiceServer {
-	return &account{
-		appSvc: appSvc,
-	}
+	return &account{appSvc: appSvc}
 }
 
 func (a *account) CreateAccountBIP44(
@@ -32,9 +30,10 @@ func (a *account) CreateAccountBIP44(
 		return nil, err
 	}
 	return &pb.CreateAccountBIP44Response{
-		AccountName:  accountInfo.Key.Name,
-		AccountIndex: accountInfo.Key.Index,
-		Xpub:         accountInfo.Xpub,
+		AccountName:    accountInfo.Key.Name,
+		AccountIndex:   accountInfo.Key.Index,
+		Xpub:           accountInfo.Xpub,
+		DerivationPath: accountInfo.DerivationPath,
 	}, nil
 }
 
@@ -50,43 +49,43 @@ func (a *account) SetAccountTemplate(
 	return &pb.SetAccountTemplateResponse{}, nil
 }
 
-func (a *account) DeriveAddress(
-	ctx context.Context, req *pb.DeriveAddressRequest,
-) (*pb.DeriveAddressResponse, error) {
+func (a *account) DeriveAddresses(
+	ctx context.Context, req *pb.DeriveAddressesRequest,
+) (*pb.DeriveAddressesResponse, error) {
 	name, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	numOfAddresses := req.GetNumOfAddresses()
 
-	addressesInfo, err := a.appSvc.DeriveAddressForAccount(
+	addressesInfo, err := a.appSvc.DeriveAddressesForAccount(
 		ctx, name, numOfAddresses,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.DeriveAddressResponse{
+	return &pb.DeriveAddressesResponse{
 		Addresses: addressesInfo.Addresses(),
 	}, nil
 }
 
-func (a *account) DeriveChangeAddress(
-	ctx context.Context, req *pb.DeriveChangeAddressRequest,
-) (*pb.DeriveChangeAddressResponse, error) {
+func (a *account) DeriveChangeAddresses(
+	ctx context.Context, req *pb.DeriveChangeAddressesRequest,
+) (*pb.DeriveChangeAddressesResponse, error) {
 	name, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	numOfAddresses := req.GetNumOfAddresses()
 
-	addressesInfo, err := a.appSvc.DeriveChangeAddressForAccount(
+	addressesInfo, err := a.appSvc.DeriveChangeAddressesForAccount(
 		ctx, name, numOfAddresses,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.DeriveChangeAddressResponse{
+	return &pb.DeriveChangeAddressesResponse{
 		Addresses: addressesInfo.Addresses(),
 	}, nil
 }

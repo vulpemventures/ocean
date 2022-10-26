@@ -12,7 +12,6 @@ import (
 type BlindPsetWithOwnedInputsArgs struct {
 	PsetBase64         string
 	OwnedInputsByIndex map[uint32]Input
-	ExtraBlindingKeys  map[string][]byte
 	LastBlinder        bool
 }
 
@@ -52,27 +51,12 @@ func (a BlindPsetWithOwnedInputsArgs) ownedInputs() map[uint32]psetv2.OwnedInput
 	return ownedInputs
 }
 
-func (a BlindPsetWithOwnedInputsArgs) inputIndexes() ([]uint32, []uint32) {
+func (a BlindPsetWithOwnedInputsArgs) inputIndexes() []uint32 {
 	ownedInputIndexes := make([]uint32, 0, len(a.OwnedInputsByIndex))
 	for i := range a.OwnedInputsByIndex {
 		ownedInputIndexes = append(ownedInputIndexes, i)
 	}
-
-	if len(a.ExtraBlindingKeys) == 0 {
-		return ownedInputIndexes, nil
-	}
-
-	ptx, _ := psetv2.NewPsetFromBase64(a.PsetBase64)
-	notOwnedInputIndexes := make([]uint32, 0)
-	for i, in := range ptx.Inputs {
-		prevout := in.GetUtxo()
-		prevoutScript := hex.EncodeToString(prevout.Script)
-		if _, ok := a.ExtraBlindingKeys[prevoutScript]; !ok {
-			continue
-		}
-		notOwnedInputIndexes = append(notOwnedInputIndexes, uint32(i))
-	}
-	return ownedInputIndexes, notOwnedInputIndexes
+	return ownedInputIndexes
 }
 
 func (w *Wallet) BlindPsetWithOwnedInputs(
@@ -83,23 +67,10 @@ func (w *Wallet) BlindPsetWithOwnedInputs(
 	}
 
 	ptx, _ := psetv2.NewPsetFromBase64(args.PsetBase64)
-	ownedInputIndexes, notOwnedInputIndexes := args.inputIndexes()
-
-	extraInputs, err := w.unblindNotOwnedInputs(
-		ptx, args.ExtraBlindingKeys, notOwnedInputIndexes,
-	)
-	if err != nil {
-		return "", err
-	}
+	ownedInputIndexes := args.inputIndexes()
 
 	ownedInputsByIndex := args.ownedInputs()
 	inputIndexes := ownedInputIndexes
-	if len(extraInputs) > 0 {
-		inputIndexes = append(inputIndexes, notOwnedInputIndexes...)
-		for _, i := range notOwnedInputIndexes {
-			ownedInputsByIndex[i] = extraInputs[i]
-		}
-	}
 
 	blindingValidator := confidential.NewZKPValidator()
 	blindingGenerator, err := confidential.NewZKPGeneratorFromOwnedInputs(
@@ -110,16 +81,15 @@ func (w *Wallet) BlindPsetWithOwnedInputs(
 	}
 
 	outputIndexesToBlind := w.getOutputIndexesToBlind(ptx, inputIndexes)
+	ownedInputs, err := blindingGenerator.UnblindInputs(ptx, inputIndexes)
+	if err != nil {
+		return "", err
+	}
 	outBlindArgs, err := blindingGenerator.BlindOutputs(
 		ptx, outputIndexesToBlind, nil,
 	)
 	if err != nil {
 		return "", err
-	}
-
-	ownedInputs := make([]psetv2.OwnedInput, 0, len(ownedInputsByIndex))
-	for i := 0; i < len(ownedInputIndexes); i++ {
-		ownedInputs = append(ownedInputs, ownedInputsByIndex[uint32(i)])
 	}
 
 	blinder, err := psetv2.NewBlinder(
