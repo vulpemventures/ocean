@@ -107,7 +107,7 @@ func (as *AccountService) ListAddressesForAccount(
 		return nil, err
 	}
 
-	addressesInfo, err := w.AllDerivedExternalAddressesForAccount(accountName)
+	addressesInfo, err := w.AllDerivedAddressesForAccount(accountName)
 	if err != nil {
 		return nil, err
 	}
