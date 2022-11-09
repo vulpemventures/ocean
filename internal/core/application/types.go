@@ -114,7 +114,28 @@ func (u UtxoKeys) String() string {
 	return strings.Join(str, ", ")
 }
 
-type Input domain.UtxoKey
+type Input struct {
+	TxID          string
+	VOut          uint32
+	Script        string
+	ScriptSigSize int
+	WitnessSize   int
+}
+
+func (i Input) toUtxoKey() domain.UtxoKey {
+	return domain.UtxoKey{
+		TxID: i.TxID,
+		VOut: i.VOut,
+	}
+}
+
+func (i Input) toUtxo() domain.Utxo {
+	buf, _ := hex.DecodeString(i.Script)
+	return domain.Utxo{
+		UtxoKey: i.toUtxoKey(),
+		Script:  buf,
+	}
+}
 
 type UnblindedInput struct {
 	Index         uint32

@@ -168,7 +168,8 @@ func (ts *TransactionService) EstimateFees(
 		return 0, err
 	}
 
-	walletInputs, err := ts.getLockedInputs(ctx, ins)
+	lockedUtxosOnly := true
+	walletInputs, err := ts.getWalletInputs(ctx, ins, !lockedUtxosOnly)
 	if err != nil {
 		return 0, err
 	}
@@ -236,7 +237,8 @@ func (ts *TransactionService) CreatePset(
 		return "", err
 	}
 
-	walletInputs, err := ts.getLockedInputs(ctx, inputs)
+	lockedUtxosOnly := true
+	walletInputs, err := ts.getWalletInputs(ctx, inputs, lockedUtxosOnly)
 	if err != nil {
 		return "", err
 	}
@@ -258,7 +260,8 @@ func (ts *TransactionService) UpdatePset(
 		return "", err
 	}
 
-	walletInputs, err := ts.getLockedInputs(ctx, inputs)
+	lockedInputsOnly := true
+	walletInputs, err := ts.getWalletInputs(ctx, inputs, lockedInputsOnly)
 	if err != nil {
 		return "", err
 	}
@@ -364,6 +367,14 @@ func (ts *TransactionService) Transfer(
 	utxoRepo := ts.repoManager.UtxoRepository()
 	walletRepo := ts.repoManager.WalletRepository()
 
+	balance, err := utxoRepo.GetBalanceForAccount(ctx, accountName)
+	if err != nil {
+		return "", err
+	}
+	if len(balance) <= 0 {
+		return "", fmt.Errorf("account %s has 0 balance", accountName)
+	}
+
 	utxos, err := utxoRepo.GetSpendableUtxosForAccount(
 		ctx, accountName,
 	)
@@ -376,13 +387,16 @@ func (ts *TransactionService) Transfer(
 
 	changeByAsset := make(map[string]uint64)
 	selectedUtxos := make([]*domain.Utxo, 0)
+	lbtc := ts.network.AssetID
 	for targetAsset, targetAmount := range outputs.totalAmountByAsset() {
 		utxos, change, err := DefaultCoinSelector.SelectUtxos(utxos, targetAmount, targetAsset)
 		if err != nil {
 			return "", err
 		}
-		changeByAsset[targetAsset] = change
 		selectedUtxos = append(selectedUtxos, utxos...)
+		if change > 0 {
+			changeByAsset[targetAsset] = change
+		}
 	}
 
 	inputs := make([]wallet.Input, 0, len(utxos))
@@ -434,9 +448,9 @@ func (ts *TransactionService) Transfer(
 
 	// If feeAmount is lower than the lbtc change, it's enough to deduct it
 	// from the change amount.
-	if feeAmount < changeByAsset[ts.network.AssetID] {
+	if feeAmount < changeByAsset[lbtc] {
 		for i, out := range changeOutputs {
-			if out.Asset == ts.network.AssetID {
+			if out.Asset == lbtc {
 				changeOutputs[i].Amount -= feeAmount
 				break
 			}
@@ -444,10 +458,10 @@ func (ts *TransactionService) Transfer(
 	}
 	// If feeAmount is exactly the lbtc change, it's enough to remove the
 	// change output.
-	if feeAmount == changeByAsset[ts.network.AssetID] {
+	if feeAmount == changeByAsset[lbtc] {
 		var outIndex int
 		for i, out := range changeOutputs {
-			if out.Asset == ts.network.AssetID {
+			if out.Asset == lbtc {
 				outIndex = i
 				break
 			}
@@ -457,71 +471,90 @@ func (ts *TransactionService) Transfer(
 		)
 	}
 	// If feeAmount is greater than the lbtc change, another coin-selection round
-	// is required.
-	if feeAmount > changeByAsset[ts.network.AssetID] {
-		targetAsset := ts.network.AssetID
-		targetAmount := wallet.DummyFeeAmount
-		if feeAmount > targetAmount {
-			targetAmount = roundUpAmount(feeAmount)
-		}
-
-		// Coin-selection must be done over remaining utxos.
-		remainingUtxos := getRemainingUtxos(utxos, selectedUtxos)
-		selectedUtxos, change, err := DefaultCoinSelector.SelectUtxos(
-			remainingUtxos, targetAmount, targetAsset,
-		)
-		if err != nil {
-			return "", err
-		}
-
-		for _, u := range selectedUtxos {
-			input := wallet.Input{
-				TxID:            u.TxID,
-				TxIndex:         u.VOut,
-				Value:           u.Value,
-				Asset:           u.Asset,
-				Script:          u.Script,
-				ValueBlinder:    u.ValueBlinder,
-				AssetBlinder:    u.AssetBlinder,
-				ValueCommitment: u.ValueCommitment,
-				AssetCommitment: u.AssetCommitment,
-				Nonce:           u.Nonce,
-			}
-			inputs = append(inputs, input)
-			inputsByIndex[uint32(len(inputs))] = input
-		}
-
-		if change > 0 {
-			// For the eventual change amount, it might be necessary to add a lbtc
-			// change output to the list if it's still not in the list.
-			if _, ok := changeByAsset[targetAsset]; !ok {
-				addrInfo, err := walletRepo.DeriveNextInternalAddressesForAccount(
-					ctx, accountName, 1,
-				)
-				if err != nil {
-					return "", err
+	// is required only in case the user is not trasferring the whole balance.
+	// In that case the fee amount is deducted from the lbtc output with biggest.
+	if feeAmount > changeByAsset[lbtc] {
+		if changeByAsset[lbtc] == 0 {
+			outIndex := 0
+			for i, out := range outputs {
+				if out.Asset == lbtc {
+					if out.Amount > outputs[outIndex].Amount {
+						outIndex = i
+					}
 				}
-				script, _ := hex.DecodeString(addrInfo[0].Script)
-				changeOutputs = append(changeOutputs, wallet.Output{
-					Amount:      change,
-					Asset:       targetAsset,
-					Script:      script,
-					BlindingKey: addrInfo[0].BlindingKey,
-				})
+			}
+			outs[outIndex] = wallet.Output{
+				Asset:        outs[outIndex].Asset,
+				Amount:       outs[outIndex].Amount - feeAmount,
+				Script:       outs[outIndex].Script,
+				BlindingKey:  outs[outIndex].BlindingKey,
+				BlinderIndex: outs[outIndex].BlinderIndex,
+			}
+		} else {
+			targetAsset := lbtc
+			targetAmount := wallet.DummyFeeAmount
+			if feeAmount > targetAmount {
+				targetAmount = roundUpAmount(feeAmount)
 			}
 
-			// Now that we have all inputs and outputs, estimate the real fee amount.
-			feeAmount = wallet.EstimateFees(
-				inputs, append(outs, changeOutputs...), millisatsPerByte,
+			// Coin-selection must be done over remaining utxos.
+			remainingUtxos := getRemainingUtxos(utxos, selectedUtxos)
+			selectedUtxos, change, err := DefaultCoinSelector.SelectUtxos(
+				remainingUtxos, targetAmount, targetAsset,
 			)
+			if err != nil {
+				return "", err
+			}
 
-			// Update the change amount by adding the delta
-			// delta = targetAmount - feeAmount.
-			for i, out := range changeOutputs {
-				if out.Asset == targetAsset {
-					// This way the delta is subtracted in case it's negative.
-					changeOutputs[i].Amount = uint64(int(out.Amount) + int(targetAmount) - int(feeAmount))
-					break
+			for _, u := range selectedUtxos {
+				input := wallet.Input{
+					TxID:            u.TxID,
+					TxIndex:         u.VOut,
+					Value:           u.Value,
+					Asset:           u.Asset,
+					Script:          u.Script,
+					ValueBlinder:    u.ValueBlinder,
+					AssetBlinder:    u.AssetBlinder,
+					ValueCommitment: u.ValueCommitment,
+					AssetCommitment: u.AssetCommitment,
+					Nonce:           u.Nonce,
+				}
+				inputs = append(inputs, input)
+				inputsByIndex[uint32(len(inputs))] = input
+			}
+
+			if change > 0 {
+				// For the eventual change amount, it might be necessary to add a lbtc
+				// change output to the list if it's still not in the list.
+				if _, ok := changeByAsset[targetAsset]; !ok {
+					addrInfo, err := walletRepo.DeriveNextInternalAddressesForAccount(
+						ctx, accountName, 1,
+					)
+					if err != nil {
+						return "", err
+					}
+					script, _ := hex.DecodeString(addrInfo[0].Script)
+					changeOutputs = append(changeOutputs, wallet.Output{
+						Amount:      change,
+						Asset:       targetAsset,
+						Script:      script,
+						BlindingKey: addrInfo[0].BlindingKey,
+					})
+				}
+
+				// Now that we have all inputs and outputs, estimate the real fee amount.
+				feeAmount = wallet.EstimateFees(
+					inputs, append(outs, changeOutputs...), millisatsPerByte,
+				)
+
+				// Update the change amount by adding the delta
+				// delta = targetAmount - feeAmount.
+				for i, out := range changeOutputs {
+					if out.Asset == targetAsset {
+						// This way the delta is subtracted in case it's negative.
+						changeOutputs[i].Amount = uint64(int(out.Amount) + int(targetAmount) - int(feeAmount))
+						break
+					}
 				}
 			}
 		}
@@ -610,6 +643,7 @@ func (ts *TransactionService) spawnUtxoUnlocker(utxoKeys []domain.UtxoKey) {
 		keys := utxosByLockTimestamp[timestamp]
 		unlockTime := ts.utxoExpiryDuration - time.Since(time.Unix(timestamp, 0))
 		t := time.NewTicker(unlockTime)
+		quitChan := make(chan struct{})
 		go func() {
 			ts.log("spawning unlocker for utxo(s) %s", UtxoKeys(keys))
 			ts.log(fmt.Sprintf(
@@ -617,43 +651,50 @@ func (ts *TransactionService) spawnUtxoUnlocker(utxoKeys []domain.UtxoKey) {
 				math.Round(unlockTime.Seconds()/10)*10,
 			))
 
-			for range t.C {
-				utxos, _ := ts.repoManager.UtxoRepository().GetUtxosByKey(ctx, keys)
-				utxosToUnlock := make([]domain.UtxoKey, 0, len(utxos))
-				spentUtxos := make([]domain.UtxoKey, 0, len(utxos))
-				for _, u := range utxos {
-					if !u.IsSpent() && u.IsLocked() {
-						utxosToUnlock = append(utxosToUnlock, u.Key())
-					} else {
-						spentUtxos = append(spentUtxos, u.Key())
-					}
-				}
-
-				if len(utxosToUnlock) > 0 {
-					// In case of errors here, the ticker is possibly reset to a shortest
-					// duration to keep retring to unlock the locked utxos as soon as
-					// possible.
-					count, err := ts.repoManager.UtxoRepository().UnlockUtxos(
-						ctx, utxosToUnlock,
-					)
-					if err != nil {
-						shortDuration := 5 * time.Second
-						if shortDuration < unlockTime {
-							t.Reset(shortDuration)
+			for {
+				select {
+				case <-quitChan:
+					return
+				case <-t.C:
+					utxos, _ := ts.repoManager.UtxoRepository().GetUtxosByKey(ctx, keys)
+					utxosToUnlock := make([]domain.UtxoKey, 0, len(utxos))
+					spentUtxos := make([]domain.UtxoKey, 0, len(utxos))
+					for _, u := range utxos {
+						if !u.IsSpent() && u.IsLocked() {
+							utxosToUnlock = append(utxosToUnlock, u.Key())
+						} else {
+							spentUtxos = append(spentUtxos, u.Key())
 						}
-						continue
 					}
 
-					if count > 0 {
-						ts.log("unlocked %d utxo(s) %s", count, UtxoKeys(keys))
+					if len(utxosToUnlock) > 0 {
+						// In case of errors here, the ticker is possibly reset to a shortest
+						// duration to keep retring to unlock the locked utxos as soon as
+						// possible.
+						count, err := ts.repoManager.UtxoRepository().UnlockUtxos(
+							ctx, utxosToUnlock,
+						)
+						if err != nil {
+							shortDuration := 5 * time.Second
+							if shortDuration < unlockTime {
+								t.Reset(shortDuration)
+							}
+							continue
+						}
+
+						if count > 0 {
+							ts.log("unlocked %d utxo(s) %s", count, UtxoKeys(keys))
+						}
+						t.Stop()
 					}
-					t.Stop()
-				}
-				if len(spentUtxos) > 0 {
-					ts.log(
-						"utxo(s) %s have been spent, skipping unlocking",
-						UtxoKeys(spentUtxos),
-					)
+					if len(spentUtxos) > 0 {
+						ts.log(
+							"utxo(s) %s have been spent, skipping unlocking",
+							UtxoKeys(spentUtxos),
+						)
+						t.Stop()
+						quitChan <- struct{}{}
+					}
 				}
 			}
 		}()
@@ -688,12 +729,12 @@ func (ts *TransactionService) getAccount(
 	return w.GetAccount(accountName)
 }
 
-func (ts *TransactionService) getLockedInputs(
-	ctx context.Context, ins Inputs,
+func (ts *TransactionService) getWalletInputs(
+	ctx context.Context, ins Inputs, wantsLocked bool,
 ) ([]wallet.Input, error) {
 	keys := make([]domain.UtxoKey, 0, len(ins))
 	for _, in := range ins {
-		keys = append(keys, domain.UtxoKey(in))
+		keys = append(keys, in.toUtxoKey())
 	}
 	utxos, err := ts.repoManager.UtxoRepository().GetUtxosByKey(ctx, keys)
 	if err != nil {
@@ -703,7 +744,7 @@ func (ts *TransactionService) getLockedInputs(
 	w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)
 	inputs := make([]wallet.Input, 0, len(utxos))
 	for _, u := range utxos {
-		if !u.IsLocked() {
+		if wantsLocked && !u.IsLocked() {
 			return nil, ErrForbiddenUnlockedInputs
 		}
 
@@ -783,23 +824,20 @@ func (ts *TransactionService) findLockedInputs(
 }
 
 func (ts *TransactionService) getExternalInputs(
-	walletIns []wallet.Input, allIns Inputs,
+	walletIns []wallet.Input, txIns Inputs,
 ) ([]wallet.Input, error) {
+	isExternalInput := func(in Input) bool {
+		for _, walletIn := range walletIns {
+			if walletIn.TxID == in.TxID && walletIn.TxIndex == in.VOut {
+				return false
+			}
+		}
+		return true
+	}
 	externalUtxos := make([]domain.Utxo, 0)
-	for _, key := range allIns {
-		isExternalInput := true
-		for _, in := range walletIns {
-			if in.TxID == key.TxID && in.TxIndex == key.VOut {
-				isExternalInput = false
-				break
-			}
-			if !isExternalInput {
-				continue
-			}
-			externalUtxos = append(externalUtxos, domain.Utxo{
-				UtxoKey: domain.UtxoKey(key),
-				Script:  in.Script,
-			})
+	for _, in := range txIns {
+		if isExternalInput(in) {
+			externalUtxos = append(externalUtxos, in.toUtxo())
 		}
 	}
 

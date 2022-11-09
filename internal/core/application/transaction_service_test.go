@@ -58,7 +58,11 @@ func testExternalTransaction(t *testing.T) {
 
 		inputs := make(application.Inputs, 0, len(selectedUtxos))
 		for _, u := range selectedUtxos {
-			inputs = append(inputs, application.Input(u.Key()))
+			inputs = append(inputs, application.Input{
+				TxID:   u.TxID,
+				VOut:   u.VOut,
+				Script: hex.EncodeToString(u.Script),
+			})
 		}
 
 		if change > 0 {
