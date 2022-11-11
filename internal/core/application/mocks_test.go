@@ -88,8 +88,8 @@ func (m *mockBcScanner) GetBlockHeight(hash []byte) (uint32, error) {
 	return res, args.Error(1)
 }
 
-func (m *mockBcScanner) GetUtxos(utxoKeys []domain.UtxoKey) ([]*domain.Utxo, error) {
-	args := m.Called(utxoKeys)
+func (m *mockBcScanner) GetUtxos(utxos []domain.Utxo) ([]*domain.Utxo, error) {
+	args := m.Called(utxos)
 	var res []*domain.Utxo
 	if a := args.Get(0); a != nil {
 		res = a.([]*domain.Utxo)
@@ -247,10 +247,6 @@ func randomBytes(len int) []byte {
 func randomIntInRange(min, max int) int {
 	n, _ := rand.Int(rand.Reader, big.NewInt(int64(max)))
 	return int(int(n.Int64())) + min
-}
-
-func b2h(buf []byte) string {
-	return hex.EncodeToString(buf)
 }
 
 func h2b(str string) []byte {

@@ -46,7 +46,7 @@ func TestAccountService(t *testing.T) {
 
 	addresses, err = svc.ListAddressesForAccount(ctx, accountName)
 	require.NoError(t, err)
-	require.Len(t, addresses, 2)
+	require.GreaterOrEqual(t, len(addresses), 2)
 
 	utxos, err := svc.ListUtxosForAccount(ctx, accountName)
 	require.NoError(t, err)

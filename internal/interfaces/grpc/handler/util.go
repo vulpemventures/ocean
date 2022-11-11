@@ -112,8 +112,11 @@ func parseInputs(ins []*pb.Input) ([]application.Input, error) {
 	inputs := make([]application.Input, 0, len(ins))
 	for _, in := range ins {
 		inputs = append(inputs, application.Input{
-			TxID: in.GetTxid(),
-			VOut: in.GetIndex(),
+			TxID:          in.GetTxid(),
+			VOut:          in.GetIndex(),
+			Script:        in.GetScript(),
+			ScriptSigSize: int(in.GetScriptsigSize()),
+			WitnessSize:   int(in.GetWitnessSize()),
 		})
 	}
 	return inputs, nil

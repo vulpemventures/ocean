@@ -6,7 +6,9 @@ import (
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/go-elements/elementsutil"
+	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/go-elements/transaction"
 	"github.com/vulpemventures/neutrino-elements/pkg/blockservice"
 	"github.com/vulpemventures/neutrino-elements/pkg/protocol"
@@ -51,6 +53,17 @@ func (a ServiceArgs) validate() error {
 		return fmt.Errorf("missing esplora url")
 	}
 	return nil
+}
+
+func (a ServiceArgs) network() network.Network {
+	switch a.Network {
+	case network.Regtest.Name:
+		return network.Regtest
+	case network.Testnet.Name:
+		return network.Testnet
+	default:
+		return network.Liquid
+	}
 }
 
 func NewElementsScanner(args ServiceArgs) (ports.BlockchainScanner, error) {
@@ -100,14 +113,26 @@ func (s *service) StopWatchForAccount(accountName string) {
 	s.removeScanner(accountName)
 }
 
-func (s *service) GetUtxos(utxoKeys []domain.UtxoKey) ([]*domain.Utxo, error) {
-	utxos := make([]*domain.Utxo, 0, len(utxoKeys))
-	for _, key := range utxoKeys {
-		resp, err := s.rpcClient.call("gettransaction", []interface{}{key.TxID})
-		if err != nil {
+func (s *service) GetUtxos(utxoList []domain.Utxo) ([]*domain.Utxo, error) {
+	utxos := make([]*domain.Utxo, 0, len(utxoList))
+	for _, u := range utxoList {
+		key := u.UtxoKey
+		addr := addressFromScript(u.Script, s.args.network())
+		if _, err := s.rpcClient.call(
+			"importaddress", []interface{}{addr},
+		); err != nil {
 			return nil, err
 		}
-		m := resp.(map[string]interface{})
+
+		var m map[string]interface{}
+		for {
+			resp, err := s.rpcClient.call("gettransaction", []interface{}{key.TxID})
+			if err != nil {
+				continue
+			}
+			m = resp.(map[string]interface{})
+			break
+		}
 
 		txHex := m["hex"].(string)
 		tx, _ := transaction.NewTxFromHex(txHex)
@@ -216,4 +241,27 @@ func genesisBlockHashForNetwork(net string) *chainhash.Hash {
 	genesis := protocol.GetCheckpoints(magic)[0]
 	h, _ := chainhash.NewHashFromStr(genesis)
 	return h
+}
+
+func addressFromScript(script []byte, net network.Network) string {
+	switch scriptType := address.GetScriptType(script); scriptType {
+	case address.P2PkhScript, address.P2ShScript:
+		prefix := net.PubKeyHash
+		scriptHash := script[3 : len(script)-2]
+		if scriptType == address.P2ShScript {
+			prefix = net.ScriptHash
+			scriptHash = script[2 : len(script)-1]
+		}
+		return address.ToBase58(&address.Base58{
+			Version: prefix,
+			Data:    scriptHash,
+		})
+	default:
+		addr, _ := address.ToBech32(&address.Bech32{
+			Prefix:  net.Bech32,
+			Version: script[0],
+			Program: script[2:],
+		})
+		return addr
+	}
 }

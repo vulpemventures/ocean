@@ -39,7 +39,7 @@ type BlockchainScanner interface {
 	GetBlockHash(height uint32) ([]byte, error)
 	// GetUtxos is a sync function to get info about the utxos represented by
 	// given outpoints (UtxoKeys).
-	GetUtxos(utxoKeys []domain.UtxoKey) ([]*domain.Utxo, error)
+	GetUtxos(utxos []domain.Utxo) ([]*domain.Utxo, error)
 	// BroadcastTransaction sends the given raw tx (in hex string) over the
 	// network in order to be included in a later block of the Liquid blockchain.
 	BroadcastTransaction(txHex string) (string, error)

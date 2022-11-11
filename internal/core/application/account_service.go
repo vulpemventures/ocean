@@ -107,7 +107,7 @@ func (as *AccountService) ListAddressesForAccount(
 		return nil, err
 	}
 
-	addressesInfo, err := w.AllDerivedExternalAddressesForAccount(accountName)
+	addressesInfo, err := w.AllDerivedAddressesForAccount(accountName)
 	if err != nil {
 		return nil, err
 	}
@@ -198,9 +198,6 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 	as.repoManager.RegisterHandlerForWalletEvent(
 		domain.WalletUnlocked, func(event domain.WalletEvent) {
 			w, _ := as.repoManager.WalletRepository().GetWallet(context.Background())
-			for key, acc := range w.AccountsByKey {
-				fmt.Printf("%s %+v\n", key, acc)
-			}
 
 			for accountName := range w.AccountKeysByName {
 				accountKey := w.AccountKeysByName[accountName]
