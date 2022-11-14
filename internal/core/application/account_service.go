@@ -238,6 +238,13 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 			as.bcScanner.StopWatchForAccount(event.AccountName)
 		},
 	)
+	// Start watching for when utxos are spent as soon as they are added to the storage.
+	as.repoManager.RegisterHandlerForUtxoEvent(
+		domain.UtxoAdded, func(event domain.UtxoEvent) {
+			accountName := event.Utxos[0].AccountName
+			as.bcScanner.WatchForUtxos(accountName, event.Utxos)
+		},
+	)
 }
 
 func (as *AccountService) listenToUtxoChannel(
