@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/btcsuite/btcd/btcutil/gcs/builder"
+	log "github.com/sirupsen/logrus"
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -200,7 +201,9 @@ func (s *service) FindTransactionsForOutputScripts(
 		return nil, nil, err
 	}
 
+	log.Debugf("FindTransactionsForOutputScripts: %d scripts, chain tip: %d", len(outputScripts), chainTip.Height)
 	for nextHeight <= chainTip.Height {
+		log.Debugf("FindTransactionsForOutputScripts: checking block %d for output scripts", nextHeight)
 		var blockHash *chainhash.Hash
 		if nextHeight == 0 {
 			blockHash = genesisBlockHashForNetwork(s.args.Network)

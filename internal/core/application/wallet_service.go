@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/confidential"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
@@ -180,6 +181,7 @@ func (ws *WalletService) RestoreWallet(
 
 	allUtxos := make([]*domain.Utxo, 0)
 
+	log.Infof("start scanning internal chain for utxos from block %d", birthdayBlockHeight)
 	internalUtxos, err := ws.restore(
 		w,
 		ws.accountGap,
@@ -191,7 +193,9 @@ func (ws *WalletService) RestoreWallet(
 		return err
 	}
 	allUtxos = append(allUtxos, internalUtxos...)
+	log.Infof("found %d internal utxos", len(internalUtxos))
 
+	log.Infof("start scanning external chain for utxos from block %d", birthdayBlockHeight)
 	externalUtxos, err := ws.restore(
 		w,
 		ws.accountGap,
@@ -203,6 +207,7 @@ func (ws *WalletService) RestoreWallet(
 		return err
 	}
 	allUtxos = append(allUtxos, externalUtxos...)
+	log.Infof("found %d external utxos", len(externalUtxos))
 
 	if err := w.Unlock(passpharse); err != nil {
 		return err
