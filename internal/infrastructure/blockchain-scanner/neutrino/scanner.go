@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/confidential"
 	"github.com/vulpemventures/go-elements/elementsutil"
+	"github.com/vulpemventures/go-elements/transaction"
 	"github.com/vulpemventures/neutrino-elements/pkg/blockservice"
 	"github.com/vulpemventures/neutrino-elements/pkg/repository"
 	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
@@ -87,6 +88,24 @@ func (s *scannerService) watchAddresses(addressesInfo []domain.AddressInfo) {
 			"start watching address %s for account %s",
 			info.DerivationPath, s.accountName,
 		)
+	}
+}
+
+func (s *scannerService) watchUtxos(utxos []domain.UtxoInfo) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	for _, u := range utxos {
+		hash, _ := elementsutil.TxIDToBytes(u.TxID)
+		item, _ := scanner.NewSpentWatchItemFromInput(
+			&transaction.TxInput{Hash: hash, Index: u.VOut}, u.Script,
+		)
+		s.svc.Watch(
+			scanner.WithWatchItem(item),
+			scanner.WithStartBlock(s.startingBlockHeight),
+		)
+
+		s.log("start watching utxo %s for account %s", u, s.accountName)
 	}
 }
 

@@ -43,6 +43,32 @@ func (m *mockBcScanner) WatchForAccount(
 		}
 	}
 }
+func (m *mockBcScanner) WatchForUtxos(
+	accountName string, utxos []domain.UtxoInfo,
+) {
+	if len(utxos) > 0 {
+		list := make([]*domain.Utxo, 0, len(utxos))
+		for _, u := range utxos {
+			list = append(list, &domain.Utxo{
+				UtxoKey:         u.Key(),
+				Value:           u.Value,
+				Asset:           u.Asset,
+				Script:          u.Script,
+				AssetBlinder:    u.AssetBlinder,
+				ValueBlinder:    u.ValueBlinder,
+				SpentStatus:     u.SpentStatus,
+				ConfirmedStatus: u.ConfirmedStatus,
+				AccountName:     u.AccountName,
+			})
+		}
+		m.chUtxos <- list
+
+		for _, u := range utxos {
+			tx := randomTx(accountName, u.TxID)
+			m.chTxs <- tx
+		}
+	}
+}
 
 func (m *mockBcScanner) StopWatchForAccount(accountName string) {
 	close(m.chTxs)

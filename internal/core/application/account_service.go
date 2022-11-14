@@ -11,17 +11,17 @@ import (
 )
 
 // AccountService is responsible for operations related to wallet accounts:
-// 	* Create a new account.
-// 	* Derive addresses for an existing account.
-// 	* List derived addresses for an existing account.
-// 	* Get balance of an existing account.
-// 	* List utxos of an existing account.
-// 	* Delete an existing account.
+//   - Create a new account.
+//   - Derive addresses for an existing account.
+//   - List derived addresses for an existing account.
+//   - Get balance of an existing account.
+//   - List utxos of an existing account.
+//   - Delete an existing account.
 //
 // The service registers 3 handlers related to the following wallet events:
-//	* domain.WalletAccountCreated - whenever an account is created, the service initializes a dedicated blockchain scanner and starts listening for its reports.
-//	* domain.WalletAccountAddressesDerived - whenever one or more addresses are derived for an account, they are added to the list of those watched by the account's scanner.
-//	* domain.WalletAccountDeleted - whenever an account is deleted, the relative scanner is stopped and removed.
+//   - domain.WalletAccountCreated - whenever an account is created, the service initializes a dedicated blockchain scanner and starts listening for its reports.
+//   - domain.WalletAccountAddressesDerived - whenever one or more addresses are derived for an account, they are added to the list of those watched by the account's scanner.
+//   - domain.WalletAccountDeleted - whenever an account is deleted, the relative scanner is stopped and removed.
 //
 // The service guarantees to be always listening to notifications coming from
 // each of its blockchain scanners in order to keep updated the utxo set of the
@@ -238,6 +238,25 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 			as.bcScanner.StopWatchForAccount(event.AccountName)
 		},
 	)
+	// Start watching for when utxos are spent as soon as they are added to the storage.
+	as.repoManager.RegisterHandlerForUtxoEvent(
+		domain.UtxoAdded, func(event domain.UtxoEvent) {
+			accountName := event.Utxos[0].AccountName
+			as.bcScanner.WatchForUtxos(accountName, event.Utxos)
+		},
+	)
+
+	// In background, make sure to watch for all utxos to get notified when they are spent.
+	go func() {
+		utxos := as.repoManager.UtxoRepository().GetAllUtxos(
+			context.Background(),
+		)
+		for _, u := range utxos {
+			if !u.IsSpent() {
+				as.bcScanner.WatchForUtxos(u.AccountName, []domain.UtxoInfo{u.Info()})
+			}
+		}
+	}()
 }
 
 func (as *AccountService) listenToUtxoChannel(
