@@ -58,3 +58,53 @@ vet:
 help:
 	@echo "Usage: \n"
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
+
+#### Postgres database ####
+## pg: starts postgres db inside docker container
+pg:
+	docker run --name oceand-pg -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres
+
+## droppg: stop and remove postgres container
+droppg:
+	docker stop oceand-pg
+	docker rm oceand-pg
+
+## createdb: create db inside docker container
+createdb:
+	docker exec oceand-pg createdb --username=root --owner=root oceand-db
+
+## dropdb: drops db inside docker container
+dropdb:
+	docker exec oceand-pg dropdb oceand-db
+
+## createtestdb: create test db inside docker container
+createtestdb:
+	docker exec oceand-pg createdb --username=root --owner=root oceand-db-test
+
+## droptestdb: drops test db inside docker container
+droptestdb:
+	docker exec oceand-pg dropdb oceand-db-test
+
+## recreatedb: drop and create main and test db
+recreatedb: dropdb createdb droptestdb createtestdb
+
+## recreatetestdb: drop and create test db
+recreatetestdb: droptestdb createtestdb
+
+## pgcreatetestdb: starts docker container and creates test db, used in CI
+pgcreatetestdb:
+	chmod u+x ./scripts/create_testdb
+	./scripts/create_testdb
+
+## psql: connects to postgres terminal running inside docker container
+psql:
+	docker exec -it oceand-pg psql -U root -d oceand-db
+
+## migrate: creates pg migration file(eg. make FILE=init migrate)
+migrate:
+	migrate create -ext sql -dir ./internal/infrastructure/storage/postgres/migration/ $(FILE)
+
+## sqlc: gen sql
+sqlc:
+	@echo "gen sql..."
+	cd internal/infrastructure/storage/db/postgres; sqlc generate
