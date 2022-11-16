@@ -102,7 +102,7 @@ psql:
 
 ## migrate: creates pg migration file(eg. make FILE=init migrate)
 migrate:
-	migrate create -ext sql -dir ./internal/infrastructure/storage/postgres/migration/ $(FILE)
+	migrate create -ext sql -dir ./internal/infrastructure/storage/db/postgres/migration/ $(FILE)
 
 ## sqlc: gen sql
 sqlc:
