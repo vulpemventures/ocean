@@ -1,7 +1,7 @@
 CREATE TABLE wallet (
     id varchar(255) NOT NULL PRIMARY KEY,
-    encrypted_mnemonic VARCHAR(64) NOT NULL,
-    password_hash VARCHAR(64) NOT NULL,
+    encrypted_mnemonic bytea NOT NULL,
+    password_hash bytea NOT NULL,
     birthday_block_height INTEGER NOT NULL,
     root_path VARCHAR(64) NOT NULL,
     network_name VARCHAR(64) NOT NULL,
@@ -11,16 +11,17 @@ CREATE TABLE wallet (
 CREATE TABLE account (
     name VARCHAR(50) NOT NULL PRIMARY KEY,
     index INTEGER NOT NULL,
-    xpub VARCHAR(100) NOT NULL,
-    derivation_path VARCHAR(100) NOT NULL,
+    xpub VARCHAR(200) NOT NULL,
+    derivation_path VARCHAR(200) NOT NULL,
+    next_external_index INTEGER NOT NULL,
+    next_internal_index INTEGER NOT NULL,
     fk_wallet_id VARCHAR(255) NOT NULL,
     FOREIGN KEY (fk_wallet_id) REFERENCES wallet(id)
 );
 
 CREATE TABLE account_script_info (
-    id SERIAL PRIMARY KEY,
-    script bytea NOT NULL,
-    derivation_path VARCHAR(100) NOT NULL,
+    script VARCHAR(1000) NOT NULL PRIMARY KEY,
+    derivation_path VARCHAR(200) NOT NULL,
     fk_account_name VARCHAR(50) NOT NULL,
     FOREIGN KEY (fk_account_name) REFERENCES account(name)
 );
@@ -63,6 +64,6 @@ CREATE TABLE utxo_status (
     block_time timestamp NOT NULL,
     block_hash varchar(64) NOT NULL,
     status integer NOT NULL,
-    fk_utxo_id varchar(64) NOT NULL,
+    fk_utxo_id integer NOT NULL,
     FOREIGN KEY (fk_utxo_id) REFERENCES utxo(id)
 );

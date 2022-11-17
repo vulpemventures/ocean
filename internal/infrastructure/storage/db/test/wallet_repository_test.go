@@ -3,6 +3,7 @@ package db_test
 import (
 	"context"
 	"fmt"
+	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"os"
 	"strings"
 	"testing"
@@ -185,7 +186,20 @@ func newWalletRepositories(
 	handlers := []ports.WalletEventHandler{
 		handlerFactory("badger"), handlerFactory("inmemory"),
 	}
-	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager}
+
+	pgRepoManager, err := postgresdb.NewRepoManager(postgresdb.DbConfig{
+		DbUser:             "root",
+		DbPassword:         "secret",
+		DbHost:             "127.0.0.1",
+		DbPort:             5432,
+		DbName:             "oceand-db-test",
+		MigrationSourceURL: "file://../postgres/migration",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager, pgRepoManager}
 
 	for i, handler := range handlers {
 		repoManager := repoManagers[i]
@@ -198,5 +212,6 @@ func newWalletRepositories(
 	return map[string]domain.WalletRepository{
 		"inmemory": inmemoryRepoManager.WalletRepository(),
 		"badger":   badgerRepoManager.WalletRepository(),
+		"postgres": pgRepoManager.WalletRepository(),
 	}, nil
 }

@@ -2,21 +2,22 @@ package postgresdb
 
 import (
 	"context"
-	"database/sql"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/vulpemventures/ocean/internal/core/domain"
+	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
 	"sync"
 )
 
 type txRepositoryPg struct {
-	db               *sql.DB
+	querier          *queries.Queries
 	chLock           *sync.Mutex
 	chEvents         chan domain.TransactionEvent
 	externalChEvents chan domain.TransactionEvent
 }
 
-func NewTxRepositoryPgImpl(db *sql.DB) domain.TransactionRepository {
+func NewTxRepositoryPgImpl(pgxPool *pgxpool.Pool) domain.TransactionRepository {
 	return &txRepositoryPg{
-		db:               db,
+		querier:          queries.New(pgxPool),
 		chLock:           &sync.Mutex{},
 		chEvents:         make(chan domain.TransactionEvent),
 		externalChEvents: make(chan domain.TransactionEvent),

@@ -1,19 +1,22 @@
 package postgresdb
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"sync"
 	"time"
 
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
+
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 const (
-	postgresDriver             = "postgres"
+	postgresDriver             = "pgx"
 	insecureDataSourceTemplate = "postgresql://%s:%s@%s:%d/%s?sslmode=disable"
 )
 
@@ -28,18 +31,20 @@ type repoManager struct {
 }
 
 func NewRepoManager(dbConfig DbConfig) (ports.RepoManager, error) {
-	db, err := connect(dbConfig)
+	dataSource := insecureDataSourceStr(dbConfig)
+
+	pgxPool, err := connect(dataSource)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = migrateDb(db, dbConfig.MigrationSourceURL); err != nil {
+	if err = migrateDb(dataSource, dbConfig.MigrationSourceURL); err != nil {
 		return nil, err
 	}
 
-	utxoRepository := NewUtxoRepositoryPgImpl(db)
-	walletRepository := NewWalletRepositoryPgImpl(db)
-	txRepository := NewTxRepositoryPgImpl(db)
+	utxoRepository := NewUtxoRepositoryPgImpl(pgxPool)
+	walletRepository := NewWalletRepositoryPgImpl(pgxPool)
+	txRepository := NewTxRepositoryPgImpl(pgxPool)
 
 	rm := &repoManager{
 		utxoRepository:      utxoRepository,
@@ -161,22 +166,14 @@ func (m *handlerMap) get(key int) (interface{}, bool) {
 	return val, ok
 }
 
-func connect(dbConfig DbConfig) (*sql.DB, error) {
-	dataSource := insecureDataSourceStr(dbConfig)
-
-	db, err := sql.Open(
-		postgresDriver,
-		dataSource,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+func connect(dataSource string) (*pgxpool.Pool, error) {
+	return pgxpool.Connect(context.Background(), dataSource)
 }
 
-func migrateDb(db *sql.DB, migrationSourceUrl string) error {
-	dbInstance, err := postgres.WithInstance(db, &postgres.Config{})
+func migrateDb(dataSource, migrationSourceUrl string) error {
+	pg := postgres.Postgres{}
+
+	d, err := pg.Open(dataSource)
 	if err != nil {
 		return err
 	}
@@ -184,7 +181,7 @@ func migrateDb(db *sql.DB, migrationSourceUrl string) error {
 	m, err := migrate.NewWithDatabaseInstance(
 		migrationSourceUrl,
 		postgresDriver,
-		dbInstance,
+		d,
 	)
 	if err != nil {
 		return err
