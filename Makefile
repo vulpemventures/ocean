@@ -43,7 +43,7 @@ run: clean
 	export OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
 	go run ./cmd/oceand
 
-test: fmt
+test: fmt pgcreatetestdb
 	@echo "Testing..."
 	go test --race --count=1 -v ./...
 
