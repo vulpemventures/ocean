@@ -40,11 +40,11 @@ func (u *utxoRepositoryPg) AddUtxos(
 	count := 0
 
 	utxosInfo := make([]domain.UtxoInfo, 0, len(utxos))
+	conn, err := u.pgxPool.Acquire(ctx)
+	if err != nil {
+		return 0, err
+	}
 	for _, v := range utxos {
-		conn, err := u.pgxPool.Acquire(ctx)
-		if err != nil {
-			return 0, err
-		}
 
 		tx, err := conn.Begin(ctx)
 		if err != nil {

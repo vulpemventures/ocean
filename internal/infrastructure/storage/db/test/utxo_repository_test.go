@@ -41,9 +41,7 @@ func TestUtxoRepository(t *testing.T) {
 
 func testUtxoRepository(t *testing.T, repo domain.UtxoRepository) {
 	newUtxos, utxoKeys, balanceByAsset = randomUtxosForAccount(accountName)
-	testAddUtxos(t, repo)
-
-	testGetUtxos(t, repo)
+	testAddAndGetUtxos(t, repo)
 
 	testGetBalanceForAccount(t, repo)
 
@@ -56,8 +54,8 @@ func testUtxoRepository(t *testing.T, repo domain.UtxoRepository) {
 	testSpendUtxos(t, repo)
 }
 
-func testAddUtxos(t *testing.T, repo domain.UtxoRepository) {
-	t.Run("add_utxos", func(t *testing.T) {
+func testAddAndGetUtxos(t *testing.T, repo domain.UtxoRepository) {
+	t.Run("add_utxos and get_utxos", func(t *testing.T) {
 		count, err := repo.AddUtxos(ctx, newUtxos)
 		require.NoError(t, err)
 		require.Equal(t, len(newUtxos), count)
@@ -65,11 +63,8 @@ func testAddUtxos(t *testing.T, repo domain.UtxoRepository) {
 		count, err = repo.AddUtxos(ctx, newUtxos)
 		require.NoError(t, err)
 		require.Zero(t, count)
-	})
-}
 
-func testGetUtxos(t *testing.T, repo domain.UtxoRepository) {
-	t.Run("get_utxos", func(t *testing.T) {
+		//get utxos
 		utxos, err := repo.GetAllUtxos(ctx)
 		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
@@ -282,8 +277,8 @@ func newUtxoRepositories(handlerFactory func(repoType string) ports.UtxoEventHan
 		repoManager.RegisterHandlerForUtxoEvent(domain.UtxoSpent, handler)
 	}
 	return map[string]domain.UtxoRepository{
-		"inmemory": inmemoryRepoManager.UtxoRepository(),
-		"badger":   badgerRepoManager.UtxoRepository(),
+		//"inmemory": inmemoryRepoManager.UtxoRepository(),
+		//"badger":   badgerRepoManager.UtxoRepository(),
 		"postgres": pgRepoManager.UtxoRepository(),
 	}, nil
 }
