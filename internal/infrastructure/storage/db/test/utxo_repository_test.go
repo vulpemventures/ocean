@@ -277,8 +277,8 @@ func newUtxoRepositories(handlerFactory func(repoType string) ports.UtxoEventHan
 		repoManager.RegisterHandlerForUtxoEvent(domain.UtxoSpent, handler)
 	}
 	return map[string]domain.UtxoRepository{
-		//"inmemory": inmemoryRepoManager.UtxoRepository(),
-		//"badger":   badgerRepoManager.UtxoRepository(),
+		"inmemory": inmemoryRepoManager.UtxoRepository(),
+		"badger":   badgerRepoManager.UtxoRepository(),
 		"postgres": pgRepoManager.UtxoRepository(),
 	}, nil
 }
