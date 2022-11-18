@@ -71,6 +71,7 @@ func testAddUtxos(t *testing.T, repo domain.UtxoRepository) {
 func testGetUtxos(t *testing.T, repo domain.UtxoRepository) {
 	t.Run("get_utxos", func(t *testing.T) {
 		utxos, err := repo.GetAllUtxos(ctx)
+		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
 
 		utxos, err = repo.GetAllUtxosForAccount(ctx, accountName)
