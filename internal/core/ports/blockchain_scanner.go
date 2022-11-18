@@ -20,6 +20,9 @@ type BlockchainScanner interface {
 		accountName string, startingBlockHeight uint32,
 		addresses []domain.AddressInfo,
 	)
+	WatchForUtxos(
+		accountName string, utxos []domain.UtxoInfo,
+	)
 	// StopWatchForAccount instructs the scanner to stop notifying about
 	// txs/utxos related to any address belonging to the given HD account.
 	StopWatchForAccount(accountName string)

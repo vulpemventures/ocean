@@ -107,6 +107,13 @@ func (s *service) WatchForAccount(
 	scannerSvc.watchAddresses(addressesInfo)
 }
 
+func (s *service) WatchForUtxos(
+	accountName string, utxos []domain.UtxoInfo,
+) {
+	scannerSvc := s.getOrCreateScanner(accountName, 0)
+	scannerSvc.watchUtxos(utxos)
+}
+
 func (s *service) StopWatchForAccount(accountName string) {
 	scannerSvc := s.getOrCreateScanner(accountName, 0)
 	scannerSvc.stop()
