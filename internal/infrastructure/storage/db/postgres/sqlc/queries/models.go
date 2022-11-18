@@ -34,7 +34,7 @@ type Transaction struct {
 type TxInputAccount struct {
 	ID          int32
 	AccountName string
-	TxID        string
+	FkTxID      string
 }
 
 type Utxo struct {

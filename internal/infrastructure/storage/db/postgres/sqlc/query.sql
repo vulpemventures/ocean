@@ -62,3 +62,21 @@ DELETE FROM utxo WHERE account_name=$1;
 
 -- name: GetUtxosForAccountName :many
 SELECT * FROM utxo WHERE account_name=$1;
+
+/* TRANSACTION */
+-- name: InsertTransaction :one
+INSERT INTO transaction(tx_id,tx_hex,block_hash,block_height)
+VALUES($1,$2,$3,$4) RETURNING *;
+
+-- name: InsertTransactionInputAccount :one
+INSERT INTO tx_input_account(account_name, fk_tx_id)
+VALUES($1,$2) RETURNING *;
+
+-- name: UpdateTransaction :one
+UPDATE transaction SET tx_hex=$1,block_hash=$2,block_height=$3 WHERE tx_id=$4 RETURNING *;
+
+-- name: DeleteTransactionInputAccounts :exec
+DELETE FROM tx_input_account WHERE fk_tx_id=$1;
+
+-- name: GetTransaction :many
+SELECT * FROM transaction t left join tx_input_account tia on t.tx_id = tia.fk_tx_id WHERE tx_id=$1;

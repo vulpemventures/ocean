@@ -1,6 +1,7 @@
 package main
 
 import (
+	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -34,7 +35,6 @@ var (
 	network            = config.GetNetwork()
 	noTLS              = config.GetBool(config.NoTLSKey)
 	noProfiler         = config.GetBool(config.NoProfilerKey)
-	dbDir              = filepath.Join(datadir, config.DbLocation)
 	tlsDir             = filepath.Join(datadir, config.TLSLocation)
 	scannerDir         = filepath.Join(datadir, config.ScannerLocation)
 	profilerDir        = filepath.Join(datadir, config.ProfilerLocation)
@@ -47,6 +47,12 @@ var (
 	nodeRpcAddr        = config.GetString(config.ElementsNodeRpcAddrKey)
 	utxoExpiryDuration = time.Duration(config.GetInt(config.UtxoExpiryDurationKey))
 	rootPath           = config.GetRootPath()
+	dbUser             = config.GetString(config.DbUserKey)
+	dbPassword         = config.GetString(config.DbPassKey)
+	dbHost             = config.GetString(config.DbHostKey)
+	dbPort             = config.GetInt(config.DbPortKey)
+	dbName             = config.GetString(config.DbNameKey)
+	migrationSourceURL = config.GetString(config.DbMigrationPath)
 )
 
 func main() {
@@ -81,15 +87,22 @@ func main() {
 		ExtraDomains: tlsExtraDomains,
 	}
 	appCfg := &appconfig.AppConfig{
-		Version:                 version,
-		Commit:                  commit,
-		Date:                    date,
-		RootPath:                rootPath,
-		Network:                 network,
-		UtxoExpiryDuration:      utxoExpiryDuration * time.Second,
-		RepoManagerType:         dbType,
-		BlockchainScannerType:   bcScannerType,
-		RepoManagerConfig:       dbDir,
+		Version:               version,
+		Commit:                commit,
+		Date:                  date,
+		RootPath:              rootPath,
+		Network:               network,
+		UtxoExpiryDuration:    utxoExpiryDuration * time.Second,
+		RepoManagerType:       dbType,
+		BlockchainScannerType: bcScannerType,
+		RepoManagerConfig: postgresdb.DbConfig{
+			DbUser:             dbUser,
+			DbPassword:         dbPassword,
+			DbHost:             dbHost,
+			DbPort:             dbPort,
+			DbName:             dbName,
+			MigrationSourceURL: migrationSourceURL,
+		},
 		BlockchainScannerConfig: bcScannerConfig,
 	}
 

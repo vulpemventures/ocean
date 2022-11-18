@@ -36,8 +36,8 @@ CREATE TABLE transaction (
 CREATE TABLE tx_input_account (
     id SERIAL PRIMARY KEY,
     account_name VARCHAR(50) NOT NULL,
-    tx_id VARCHAR(64) NOT NULL,
-    FOREIGN KEY (tx_id) REFERENCES transaction(tx_id)
+    fk_tx_id VARCHAR(64) NOT NULL,
+    FOREIGN KEY (fk_tx_id) REFERENCES transaction(tx_id)
 );
 
 CREATE TABLE utxo (

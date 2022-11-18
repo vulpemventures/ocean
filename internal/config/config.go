@@ -92,7 +92,7 @@ var (
 	vip *viper.Viper
 
 	defaultDatadir            = btcutil.AppDataDir("oceand", false)
-	defaultDbType             = "badger"
+	defaultDbType             = "postgres"
 	defaultBcScannerType      = "elements"
 	defaultPort               = 18000
 	defaultLogLevel           = 4

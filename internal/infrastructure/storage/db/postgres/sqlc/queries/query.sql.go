@@ -29,6 +29,15 @@ func (q *Queries) DeleteAccountScripts(ctx context.Context, fkAccountName string
 	return err
 }
 
+const deleteTransactionInputAccounts = `-- name: DeleteTransactionInputAccounts :exec
+DELETE FROM tx_input_account WHERE fk_tx_id=$1
+`
+
+func (q *Queries) DeleteTransactionInputAccounts(ctx context.Context, fkTxID string) error {
+	_, err := q.db.Exec(ctx, deleteTransactionInputAccounts, fkTxID)
+	return err
+}
+
 const deleteUtxoStatuses = `-- name: DeleteUtxoStatuses :exec
 DELETE FROM utxo_status WHERE fk_utxo_id = $1
 `
@@ -125,6 +134,48 @@ func (q *Queries) GetAllUtxos(ctx context.Context) ([]GetAllUtxosRow, error) {
 			&i.BlockHash,
 			&i.Status,
 			&i.FkUtxoID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTransaction = `-- name: GetTransaction :many
+SELECT tx_id, tx_hex, block_hash, block_height, id, account_name, fk_tx_id FROM transaction t left join tx_input_account tia on t.tx_id = tia.fk_tx_id WHERE tx_id=$1
+`
+
+type GetTransactionRow struct {
+	TxID        string
+	TxHex       string
+	BlockHash   string
+	BlockHeight int32
+	ID          sql.NullInt32
+	AccountName sql.NullString
+	FkTxID      sql.NullString
+}
+
+func (q *Queries) GetTransaction(ctx context.Context, txID string) ([]GetTransactionRow, error) {
+	rows, err := q.db.Query(ctx, getTransaction, txID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTransactionRow
+	for rows.Next() {
+		var i GetTransactionRow
+		if err := rows.Scan(
+			&i.TxID,
+			&i.TxHex,
+			&i.BlockHash,
+			&i.BlockHeight,
+			&i.ID,
+			&i.AccountName,
+			&i.FkTxID,
 		); err != nil {
 			return nil, err
 		}
@@ -432,6 +483,53 @@ type InsertAccountScriptsParams struct {
 	FkAccountName  string
 }
 
+const insertTransaction = `-- name: InsertTransaction :one
+INSERT INTO transaction(tx_id,tx_hex,block_hash,block_height)
+VALUES($1,$2,$3,$4) RETURNING tx_id, tx_hex, block_hash, block_height
+`
+
+type InsertTransactionParams struct {
+	TxID        string
+	TxHex       string
+	BlockHash   string
+	BlockHeight int32
+}
+
+// TRANSACTION
+func (q *Queries) InsertTransaction(ctx context.Context, arg InsertTransactionParams) (Transaction, error) {
+	row := q.db.QueryRow(ctx, insertTransaction,
+		arg.TxID,
+		arg.TxHex,
+		arg.BlockHash,
+		arg.BlockHeight,
+	)
+	var i Transaction
+	err := row.Scan(
+		&i.TxID,
+		&i.TxHex,
+		&i.BlockHash,
+		&i.BlockHeight,
+	)
+	return i, err
+}
+
+const insertTransactionInputAccount = `-- name: InsertTransactionInputAccount :one
+INSERT INTO tx_input_account(account_name, fk_tx_id)
+VALUES($1,$2) RETURNING id, account_name, fk_tx_id
+`
+
+type InsertTransactionInputAccountParams struct {
+	AccountName string
+	FkTxID      string
+}
+
+func (q *Queries) InsertTransactionInputAccount(ctx context.Context, arg InsertTransactionInputAccountParams) (TxInputAccount, error) {
+	row := q.db.QueryRow(ctx, insertTransactionInputAccount, arg.AccountName, arg.FkTxID)
+	var i TxInputAccount
+	err := row.Scan(&i.ID, &i.AccountName, &i.FkTxID)
+	return i, err
+}
+
 const insertUtxo = `-- name: InsertUtxo :one
 INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,nonce,range_proof,surjection_proof,account_name,lock_timestamp)
 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp
@@ -586,6 +684,34 @@ func (q *Queries) UpdateAccountIndexes(ctx context.Context, arg UpdateAccountInd
 		&i.NextExternalIndex,
 		&i.NextInternalIndex,
 		&i.FkWalletID,
+	)
+	return i, err
+}
+
+const updateTransaction = `-- name: UpdateTransaction :one
+UPDATE transaction SET tx_hex=$1,block_hash=$2,block_height=$3 WHERE tx_id=$4 RETURNING tx_id, tx_hex, block_hash, block_height
+`
+
+type UpdateTransactionParams struct {
+	TxHex       string
+	BlockHash   string
+	BlockHeight int32
+	TxID        string
+}
+
+func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (Transaction, error) {
+	row := q.db.QueryRow(ctx, updateTransaction,
+		arg.TxHex,
+		arg.BlockHash,
+		arg.BlockHeight,
+		arg.TxID,
+	)
+	var i Transaction
+	err := row.Scan(
+		&i.TxID,
+		&i.TxHex,
+		&i.BlockHash,
+		&i.BlockHeight,
 	)
 	return i, err
 }
