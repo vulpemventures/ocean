@@ -44,7 +44,7 @@ CREATE TABLE utxo (
     id SERIAL PRIMARY KEY,
     tx_id VARCHAR(64) NOT NULL,
     vout INTEGER NOT NULL,
-    value INTEGER NOT NULL,
+    value BIGINT NOT NULL,
     asset VARCHAR(64) NOT NULL,
     value_commitment bytea NOT NULL,
     asset_commitment bytea NOT NULL,
@@ -52,10 +52,11 @@ CREATE TABLE utxo (
     asset_blinder bytea NOT NULL,
     script bytea NOT NULL,
     nonce bytea NOT NULL,
-    range_proof bytea NOT NULL,
-    surjection_proof bytea NOT NULL,
+    range_proof bytea,
+    surjection_proof bytea,
     account_name varchar(50) NOT NULL,
-    lock_timestamp timestamp NOT NULL
+    lock_timestamp timestamp NOT NULL,
+    UNIQUE (tx_id, vout)
 );
 
 CREATE TABLE utxo_status (

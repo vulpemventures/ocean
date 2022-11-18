@@ -3,11 +3,6 @@ package db_test
 import (
 	"context"
 	"fmt"
-	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
-	"os"
-	"strings"
-	"testing"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/go-elements/network"
@@ -16,6 +11,10 @@ import (
 	"github.com/vulpemventures/ocean/internal/core/ports"
 	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/inmemory"
+	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
+	"os"
+	"strings"
+	"testing"
 )
 
 var (

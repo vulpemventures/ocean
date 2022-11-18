@@ -59,12 +59,10 @@ func (w *walletRepositoryPg) CreateWallet(
 		NextAccountIndex:    int32(wallet.NextAccountIndex),
 	},
 	); err != nil {
-		if pqErr := err.(*pgconn.PgError); pqErr != nil {
-			if pqErr.Code == uniqueViolation {
-				return ErrWalletAlreadyCreated
-			} else {
-				return err
-			}
+		if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok && pqErr.Code == uniqueViolation {
+			return ErrWalletAlreadyCreated
+		} else {
+			return err
 		}
 	}
 
@@ -90,7 +88,15 @@ func (w *walletRepositoryPg) UnlockWallet(
 		return err
 	}
 
-	return wallet.Unlock(password)
+	if err := wallet.Unlock(password); err != nil {
+		return err
+	}
+
+	go w.publishEvent(domain.WalletEvent{
+		EventType: domain.WalletUnlocked,
+	})
+
+	return nil
 }
 
 func (w *walletRepositoryPg) LockWallet(
@@ -102,7 +108,15 @@ func (w *walletRepositoryPg) LockWallet(
 		return err
 	}
 
-	return wallet.Lock(password)
+	if err := wallet.Lock(password); err != nil {
+		return err
+	}
+
+	go w.publishEvent(domain.WalletEvent{
+		EventType: domain.WalletLocked,
+	})
+
+	return nil
 }
 
 // UpdateWallet updates 3 tables in database: wallet, account, account_script_info
@@ -205,12 +219,10 @@ func (w *walletRepositoryPg) UpdateWallet(
 				ctx,
 				req,
 			); err != nil {
-				if pqErr := err.(*pgconn.PgError); pqErr != nil {
-					if pqErr.Code == uniqueViolation {
-						continue
-					} else {
-						return err
-					}
+				if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok && pqErr.Code == uniqueViolation {
+					continue
+				} else {
+					return err
 				}
 			}
 		}
@@ -353,7 +365,16 @@ func (w *walletRepositoryPg) DeleteAccount(
 		return err
 	}
 
-	return tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	go w.publishEvent(domain.WalletEvent{
+		EventType:   domain.WalletAccountDeleted,
+		AccountName: accountName,
+	})
+
+	return nil
 }
 
 func (w *walletRepositoryPg) GetEventChannel() chan domain.WalletEvent {

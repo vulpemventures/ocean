@@ -2,6 +2,7 @@ package db_test
 
 import (
 	"encoding/hex"
+	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"testing"
 	"time"
 
@@ -69,10 +70,10 @@ func testAddUtxos(t *testing.T, repo domain.UtxoRepository) {
 
 func testGetUtxos(t *testing.T, repo domain.UtxoRepository) {
 	t.Run("get_utxos", func(t *testing.T) {
-		utxos := repo.GetAllUtxos(ctx)
+		utxos, err := repo.GetAllUtxos(ctx)
 		require.Len(t, utxos, len(newUtxos))
 
-		utxos, err := repo.GetAllUtxosForAccount(ctx, accountName)
+		utxos, err = repo.GetAllUtxosForAccount(ctx, accountName)
 		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
 
@@ -256,7 +257,20 @@ func newUtxoRepositories(handlerFactory func(repoType string) ports.UtxoEventHan
 	handlers := []ports.UtxoEventHandler{
 		handlerFactory("badger"), handlerFactory("inmemory"),
 	}
-	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager}
+
+	pgRepoManager, err := postgresdb.NewRepoManager(postgresdb.DbConfig{
+		DbUser:             "root",
+		DbPassword:         "secret",
+		DbHost:             "127.0.0.1",
+		DbPort:             5432,
+		DbName:             "oceand-db-test",
+		MigrationSourceURL: "file://../postgres/migration",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager, pgRepoManager}
 
 	for i, handler := range handlers {
 		repoManager := repoManagers[i]
@@ -269,5 +283,6 @@ func newUtxoRepositories(handlerFactory func(repoType string) ports.UtxoEventHan
 	return map[string]domain.UtxoRepository{
 		"inmemory": inmemoryRepoManager.UtxoRepository(),
 		"badger":   badgerRepoManager.UtxoRepository(),
+		"postgres": pgRepoManager.UtxoRepository(),
 	}, nil
 }

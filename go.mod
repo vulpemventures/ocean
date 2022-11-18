@@ -1,6 +1,6 @@
 module github.com/vulpemventures/ocean
 
-go 1.17
+go 1.18
 
 require (
 	github.com/btcsuite/btcd v0.23.1

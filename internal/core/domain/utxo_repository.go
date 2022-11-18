@@ -45,7 +45,7 @@ type UtxoRepository interface {
 	GetUtxosByKey(ctx context.Context, utxoKeys []UtxoKey) ([]*Utxo, error)
 	// GetAllUtxos returns the entire UTXO set, included those locked or
 	// already spent.
-	GetAllUtxos(ctx context.Context) []*Utxo
+	GetAllUtxos(ctx context.Context) ([]*Utxo, error)
 	// GetSpendableUtxos returns all unlocked utxo UTXOs.
 	GetSpendableUtxos(ctx context.Context) ([]*Utxo, error)
 	// GetAllUtxosForAccount returns the list of all utxos for the given

@@ -41,7 +41,7 @@ type Utxo struct {
 	ID              int32
 	TxID            string
 	Vout            int32
-	Value           int32
+	Value           int64
 	Asset           string
 	ValueCommitment []byte
 	AssetCommitment []byte

@@ -35,3 +35,30 @@ DELETE FROM account WHERE name = $1;
 -- name: InsertUtxo :one
 INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,nonce,range_proof,surjection_proof,account_name,lock_timestamp)
 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *;
+
+-- name: InsertUtxoStatus :one
+INSERT INTO utxo_status(block_height,block_time,block_hash,status,fk_utxo_id)
+VALUES($1,$2,$3,$4,$5) RETURNING *;
+
+-- name: GetUtxoForKey :many
+SELECT * FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+WHERE u.tx_id = $1 AND u.vout = $2;
+
+-- name: GetAllUtxos :many
+SELECT * FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id;
+
+-- name: GetUtxosForAccount :many
+SELECT * FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+WHERE u.account_name = $1;
+
+-- name: UpdateUtxo :one
+UPDATE utxo SET value=$1,asset=$2,value_commitment=$3,asset_commitment=$4,value_blinder=$5,asset_blinder=$6,script=$7,nonce=$8,range_proof=$9,surjection_proof=$10,account_name=$11,lock_timestamp=$12 WHERE tx_id=$13 and vout=$14 RETURNING *;
+
+-- name: DeleteUtxoStatuses :exec
+DELETE FROM utxo_status WHERE fk_utxo_id = $1;
+
+-- name: DeleteUtxosForAccountName :exec
+DELETE FROM utxo WHERE account_name=$1;
+
+-- name: GetUtxosForAccountName :many
+SELECT * FROM utxo WHERE account_name=$1;

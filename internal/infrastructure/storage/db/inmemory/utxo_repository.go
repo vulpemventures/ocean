@@ -64,11 +64,11 @@ func (r *utxoRepository) GetUtxosByKey(
 	return utxos, nil
 }
 
-func (r *utxoRepository) GetAllUtxos(_ context.Context) []*domain.Utxo {
+func (r *utxoRepository) GetAllUtxos(_ context.Context) ([]*domain.Utxo, error) {
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	return r.getUtxos(false)
+	return r.getUtxos(false), nil
 }
 
 func (r *utxoRepository) GetSpendableUtxos(_ context.Context) ([]*domain.Utxo, error) {

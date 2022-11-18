@@ -29,6 +29,24 @@ func (q *Queries) DeleteAccountScripts(ctx context.Context, fkAccountName string
 	return err
 }
 
+const deleteUtxoStatuses = `-- name: DeleteUtxoStatuses :exec
+DELETE FROM utxo_status WHERE fk_utxo_id = $1
+`
+
+func (q *Queries) DeleteUtxoStatuses(ctx context.Context, fkUtxoID int32) error {
+	_, err := q.db.Exec(ctx, deleteUtxoStatuses, fkUtxoID)
+	return err
+}
+
+const deleteUtxosForAccountName = `-- name: DeleteUtxosForAccountName :exec
+DELETE FROM utxo WHERE account_name=$1
+`
+
+func (q *Queries) DeleteUtxosForAccountName(ctx context.Context, accountName string) error {
+	_, err := q.db.Exec(ctx, deleteUtxosForAccountName, accountName)
+	return err
+}
+
 const getAccount = `-- name: GetAccount :one
 SELECT name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id FROM account WHERE name = $1
 `
@@ -46,6 +64,263 @@ func (q *Queries) GetAccount(ctx context.Context, name string) (Account, error) 
 		&i.FkWalletID,
 	)
 	return i, err
+}
+
+const getAllUtxos = `-- name: GetAllUtxos :many
+SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+`
+
+type GetAllUtxosRow struct {
+	ID              int32
+	TxID            string
+	Vout            int32
+	Value           int64
+	Asset           string
+	ValueCommitment []byte
+	AssetCommitment []byte
+	ValueBlinder    []byte
+	AssetBlinder    []byte
+	Script          []byte
+	Nonce           []byte
+	RangeProof      []byte
+	SurjectionProof []byte
+	AccountName     string
+	LockTimestamp   time.Time
+	ID_2            sql.NullInt32
+	BlockHeight     sql.NullInt32
+	BlockTime       sql.NullTime
+	BlockHash       sql.NullString
+	Status          sql.NullInt32
+	FkUtxoID        sql.NullInt32
+}
+
+func (q *Queries) GetAllUtxos(ctx context.Context) ([]GetAllUtxosRow, error) {
+	rows, err := q.db.Query(ctx, getAllUtxos)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllUtxosRow
+	for rows.Next() {
+		var i GetAllUtxosRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TxID,
+			&i.Vout,
+			&i.Value,
+			&i.Asset,
+			&i.ValueCommitment,
+			&i.AssetCommitment,
+			&i.ValueBlinder,
+			&i.AssetBlinder,
+			&i.Script,
+			&i.Nonce,
+			&i.RangeProof,
+			&i.SurjectionProof,
+			&i.AccountName,
+			&i.LockTimestamp,
+			&i.ID_2,
+			&i.BlockHeight,
+			&i.BlockTime,
+			&i.BlockHash,
+			&i.Status,
+			&i.FkUtxoID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUtxoForKey = `-- name: GetUtxoForKey :many
+SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+WHERE u.tx_id = $1 AND u.vout = $2
+`
+
+type GetUtxoForKeyParams struct {
+	TxID string
+	Vout int32
+}
+
+type GetUtxoForKeyRow struct {
+	ID              int32
+	TxID            string
+	Vout            int32
+	Value           int64
+	Asset           string
+	ValueCommitment []byte
+	AssetCommitment []byte
+	ValueBlinder    []byte
+	AssetBlinder    []byte
+	Script          []byte
+	Nonce           []byte
+	RangeProof      []byte
+	SurjectionProof []byte
+	AccountName     string
+	LockTimestamp   time.Time
+	ID_2            sql.NullInt32
+	BlockHeight     sql.NullInt32
+	BlockTime       sql.NullTime
+	BlockHash       sql.NullString
+	Status          sql.NullInt32
+	FkUtxoID        sql.NullInt32
+}
+
+func (q *Queries) GetUtxoForKey(ctx context.Context, arg GetUtxoForKeyParams) ([]GetUtxoForKeyRow, error) {
+	rows, err := q.db.Query(ctx, getUtxoForKey, arg.TxID, arg.Vout)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUtxoForKeyRow
+	for rows.Next() {
+		var i GetUtxoForKeyRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TxID,
+			&i.Vout,
+			&i.Value,
+			&i.Asset,
+			&i.ValueCommitment,
+			&i.AssetCommitment,
+			&i.ValueBlinder,
+			&i.AssetBlinder,
+			&i.Script,
+			&i.Nonce,
+			&i.RangeProof,
+			&i.SurjectionProof,
+			&i.AccountName,
+			&i.LockTimestamp,
+			&i.ID_2,
+			&i.BlockHeight,
+			&i.BlockTime,
+			&i.BlockHash,
+			&i.Status,
+			&i.FkUtxoID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUtxosForAccount = `-- name: GetUtxosForAccount :many
+SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+WHERE u.account_name = $1
+`
+
+type GetUtxosForAccountRow struct {
+	ID              int32
+	TxID            string
+	Vout            int32
+	Value           int64
+	Asset           string
+	ValueCommitment []byte
+	AssetCommitment []byte
+	ValueBlinder    []byte
+	AssetBlinder    []byte
+	Script          []byte
+	Nonce           []byte
+	RangeProof      []byte
+	SurjectionProof []byte
+	AccountName     string
+	LockTimestamp   time.Time
+	ID_2            sql.NullInt32
+	BlockHeight     sql.NullInt32
+	BlockTime       sql.NullTime
+	BlockHash       sql.NullString
+	Status          sql.NullInt32
+	FkUtxoID        sql.NullInt32
+}
+
+func (q *Queries) GetUtxosForAccount(ctx context.Context, accountName string) ([]GetUtxosForAccountRow, error) {
+	rows, err := q.db.Query(ctx, getUtxosForAccount, accountName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUtxosForAccountRow
+	for rows.Next() {
+		var i GetUtxosForAccountRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TxID,
+			&i.Vout,
+			&i.Value,
+			&i.Asset,
+			&i.ValueCommitment,
+			&i.AssetCommitment,
+			&i.ValueBlinder,
+			&i.AssetBlinder,
+			&i.Script,
+			&i.Nonce,
+			&i.RangeProof,
+			&i.SurjectionProof,
+			&i.AccountName,
+			&i.LockTimestamp,
+			&i.ID_2,
+			&i.BlockHeight,
+			&i.BlockTime,
+			&i.BlockHash,
+			&i.Status,
+			&i.FkUtxoID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUtxosForAccountName = `-- name: GetUtxosForAccountName :many
+SELECT id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp FROM utxo WHERE account_name=$1
+`
+
+func (q *Queries) GetUtxosForAccountName(ctx context.Context, accountName string) ([]Utxo, error) {
+	rows, err := q.db.Query(ctx, getUtxosForAccountName, accountName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Utxo
+	for rows.Next() {
+		var i Utxo
+		if err := rows.Scan(
+			&i.ID,
+			&i.TxID,
+			&i.Vout,
+			&i.Value,
+			&i.Asset,
+			&i.ValueCommitment,
+			&i.AssetCommitment,
+			&i.ValueBlinder,
+			&i.AssetBlinder,
+			&i.Script,
+			&i.Nonce,
+			&i.RangeProof,
+			&i.SurjectionProof,
+			&i.AccountName,
+			&i.LockTimestamp,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getWalletAccountsAndScripts = `-- name: GetWalletAccountsAndScripts :many
@@ -165,7 +440,7 @@ VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id, tx_id, vout
 type InsertUtxoParams struct {
 	TxID            string
 	Vout            int32
-	Value           int32
+	Value           int64
 	Asset           string
 	ValueCommitment []byte
 	AssetCommitment []byte
@@ -214,6 +489,39 @@ func (q *Queries) InsertUtxo(ctx context.Context, arg InsertUtxoParams) (Utxo, e
 		&i.SurjectionProof,
 		&i.AccountName,
 		&i.LockTimestamp,
+	)
+	return i, err
+}
+
+const insertUtxoStatus = `-- name: InsertUtxoStatus :one
+INSERT INTO utxo_status(block_height,block_time,block_hash,status,fk_utxo_id)
+VALUES($1,$2,$3,$4,$5) RETURNING id, block_height, block_time, block_hash, status, fk_utxo_id
+`
+
+type InsertUtxoStatusParams struct {
+	BlockHeight int32
+	BlockTime   time.Time
+	BlockHash   string
+	Status      int32
+	FkUtxoID    int32
+}
+
+func (q *Queries) InsertUtxoStatus(ctx context.Context, arg InsertUtxoStatusParams) (UtxoStatus, error) {
+	row := q.db.QueryRow(ctx, insertUtxoStatus,
+		arg.BlockHeight,
+		arg.BlockTime,
+		arg.BlockHash,
+		arg.Status,
+		arg.FkUtxoID,
+	)
+	var i UtxoStatus
+	err := row.Scan(
+		&i.ID,
+		&i.BlockHeight,
+		&i.BlockTime,
+		&i.BlockHash,
+		&i.Status,
+		&i.FkUtxoID,
 	)
 	return i, err
 }
@@ -278,6 +586,65 @@ func (q *Queries) UpdateAccountIndexes(ctx context.Context, arg UpdateAccountInd
 		&i.NextExternalIndex,
 		&i.NextInternalIndex,
 		&i.FkWalletID,
+	)
+	return i, err
+}
+
+const updateUtxo = `-- name: UpdateUtxo :one
+UPDATE utxo SET value=$1,asset=$2,value_commitment=$3,asset_commitment=$4,value_blinder=$5,asset_blinder=$6,script=$7,nonce=$8,range_proof=$9,surjection_proof=$10,account_name=$11,lock_timestamp=$12 WHERE tx_id=$13 and vout=$14 RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp
+`
+
+type UpdateUtxoParams struct {
+	Value           int64
+	Asset           string
+	ValueCommitment []byte
+	AssetCommitment []byte
+	ValueBlinder    []byte
+	AssetBlinder    []byte
+	Script          []byte
+	Nonce           []byte
+	RangeProof      []byte
+	SurjectionProof []byte
+	AccountName     string
+	LockTimestamp   time.Time
+	TxID            string
+	Vout            int32
+}
+
+func (q *Queries) UpdateUtxo(ctx context.Context, arg UpdateUtxoParams) (Utxo, error) {
+	row := q.db.QueryRow(ctx, updateUtxo,
+		arg.Value,
+		arg.Asset,
+		arg.ValueCommitment,
+		arg.AssetCommitment,
+		arg.ValueBlinder,
+		arg.AssetBlinder,
+		arg.Script,
+		arg.Nonce,
+		arg.RangeProof,
+		arg.SurjectionProof,
+		arg.AccountName,
+		arg.LockTimestamp,
+		arg.TxID,
+		arg.Vout,
+	)
+	var i Utxo
+	err := row.Scan(
+		&i.ID,
+		&i.TxID,
+		&i.Vout,
+		&i.Value,
+		&i.Asset,
+		&i.ValueCommitment,
+		&i.AssetCommitment,
+		&i.ValueBlinder,
+		&i.AssetBlinder,
+		&i.Script,
+		&i.Nonce,
+		&i.RangeProof,
+		&i.SurjectionProof,
+		&i.AccountName,
+		&i.LockTimestamp,
 	)
 	return i, err
 }
