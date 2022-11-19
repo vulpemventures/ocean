@@ -44,6 +44,8 @@ func (u *utxoRepositoryPg) AddUtxos(
 	if err != nil {
 		return 0, err
 	}
+	defer conn.Release()
+
 	for _, v := range utxos {
 
 		tx, err := conn.Begin(ctx)
@@ -578,6 +580,7 @@ func (u *utxoRepositoryPg) DeleteUtxosForAccount(
 	if err != nil {
 		return err
 	}
+	defer conn.Release()
 
 	tx, err := conn.Begin(ctx)
 	if err != nil {

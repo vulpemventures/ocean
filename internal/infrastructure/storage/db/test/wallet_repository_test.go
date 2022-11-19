@@ -31,6 +31,7 @@ var (
 	birthdayBlock         = uint32(1)
 	ctx                   = context.Background()
 	errSomethingWentWrong = fmt.Errorf("something went wrong")
+	pgRepoManager         ports.RepoManager
 )
 
 func TestMain(m *testing.M) {
@@ -40,6 +41,20 @@ func TestMain(m *testing.M) {
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, []byte(newPassword)).Return([]byte(strings.Join(mnemonic, " ")), nil)
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("invalid password"))
 	domain.MnemonicCypher = mockedMnemonicCypher
+
+	pg, err := postgresdb.NewRepoManager(postgresdb.DbConfig{
+		DbUser:             "root",
+		DbPassword:         "secret",
+		DbHost:             "127.0.0.1",
+		DbPort:             5432,
+		DbName:             "oceand-db-test",
+		MigrationSourceURL: "file://../postgres/migration",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	pgRepoManager = pg
 
 	os.Exit(m.Run())
 }
@@ -184,18 +199,6 @@ func newWalletRepositories(
 	}
 	handlers := []ports.WalletEventHandler{
 		handlerFactory("badger"), handlerFactory("inmemory"),
-	}
-
-	pgRepoManager, err := postgresdb.NewRepoManager(postgresdb.DbConfig{
-		DbUser:             "root",
-		DbPassword:         "secret",
-		DbHost:             "127.0.0.1",
-		DbPort:             5432,
-		DbName:             "oceand-db-test",
-		MigrationSourceURL: "file://../postgres/migration",
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager, pgRepoManager}

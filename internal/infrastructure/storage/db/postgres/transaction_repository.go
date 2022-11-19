@@ -40,6 +40,7 @@ func (t *txRepositoryPg) AddTransaction(
 	if err != nil {
 		return false, err
 	}
+	defer conn.Release()
 
 	tx, err := conn.Begin(ctx)
 	if err != nil {

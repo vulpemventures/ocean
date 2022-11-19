@@ -2,7 +2,6 @@ package db_test
 
 import (
 	"encoding/hex"
-	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"testing"
 	"time"
 
@@ -252,18 +251,6 @@ func newUtxoRepositories(handlerFactory func(repoType string) ports.UtxoEventHan
 	}
 	handlers := []ports.UtxoEventHandler{
 		handlerFactory("badger"), handlerFactory("inmemory"),
-	}
-
-	pgRepoManager, err := postgresdb.NewRepoManager(postgresdb.DbConfig{
-		DbUser:             "root",
-		DbPassword:         "secret",
-		DbHost:             "127.0.0.1",
-		DbPort:             5432,
-		DbName:             "oceand-db-test",
-		MigrationSourceURL: "file://../postgres/migration",
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager, pgRepoManager}

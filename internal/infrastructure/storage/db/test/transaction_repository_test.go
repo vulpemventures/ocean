@@ -1,7 +1,6 @@
 package db_test
 
 import (
-	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -110,18 +109,6 @@ func newTransactionRepositories(
 
 	handlers := []ports.TxEventHandler{
 		handlerFactory("badger"), handlerFactory("inmemory"),
-	}
-
-	pgRepoManager, err := postgresdb.NewRepoManager(postgresdb.DbConfig{
-		DbUser:             "root",
-		DbPassword:         "secret",
-		DbHost:             "127.0.0.1",
-		DbPort:             5432,
-		DbName:             "oceand-db-test",
-		MigrationSourceURL: "file://../postgres/migration",
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager, pgRepoManager}
