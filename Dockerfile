@@ -25,6 +25,7 @@ ARG DIR=/home/ocean
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
 COPY --from=builder /app/bin/* /usr/local/bin/
+COPY --from=builder /app/internal/infrastructure/storage/db/postgres/migration/* /usr/local/bin/
 
 # NOTE: Default GID == UID == 1000
 RUN adduser --disabled-password \
@@ -36,7 +37,7 @@ USER $USER
 # Prevents `VOLUME $DIR/.oceand/` being created as owned by `root`
 RUN mkdir -p "$DIR/.oceand/"
 
-# Expose volume containing all `tdexd` data
+# Expose volume containing all `oceand` data
 VOLUME $DIR/.oceand/
 
 # Expose ports of grpc server and profiler

@@ -129,8 +129,9 @@ dockers:
       - "--build-arg=VERSION={{.Version}}"
       - "--build-arg=COMMIT={{.Commit}}"
       - "--build-arg=DATE={{.Date}}"
-
-  # arm64
+    extra_files:
+      - internal/infrastructure/storage/db/postgres/migration
+        # arm64
   - image_templates:
       - "ghcr.io/vulpemventures/oceand:{{ .Tag }}-arm64v8"
         # push always either release or prerelease with a docker tag with the semver only
@@ -155,6 +156,8 @@ dockers:
       - "--build-arg=VERSION={{.Version}}"
       - "--build-arg=COMMIT={{.Commit}}"
       - "--build-arg=DATE={{.Date}}"
+    extra_files:
+      - internal/infrastructure/storage/db/postgres/migration
 
 docker_manifests:
   - name_template: ghcr.io/vulpemventures/oceand:{{ .Tag }}
