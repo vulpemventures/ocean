@@ -21,6 +21,8 @@ const (
 )
 
 type repoManager struct {
+	pgxPool *pgxpool.Pool
+
 	utxoRepository   domain.UtxoRepository
 	walletRepository domain.WalletRepository
 	txRepository     domain.TransactionRepository
@@ -47,6 +49,7 @@ func NewRepoManager(dbConfig DbConfig) (ports.RepoManager, error) {
 	txRepository := NewTxRepositoryPgImpl(pgxPool)
 
 	rm := &repoManager{
+		pgxPool:             pgxPool,
 		utxoRepository:      utxoRepository,
 		walletRepository:    walletRepository,
 		txRepository:        txRepository,
@@ -135,6 +138,8 @@ func (rm *repoManager) Close() {
 	rm.utxoRepository.(*utxoRepositoryPg).close()
 	rm.txRepository.(*txRepositoryPg).close()
 	rm.walletRepository.(*walletRepositoryPg).close()
+
+	rm.pgxPool.Close()
 }
 
 // handlerMap is a util type to prevent race conditions when registering

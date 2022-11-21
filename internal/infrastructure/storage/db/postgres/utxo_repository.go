@@ -3,6 +3,7 @@ package postgresdb
 import (
 	"context"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
@@ -45,10 +46,9 @@ func (u *utxoRepositoryPg) AddUtxos(
 		return 0, err
 	}
 	defer conn.Release()
-
+	var tx pgx.Tx
 	for _, v := range utxos {
-
-		tx, err := conn.Begin(ctx)
+		tx, err = conn.Begin(ctx)
 		if err != nil {
 			return 0, err
 		}
@@ -326,28 +326,7 @@ func (u *utxoRepositoryPg) GetAllUtxosForAccount(
 	for _, v := range utxos {
 		req = append(
 			req,
-			queries.GetAllUtxosRow{
-				TxID:            v.TxID,
-				Vout:            v.Vout,
-				Value:           v.Value,
-				Asset:           v.Asset,
-				ValueCommitment: v.ValueCommitment,
-				AssetCommitment: v.AssetCommitment,
-				ValueBlinder:    v.ValueBlinder,
-				AssetBlinder:    v.AssetBlinder,
-				Script:          v.Script,
-				Nonce:           v.Nonce,
-				RangeProof:      v.RangeProof,
-				SurjectionProof: v.SurjectionProof,
-				AccountName:     v.AccountName,
-				LockTimestamp:   v.LockTimestamp,
-				ID_2:            v.ID_2,
-				BlockHeight:     v.BlockHeight,
-				BlockTime:       v.BlockTime,
-				BlockHash:       v.BlockHash,
-				Status:          v.Status,
-				FkUtxoID:        v.FkUtxoID,
-			},
+			toGetAllUtxosRow(v),
 		)
 
 	}
@@ -378,28 +357,7 @@ func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
 	for _, v := range utxos {
 		req = append(
 			req,
-			queries.GetAllUtxosRow{
-				TxID:            v.TxID,
-				Vout:            v.Vout,
-				Value:           v.Value,
-				Asset:           v.Asset,
-				ValueCommitment: v.ValueCommitment,
-				AssetCommitment: v.AssetCommitment,
-				ValueBlinder:    v.ValueBlinder,
-				AssetBlinder:    v.AssetBlinder,
-				Script:          v.Script,
-				Nonce:           v.Nonce,
-				RangeProof:      v.RangeProof,
-				SurjectionProof: v.SurjectionProof,
-				AccountName:     v.AccountName,
-				LockTimestamp:   v.LockTimestamp,
-				ID_2:            v.ID_2,
-				BlockHeight:     v.BlockHeight,
-				BlockTime:       v.BlockTime,
-				BlockHash:       v.BlockHash,
-				Status:          v.Status,
-				FkUtxoID:        v.FkUtxoID,
-			},
+			toGetAllUtxosRow(v),
 		)
 
 	}
@@ -432,28 +390,7 @@ func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
 	for _, v := range utxos {
 		req = append(
 			req,
-			queries.GetAllUtxosRow{
-				TxID:            v.TxID,
-				Vout:            v.Vout,
-				Value:           v.Value,
-				Asset:           v.Asset,
-				ValueCommitment: v.ValueCommitment,
-				AssetCommitment: v.AssetCommitment,
-				ValueBlinder:    v.ValueBlinder,
-				AssetBlinder:    v.AssetBlinder,
-				Script:          v.Script,
-				Nonce:           v.Nonce,
-				RangeProof:      v.RangeProof,
-				SurjectionProof: v.SurjectionProof,
-				AccountName:     v.AccountName,
-				LockTimestamp:   v.LockTimestamp,
-				ID_2:            v.ID_2,
-				BlockHeight:     v.BlockHeight,
-				BlockTime:       v.BlockTime,
-				BlockHash:       v.BlockHash,
-				Status:          v.Status,
-				FkUtxoID:        v.FkUtxoID,
-			},
+			toGetAllUtxosRow(v),
 		)
 
 	}
@@ -486,28 +423,7 @@ func (u *utxoRepositoryPg) GetBalanceForAccount(
 	for _, v := range utxos {
 		req = append(
 			req,
-			queries.GetAllUtxosRow{
-				TxID:            v.TxID,
-				Vout:            v.Vout,
-				Value:           v.Value,
-				Asset:           v.Asset,
-				ValueCommitment: v.ValueCommitment,
-				AssetCommitment: v.AssetCommitment,
-				ValueBlinder:    v.ValueBlinder,
-				AssetBlinder:    v.AssetBlinder,
-				Script:          v.Script,
-				Nonce:           v.Nonce,
-				RangeProof:      v.RangeProof,
-				SurjectionProof: v.SurjectionProof,
-				AccountName:     v.AccountName,
-				LockTimestamp:   v.LockTimestamp,
-				ID_2:            v.ID_2,
-				BlockHeight:     v.BlockHeight,
-				BlockTime:       v.BlockTime,
-				BlockHash:       v.BlockHash,
-				Status:          v.Status,
-				FkUtxoID:        v.FkUtxoID,
-			},
+			toGetAllUtxosRow(v),
 		)
 
 	}
@@ -720,8 +636,7 @@ func (u *utxoRepositoryPg) updateUtxo(
 	if utxo.SpentStatus.BlockTime > 0 {
 		blockTime = time.Unix(utxo.SpentStatus.BlockTime, 0)
 	}
-	emptyStatus := domain.UtxoStatus{}
-	if utxo.SpentStatus != emptyStatus {
+	if utxo.IsSpent() {
 		if _, err := u.querier.InsertUtxoStatus(ctx, queries.InsertUtxoStatusParams{
 			BlockHeight: int32(utxo.SpentStatus.BlockHeight),
 			BlockTime:   blockTime,
@@ -732,7 +647,7 @@ func (u *utxoRepositoryPg) updateUtxo(
 			return err
 		}
 	}
-	if utxo.ConfirmedStatus != emptyStatus {
+	if utxo.IsConfirmed() {
 		if _, err := u.querier.InsertUtxoStatus(ctx, queries.InsertUtxoStatusParams{
 			BlockHeight: int32(utxo.SpentStatus.BlockHeight),
 			BlockTime:   blockTime,
@@ -903,4 +818,29 @@ func (u *utxoRepositoryPg) unlockUtxo(
 
 	utxoInfo := utxo.Info()
 	return true, &utxoInfo, nil
+}
+
+func toGetAllUtxosRow(v queries.GetUtxosForAccountRow) queries.GetAllUtxosRow {
+	return queries.GetAllUtxosRow{
+		TxID:            v.TxID,
+		Vout:            v.Vout,
+		Value:           v.Value,
+		Asset:           v.Asset,
+		ValueCommitment: v.ValueCommitment,
+		AssetCommitment: v.AssetCommitment,
+		ValueBlinder:    v.ValueBlinder,
+		AssetBlinder:    v.AssetBlinder,
+		Script:          v.Script,
+		Nonce:           v.Nonce,
+		RangeProof:      v.RangeProof,
+		SurjectionProof: v.SurjectionProof,
+		AccountName:     v.AccountName,
+		LockTimestamp:   v.LockTimestamp,
+		ID_2:            v.ID_2,
+		BlockHeight:     v.BlockHeight,
+		BlockTime:       v.BlockTime,
+		BlockHash:       v.BlockHash,
+		Status:          v.Status,
+		FkUtxoID:        v.FkUtxoID,
+	}
 }

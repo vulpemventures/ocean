@@ -367,14 +367,14 @@ func (w *walletRepositoryPg) DeleteAccount(
 		return err
 	}
 
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
 	go w.publishEvent(domain.WalletEvent{
 		EventType:   domain.WalletAccountDeleted,
 		AccountName: accountName,
 	})
-
-	if err := tx.Commit(ctx); err != nil {
-		return err
-	}
 
 	return nil
 }
