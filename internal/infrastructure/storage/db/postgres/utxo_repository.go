@@ -3,7 +3,6 @@ package postgresdb
 import (
 	"context"
 	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
@@ -46,9 +45,8 @@ func (u *utxoRepositoryPg) AddUtxos(
 		return 0, err
 	}
 	defer conn.Release()
-	var tx pgx.Tx
 	for _, v := range utxos {
-		tx, err = conn.Begin(ctx)
+		tx, err := conn.Begin(ctx)
 		if err != nil {
 			return 0, err
 		}
@@ -502,6 +500,11 @@ func (u *utxoRepositoryPg) DeleteUtxosForAccount(
 	if err != nil {
 		return err
 	}
+
+	// Rollback rolls back the transaction. Rollback will return ErrTxClosed if the
+	// Tx is already closed, but is otherwise safe to call multiple times. Hence, a
+	// defer tx.Rollback() is safe even if tx.Commit() will be called first in a
+	// non-error condition.
 	defer tx.Rollback(ctx)
 
 	querierWithTx := u.querier.WithTx(tx)
