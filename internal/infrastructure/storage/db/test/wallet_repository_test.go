@@ -3,10 +3,6 @@ package db_test
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
-	"testing"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/go-elements/network"
@@ -15,6 +11,10 @@ import (
 	"github.com/vulpemventures/ocean/internal/core/ports"
 	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/inmemory"
+	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
+	"os"
+	"strings"
+	"testing"
 )
 
 var (
@@ -31,6 +31,7 @@ var (
 	birthdayBlock         = uint32(1)
 	ctx                   = context.Background()
 	errSomethingWentWrong = fmt.Errorf("something went wrong")
+	pgRepoManager         ports.RepoManager
 )
 
 func TestMain(m *testing.M) {
@@ -40,6 +41,20 @@ func TestMain(m *testing.M) {
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, []byte(newPassword)).Return([]byte(strings.Join(mnemonic, " ")), nil)
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("invalid password"))
 	domain.MnemonicCypher = mockedMnemonicCypher
+
+	pg, err := postgresdb.NewRepoManager(postgresdb.DbConfig{
+		DbUser:             "root",
+		DbPassword:         "secret",
+		DbHost:             "127.0.0.1",
+		DbPort:             5432,
+		DbName:             "oceand-db-test",
+		MigrationSourceURL: "file://../postgres/migration",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	pgRepoManager = pg
 
 	os.Exit(m.Run())
 }
@@ -185,7 +200,8 @@ func newWalletRepositories(
 	handlers := []ports.WalletEventHandler{
 		handlerFactory("badger"), handlerFactory("inmemory"),
 	}
-	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager}
+
+	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager, pgRepoManager}
 
 	for i, handler := range handlers {
 		repoManager := repoManagers[i]
@@ -198,5 +214,6 @@ func newWalletRepositories(
 	return map[string]domain.WalletRepository{
 		"inmemory": inmemoryRepoManager.WalletRepository(),
 		"badger":   badgerRepoManager.WalletRepository(),
+		"postgres": pgRepoManager.WalletRepository(),
 	}, nil
 }

@@ -19,6 +19,10 @@ ARG DIR=/home/ocean
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
+COPY --from=builder /app/internal/infrastructure/storage/db/postgres/migration/* /
+
+ENV OCEAN_DB_MIGRATION_PATH=file://
+
 # NOTE: Default GID == UID == 1000
 RUN adduser --disabled-password \
             --home "$DIR/" \

@@ -40,9 +40,7 @@ func TestUtxoRepository(t *testing.T) {
 
 func testUtxoRepository(t *testing.T, repo domain.UtxoRepository) {
 	newUtxos, utxoKeys, balanceByAsset = randomUtxosForAccount(accountName)
-	testAddUtxos(t, repo)
-
-	testGetUtxos(t, repo)
+	testAddAndGetUtxos(t, repo)
 
 	testGetBalanceForAccount(t, repo)
 
@@ -55,8 +53,8 @@ func testUtxoRepository(t *testing.T, repo domain.UtxoRepository) {
 	testSpendUtxos(t, repo)
 }
 
-func testAddUtxos(t *testing.T, repo domain.UtxoRepository) {
-	t.Run("add_utxos", func(t *testing.T) {
+func testAddAndGetUtxos(t *testing.T, repo domain.UtxoRepository) {
+	t.Run("add_utxos and get_utxos", func(t *testing.T) {
 		count, err := repo.AddUtxos(ctx, newUtxos)
 		require.NoError(t, err)
 		require.Equal(t, len(newUtxos), count)
@@ -64,15 +62,13 @@ func testAddUtxos(t *testing.T, repo domain.UtxoRepository) {
 		count, err = repo.AddUtxos(ctx, newUtxos)
 		require.NoError(t, err)
 		require.Zero(t, count)
-	})
-}
 
-func testGetUtxos(t *testing.T, repo domain.UtxoRepository) {
-	t.Run("get_utxos", func(t *testing.T) {
-		utxos := repo.GetAllUtxos(ctx)
+		//get utxos
+		utxos, err := repo.GetAllUtxos(ctx)
+		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
 
-		utxos, err := repo.GetAllUtxosForAccount(ctx, accountName)
+		utxos, err = repo.GetAllUtxosForAccount(ctx, accountName)
 		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
 
@@ -256,7 +252,8 @@ func newUtxoRepositories(handlerFactory func(repoType string) ports.UtxoEventHan
 	handlers := []ports.UtxoEventHandler{
 		handlerFactory("badger"), handlerFactory("inmemory"),
 	}
-	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager}
+
+	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager, pgRepoManager}
 
 	for i, handler := range handlers {
 		repoManager := repoManagers[i]
@@ -269,5 +266,6 @@ func newUtxoRepositories(handlerFactory func(repoType string) ports.UtxoEventHan
 	return map[string]domain.UtxoRepository{
 		"inmemory": inmemoryRepoManager.UtxoRepository(),
 		"badger":   badgerRepoManager.UtxoRepository(),
+		"postgres": pgRepoManager.UtxoRepository(),
 	}, nil
 }

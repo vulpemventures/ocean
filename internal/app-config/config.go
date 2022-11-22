@@ -2,6 +2,7 @@ package appconfig
 
 import (
 	"fmt"
+	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -136,6 +137,19 @@ func (c *AppConfig) repoManager() (ports.RepoManager, error) {
 		if err != nil {
 			return nil, err
 		}
+		c.rm = rm
+		return c.rm, nil
+	case "postgres":
+		dbConfig, ok := c.RepoManagerConfig.(postgresdb.DbConfig)
+		if !ok {
+			return nil, fmt.Errorf("invalid repo manager config type, must be postgresdb.DbConfig")
+		}
+
+		rm, err := postgresdb.NewRepoManager(dbConfig)
+		if err != nil {
+			return nil, err
+		}
+
 		c.rm = rm
 		return c.rm, nil
 	default:

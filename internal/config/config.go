@@ -74,13 +74,25 @@ const (
 	// ProfilerLocation is the folder inside the datadir containing profiler
 	// stats files.
 	ProfilerLocation = "stats"
+	// DbUserKey is user used to connect to db
+	DbUserKey = "DB_USER"
+	// DbPassKey is password used to connect to db
+	DbPassKey = "DB_PASS"
+	// DbHostKey is host where db is installed
+	DbHostKey = "DB_HOST"
+	// DbPortKey is port on which db is listening
+	DbPortKey = "DB_PORT"
+	// DbNameKey is name of database
+	DbNameKey = "DB_NAME"
+	// DbMigrationPath is the path to migration files
+	DbMigrationPath = "DB_MIGRATION_PATH"
 )
 
 var (
 	vip *viper.Viper
 
 	defaultDatadir            = btcutil.AppDataDir("oceand", false)
-	defaultDbType             = "badger"
+	defaultDbType             = "postgres"
 	defaultBcScannerType      = "elements"
 	defaultPort               = 18000
 	defaultLogLevel           = 4
@@ -103,6 +115,7 @@ var (
 	SupportedDbs = supportedType{
 		"badger":   {},
 		"inmemory": {},
+		"postgres": {},
 	}
 	SupportedBcScanners = supportedType{
 		"neutrino": {},
@@ -127,6 +140,12 @@ func init() {
 	vip.SetDefault(StatsIntervalKey, defaultStatsInterval)
 	vip.SetDefault(UtxoExpiryDurationKey, defaultUtxoExpiryDuration)
 	vip.SetDefault(EsploraUrlKey, defaultEsploraUrl)
+	vip.SetDefault(DbUserKey, "root")
+	vip.SetDefault(DbPassKey, "secret")
+	vip.SetDefault(DbHostKey, "127.0.0.1")
+	vip.SetDefault(DbPortKey, 5432)
+	vip.SetDefault(DbNameKey, "alertsd-db-pg")
+	vip.SetDefault(DbMigrationPath, "file://internal/infrastructure/storage/db/postgres/migration")
 
 	if err := validate(); err != nil {
 		log.Fatalf("invalid config: %s", err)

@@ -1,0 +1,11 @@
+version: 1
+packages:
+  - path: "sqlc/queries"
+    name: "queries"
+    engine: "postgresql"
+    schema: "migration"
+    queries: "sqlc/query.sql"
+    sql_package: "pgx/v4"
+overrides:
+  - column: "utxo.value"
+    go_type: "int64"

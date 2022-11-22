@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,7 @@ func TestTransactionRepository(t *testing.T) {
 	repositories, err := newTransactionRepositories(
 		func(repoType string) ports.TxEventHandler {
 			return func(event domain.TransactionEvent) {
-				t.Logf(
+				fmt.Printf(
 					"received event from %s repo: {EventType: %s, Transaction: "+
 						"{TxID: %s, Accounts: %v}}\n", repoType, event.EventType,
 					event.Transaction.TxID, event.Transaction.GetAccounts(),
@@ -110,7 +111,8 @@ func newTransactionRepositories(
 	handlers := []ports.TxEventHandler{
 		handlerFactory("badger"), handlerFactory("inmemory"),
 	}
-	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager}
+
+	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager, pgRepoManager}
 
 	for i, handler := range handlers {
 		repoManager := repoManagers[i]
@@ -122,5 +124,6 @@ func newTransactionRepositories(
 	return map[string]domain.TransactionRepository{
 		"inmemory": inmemoryRepoManager.TransactionRepository(),
 		"badger":   badgerRepoManager.TransactionRepository(),
+		"postgres": pgRepoManager.TransactionRepository(),
 	}, nil
 }

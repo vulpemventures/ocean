@@ -61,7 +61,7 @@ func (r *utxoRepository) GetUtxosByKey(
 
 func (r *utxoRepository) GetAllUtxos(
 	ctx context.Context,
-) []*domain.Utxo {
+) ([]*domain.Utxo, error) {
 	return r.getAllUtxos(ctx)
 }
 
@@ -204,9 +204,8 @@ func (r *utxoRepository) addUtxos(
 	return count, nil
 }
 
-func (r *utxoRepository) getAllUtxos(ctx context.Context) []*domain.Utxo {
-	utxos, _ := r.findUtxos(ctx, nil)
-	return utxos
+func (r *utxoRepository) getAllUtxos(ctx context.Context) ([]*domain.Utxo, error) {
+	return r.findUtxos(ctx, nil)
 }
 
 func (r *utxoRepository) spendUtxos(
