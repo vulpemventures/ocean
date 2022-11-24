@@ -2,12 +2,13 @@ package postgresdb
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
-	"sync"
-	"time"
 )
 
 const (
@@ -582,7 +583,7 @@ func (u *utxoRepositoryPg) spendUtxo(
 		return false, nil, err
 	}
 
-	if utxos == nil {
+	if len(utxos) <= 0 {
 		return false, nil, nil
 	}
 
@@ -699,7 +700,7 @@ func (u *utxoRepositoryPg) confirmUtxo(
 		return false, nil, err
 	}
 
-	if utxos == nil {
+	if len(utxos) <= 0 {
 		return false, nil, nil
 	}
 
@@ -753,7 +754,7 @@ func (u *utxoRepositoryPg) lockUtxo(
 		return false, nil, err
 	}
 
-	if utxos == nil {
+	if len(utxos) <= 0 {
 		return false, nil, nil
 	}
 
@@ -805,7 +806,7 @@ func (u *utxoRepositoryPg) unlockUtxo(
 		return false, nil, err
 	}
 
-	if utxos == nil {
+	if len(utxos) <= 0 {
 		return false, nil, nil
 	}
 
