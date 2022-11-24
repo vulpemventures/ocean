@@ -28,7 +28,7 @@ CREATE TABLE account_script_info (
 
 CREATE TABLE transaction (
     tx_id VARCHAR(64) NOT NULL PRIMARY KEY,
-    tx_hex VARCHAR(1000) NOT NULL,
+    tx_hex VARCHAR(10485760) NOT NULL,
     block_hash VARCHAR(64) NOT NULL,
     block_height INTEGER NOT NULL
 );
