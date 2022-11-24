@@ -144,7 +144,7 @@ func init() {
 	vip.SetDefault(DbPassKey, "secret")
 	vip.SetDefault(DbHostKey, "127.0.0.1")
 	vip.SetDefault(DbPortKey, 5432)
-	vip.SetDefault(DbNameKey, "oceand")
+	vip.SetDefault(DbNameKey, "oceand-db")
 	vip.SetDefault(DbMigrationPath, "file://internal/infrastructure/storage/db/postgres/migration")
 
 	if err := validate(); err != nil {

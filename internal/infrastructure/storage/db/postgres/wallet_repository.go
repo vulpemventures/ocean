@@ -2,14 +2,14 @@ package postgresdb
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
+
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
-	"sync"
 )
 
 const (
@@ -171,7 +171,7 @@ func (w *walletRepositoryPg) UpdateWallet(
 		newAccount := false
 		_, err := querierWithTx.GetAccount(ctx, account.Info.Key.Name)
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if err.Error() == pgxNoRows {
 				newAccount = true
 			} else {
 				return err
@@ -237,29 +237,20 @@ func (w *walletRepositoryPg) CreateAccount(
 	accountName string,
 	birthdayBlock uint32,
 ) (*domain.AccountInfo, error) {
-	wallet, err := w.getWallet(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	account, err := wallet.CreateAccount(accountName, birthdayBlock)
-	if err != nil {
-		return nil, err
-	}
-
-	if account == nil {
-		return nil, fmt.Errorf("account %s already existing", accountName)
-	}
-
-	if _, err := w.querier.InsertAccount(ctx, queries.InsertAccountParams{
-		Name:              account.Info.Key.Name,
-		Index:             int32(account.Info.Key.Index),
-		Xpub:              account.Info.Xpub,
-		DerivationPath:    account.Info.DerivationPath,
-		NextExternalIndex: int32(account.NextExternalIndex),
-		NextInternalIndex: int32(account.NextInternalIndex),
-		FkWalletID:        walletKey,
-	}); err != nil {
+	var accountInfo *domain.AccountInfo
+	if err := w.UpdateWallet(
+		ctx, func(wallet *domain.Wallet) (*domain.Wallet, error) {
+			account, err := wallet.CreateAccount(accountName, birthdayBlock)
+			if err != nil {
+				return nil, err
+			}
+			if account == nil {
+				return nil, fmt.Errorf("account %s already existing", accountName)
+			}
+			accountInfo = &account.Info
+			return wallet, nil
+		},
+	); err != nil {
 		return nil, err
 	}
 
@@ -268,7 +259,7 @@ func (w *walletRepositoryPg) CreateAccount(
 		AccountName: accountName,
 	})
 
-	return &account.Info, nil
+	return accountInfo, nil
 }
 
 func (w *walletRepositoryPg) DeriveNextExternalAddressesForAccount(
@@ -400,7 +391,7 @@ func (w *walletRepositoryPg) close() {
 	close(w.externalChEvents)
 }
 
-//getWallet recreates wallet based on 3 tables: wallet, account, account_script_info
+// getWallet recreates wallet based on 3 tables: wallet, account, account_script_info
 func (w *walletRepositoryPg) getWallet(
 	ctx context.Context,
 ) (*domain.Wallet, error) {
@@ -411,18 +402,6 @@ func (w *walletRepositoryPg) getWallet(
 
 	if len(walletAccounts) == 0 {
 		return nil, ErrorWalletNotFound
-	}
-
-	wallet := &domain.Wallet{
-		EncryptedMnemonic:   walletAccounts[0].EncryptedMnemonic,
-		PasswordHash:        walletAccounts[0].PasswordHash,
-		BirthdayBlockHeight: uint32(walletAccounts[0].BirthdayBlockHeight),
-		RootPath:            walletAccounts[0].RootPath,
-		NetworkName:         walletAccounts[0].NetworkName,
-		NextAccountIndex:    uint32(walletAccounts[0].NextAccountIndex),
-		AccountsByKey:       make(map[string]*domain.Account),
-		AccountKeysByIndex:  make(map[uint32]string),
-		AccountKeysByName:   make(map[string]string),
 	}
 
 	accounts := make(map[string]domain.Account, 0)
@@ -457,26 +436,31 @@ func (w *walletRepositoryPg) getWallet(
 		}
 	}
 
-	if len(accounts) > 0 {
-		accountsByKey := make(map[string]*domain.Account)
-		accountKeysByIndex := make(map[uint32]string)
-		accountKeysByName := make(map[string]string)
-		for k, v := range accounts {
-			accountKey := domain.AccountKey{
-				Name:  k,
-				Index: wallet.NextAccountIndex,
-			}
-			accountsByKey[accountKey.String()] = &v
-
-			accountKeysByIndex[v.Info.Key.Index] = accountKey.String()
-
-			accountKeysByName[v.Info.Key.Name] = accountKey.String()
+	accountsByKey := make(map[string]*domain.Account)
+	accountKeysByIndex := make(map[uint32]string)
+	accountKeysByName := make(map[string]string)
+	for k := range accounts {
+		v := accounts[k]
+		accountKey := domain.AccountKey{
+			Name:  k,
+			Index: v.Info.Key.Index,
 		}
+		accountsByKey[accountKey.String()] = &v
 
-		wallet.AccountsByKey = accountsByKey
-		wallet.AccountKeysByIndex = accountKeysByIndex
-		wallet.AccountKeysByName = accountKeysByName
+		accountKeysByIndex[v.Info.Key.Index] = accountKey.String()
+
+		accountKeysByName[v.Info.Key.Name] = accountKey.String()
 	}
 
-	return wallet, nil
+	return &domain.Wallet{
+		EncryptedMnemonic:   walletAccounts[0].EncryptedMnemonic,
+		PasswordHash:        walletAccounts[0].PasswordHash,
+		BirthdayBlockHeight: uint32(walletAccounts[0].BirthdayBlockHeight),
+		RootPath:            walletAccounts[0].RootPath,
+		NetworkName:         walletAccounts[0].NetworkName,
+		NextAccountIndex:    uint32(walletAccounts[0].NextAccountIndex),
+		AccountsByKey:       accountsByKey,
+		AccountKeysByIndex:  accountKeysByIndex,
+		AccountKeysByName:   accountKeysByName,
+	}, nil
 }
