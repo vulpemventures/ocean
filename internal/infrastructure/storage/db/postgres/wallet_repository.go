@@ -254,6 +254,11 @@ func (w *walletRepositoryPg) CreateAccount(
 		return nil, err
 	}
 
+	go w.publishEvent(domain.WalletEvent{
+		EventType:   domain.WalletAccountCreated,
+		AccountName: accountName,
+	})
+
 	return accountInfo, nil
 }
 
