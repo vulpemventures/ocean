@@ -302,12 +302,12 @@ func (as *AccountService) listenToUtxoChannel(
 			)
 			if err != nil {
 				as.warn(
-					err, "error while updating utxos status to spent for account %s",
+					err, "error while updating utxos status to confirmed for account %s",
 					accountName,
 				)
 			}
 			if count > 0 {
-				as.log("spent %d utxos for account %s", count, accountName)
+				as.log("confirmed %d utxos for account %s", count, accountName)
 				continue
 			}
 		}
