@@ -60,8 +60,11 @@ const (
 	// instead of the default m/84'/[1776|1]' (depending on network).
 	RootPathKey = "ROOT_PATH"
 	// EsploraUrlKey is the key for the esplora block esplorer consumed by the
-	// neutrino blockchain scanner
+	// neutrino blockchain scanner.
 	EsploraUrlKey = "ESPLORA_URL"
+	// ElectrumUrlKey is the key for the electrum server endpoint consumed by the
+	// electrum blockchain scanner.
+	ElectrumUrlKey = "ELECTRUM_URL"
 
 	// DbLocation is the folder inside the datadir containing db files.
 	DbLocation = "db"
@@ -93,7 +96,7 @@ var (
 
 	defaultDatadir            = btcutil.AppDataDir("oceand", false)
 	defaultDbType             = "postgres"
-	defaultBcScannerType      = "elements"
+	defaultBcScannerType      = "electrum"
 	defaultPort               = 18000
 	defaultLogLevel           = 4
 	defaultNetwork            = network.Liquid.Name
@@ -101,6 +104,7 @@ var (
 	defaultStatsInterval      = 600 // 10 minutes
 	defaultUtxoExpiryDuration = 360 // 6 minutes (3 blocks)
 	defaultEsploraUrl         = "https://blockstream.info/liquid/api"
+	defaultElectrumUrl        = "ssl://blockstream.info:995"
 
 	supportedNetworks = map[string]*network.Network{
 		network.Liquid.Name:  &network.Liquid,
@@ -120,6 +124,7 @@ var (
 	SupportedBcScanners = supportedType{
 		"neutrino": {},
 		"elements": {},
+		"electrum": {},
 	}
 )
 
@@ -146,6 +151,7 @@ func init() {
 	vip.SetDefault(DbPortKey, 5432)
 	vip.SetDefault(DbNameKey, "oceand-db")
 	vip.SetDefault(DbMigrationPath, "file://internal/infrastructure/storage/db/postgres/migration")
+	vip.SetDefault(ElectrumUrlKey, defaultElectrumUrl)
 
 	if err := validate(); err != nil {
 		log.Fatalf("invalid config: %s", err)

@@ -10,6 +10,7 @@ import (
 	"github.com/vulpemventures/ocean/internal/config"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"github.com/vulpemventures/ocean/internal/core/ports"
+	electrum_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/electrum"
 	elements_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/elements"
 	neutrino_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/neutrino"
 	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
@@ -22,13 +23,13 @@ import (
 // This data structure acts also as a factory of the mentioned application
 // services and the portable services used by them.
 // Public config args:
-//	* RootPath - (optional) Wallet root HD path (defaults to m/84'/0').
-//	* Network - (required) The Liquid network (mainnet, testnet, regtest).
-//	* UtxoExpiryDuration - (required) The duration in seconds for the app service to wait until unlocking one or more previously locked utxo.
-//	* RepoManagerType - (required) One of the supported repository manager types.
-//	* BlockchainScannerType - (required) One of the supported blockchain scanner types.
-//	* RepoManagerConfig - (optional) Custom config args for the repository manager based on its type.
-//	* BlockchainScannerConfig - (optional) Custom config args for the blockchain scanner based on its type.
+//   - RootPath - (optional) Wallet root HD path (defaults to m/84'/0').
+//   - Network - (required) The Liquid network (mainnet, testnet, regtest).
+//   - UtxoExpiryDuration - (required) The duration in seconds for the app service to wait until unlocking one or more previously locked utxo.
+//   - RepoManagerType - (required) One of the supported repository manager types.
+//   - BlockchainScannerType - (required) One of the supported blockchain scanner types.
+//   - RepoManagerConfig - (optional) Custom config args for the repository manager based on its type.
+//   - BlockchainScannerConfig - (optional) Custom config args for the blockchain scanner based on its type.
 type AppConfig struct {
 	Version string
 	Commit  string
@@ -197,6 +198,23 @@ func (c *AppConfig) bcScanner() (ports.BlockchainScanner, error) {
 		}
 		c.bcs = bcs
 		return c.bcs, nil
+	case "electrum":
+		if c.BlockchainScannerConfig == nil {
+			return nil, fmt.Errorf("missing blockchain scanner config args")
+		}
+		args, ok := c.BlockchainScannerConfig.(electrum_scanner.ServiceArgs)
+		if !ok {
+			return nil, fmt.Errorf(
+				"invalid blockchain scanner config type, must be " +
+					"elements_scanner.ServiceArgs",
+			)
+		}
+		bcs, err := electrum_scanner.NewService(args)
+		if err != nil {
+			return nil, err
+		}
+		c.bcs = bcs
+		return c.bcs, nil
 	default:
 		return nil, fmt.Errorf("unknown blockchain scanner type")
 	}
@@ -262,5 +280,9 @@ func (c *AppConfig) buildInfo() application.BuildInfo {
 	if c.Date != "" {
 		date = c.Date
 	}
-	return application.BuildInfo{version, commit, date}
+	return application.BuildInfo{
+		Version: version,
+		Commit:  commit,
+		Date:    date,
+	}
 }
