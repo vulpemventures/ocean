@@ -142,10 +142,10 @@ func (s *service) StopWatchForAccount(accountName string) {
 	s.removeScanner(accountName)
 }
 
-func (s *service) GetUtxos(utxoList []domain.Utxo) ([]*domain.Utxo, error) {
+func (s *service) GetUtxos(utxoList []domain.Utxo) ([]domain.Utxo, error) {
 	baseUrl := s.nodeConfig.EsploraUrl
 	client := &http.Client{}
-	utxos := make([]*domain.Utxo, 0, len(utxoList))
+	utxos := make([]domain.Utxo, 0, len(utxoList))
 	for _, u := range utxoList {
 		key := u.UtxoKey
 		url := fmt.Sprintf("%s/tx/%s", baseUrl, key.TxID)
@@ -191,18 +191,6 @@ func (s *service) GetLatestBlock() ([]byte, uint32, error) {
 	}
 	hash, _ := block.Hash()
 	return hash.CloneBytes(), block.Height, nil
-}
-
-func (s *service) GetBlockHeight(blockHash []byte) (uint32, error) {
-	hash, err := chainhash.NewHash(blockHash)
-	if err != nil {
-		return 0, err
-	}
-	block, err := s.headersRepo.GetBlockHeader(context.Background(), *hash)
-	if err != nil {
-		return 0, err
-	}
-	return block.Height, nil
 }
 
 func (s *service) GetBlockHash(height uint32) ([]byte, error) {
@@ -268,11 +256,11 @@ type esploraTxOut struct {
 
 func (o esploraTxOut) toDomain(
 	key domain.UtxoKey, confirmedStatus domain.UtxoStatus,
-) *domain.Utxo {
+) domain.Utxo {
 	script, _ := hex.DecodeString(o.Script)
 	valueCommitment, _ := hex.DecodeString(o.ValueCommitment)
 	assetCommitment, _ := hex.DecodeString(o.AssetCommitment)
-	return &domain.Utxo{
+	return domain.Utxo{
 		UtxoKey:         key,
 		Value:           o.Value,
 		Asset:           o.Asset,

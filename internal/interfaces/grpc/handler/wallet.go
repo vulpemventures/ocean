@@ -117,7 +117,7 @@ func (w *wallet) RestoreWallet(
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	birthdayBlock, err := parseBlockHash(req.GetBirthdayBlockHash())
+	birthdayBlock, err := parseBlockHeight(req.GetBirthdayBlockHeight())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

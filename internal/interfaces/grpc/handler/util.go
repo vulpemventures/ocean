@@ -232,18 +232,11 @@ func parseUtxoEventType(eventType domain.UtxoEventType) pb.UtxoEventType {
 	}
 }
 
-func parseBlockHash(hash string) ([]byte, error) {
-	if len(hash) == 0 {
-		return nil, fmt.Errorf("missing block hash")
+func parseBlockHeight(height uint32) (uint32, error) {
+	if int(height) < 0 {
+		return 0, fmt.Errorf("invalid block height")
 	}
-	buf, err := hex.DecodeString(hash)
-	if err != nil {
-		return nil, fmt.Errorf("invalid block hash format")
-	}
-	if len(buf) != 32 {
-		return nil, fmt.Errorf("invalid block hash length")
-	}
-	return buf, nil
+	return height, nil
 }
 
 func parseUnblindedInputs(
