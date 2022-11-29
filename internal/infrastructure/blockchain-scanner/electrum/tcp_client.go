@@ -72,8 +72,6 @@ func newTCPClient(addr string) (electrumClient, error) {
 }
 
 func (c *tcpClient) connect() {
-	c.log("start listening to messages from electrum server")
-
 	conn := bufio.NewReader(c.conn)
 	for {
 		var resp response
@@ -127,7 +125,6 @@ func (c *tcpClient) connect() {
 func (c *tcpClient) close() {
 	c.conn.Close()
 	c.chHandler.clear()
-	c.log("closed connection with electrum server")
 }
 
 func (c *tcpClient) subscribeForBlocks() {

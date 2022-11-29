@@ -55,8 +55,6 @@ func newWSClient(addr string) (electrumClient, error) {
 }
 
 func (c *wsClient) connect() {
-	c.log("start listening to messages from electrum server")
-
 	for {
 		var resp response
 		if err := c.conn.ReadJSON(&resp); err != nil {
@@ -106,7 +104,6 @@ func (c *wsClient) connect() {
 func (c *wsClient) close() {
 	c.conn.Close()
 	c.chHandler.clear()
-	c.log("closed connection with electrum server")
 }
 
 func (c *wsClient) subscribeForBlocks() {

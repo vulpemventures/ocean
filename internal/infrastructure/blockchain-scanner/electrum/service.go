@@ -25,6 +25,9 @@ type service struct {
 	utxoChannelByAccount   map[string]chan []*domain.Utxo
 	txChannelByAccount     map[string]chan *domain.Transaction
 	reportChannelByAccount map[string]chan accountReport
+
+	log  func(format string, a ...interface{})
+	warn func(err error, format string, a ...interface{})
 }
 
 type ServiceArgs struct {
@@ -73,9 +76,19 @@ func NewService(args ServiceArgs) (ports.BlockchainScanner, error) {
 		return nil, err
 	}
 
+	logFn := func(format string, a ...interface{}) {
+		format = fmt.Sprintf("scanner: %s", format)
+		log.Debugf(format, a...)
+	}
+	warnFn := func(err error, format string, a ...interface{}) {
+		format = fmt.Sprintf("scanner: %s", format)
+		log.WithError(err).Warnf(format, a...)
+	}
+
 	svc := &service{
 		client, db, lock, addressByScriptHash,
 		utxoChannelByAccount, txChannelByAccount, reportChannelByAccount,
+		logFn, warnFn,
 	}
 	svc.db.registerEventHandler(svc.dbEventHandler)
 
@@ -83,6 +96,8 @@ func NewService(args ServiceArgs) (ports.BlockchainScanner, error) {
 }
 
 func (s *service) Start() {
+	s.log("start listening to messages from electrum server")
+
 	go s.client.connect()
 	s.client.subscribeForBlocks()
 }
@@ -90,6 +105,7 @@ func (s *service) Start() {
 func (s *service) Stop() {
 	s.client.close()
 	s.db.close()
+	s.log("closed connection with electrum server")
 }
 
 func (s *service) WatchForAccount(
@@ -192,7 +208,9 @@ func (s *service) listenToAccountChannel(chReports chan accountReport) {
 	for report := range chReports {
 		history, err := s.client.getScriptHashHistory(report.scriptHash)
 		if err != nil {
-			log.WithError(err).Warn("failed to get history for script hash %s", report.scriptHash)
+			s.warn(
+				err, "failed to get history for script hash %s", report.scriptHash,
+			)
 			continue
 		}
 
@@ -203,7 +221,7 @@ func (s *service) listenToAccountChannel(chReports chan accountReport) {
 func (s *service) dbEventHandler(event dbEvent) {
 	tx, err := s.client.getTx(event.tx.Txid)
 	if err != nil {
-		log.WithError(err).Warnf("failed to fetch tx for event %+v", event)
+		s.warn(err, "failed to fetch tx for event %+v", event)
 		return
 	}
 	addrInfo := s.getAddressByScriptHash(event.scriptHash)
@@ -219,7 +237,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 			uint32(event.tx.Height),
 		)
 		if err != nil {
-			log.WithError(err).Warnf("failed to fetch block %d", event.tx.Height)
+			s.warn(err, "failed to fetch block %d", event.tx.Height)
 			return
 		}
 
@@ -264,7 +282,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 				}
 				unblindedData, err := confidential.UnblindOutputWithKey(out, addrInfo.BlindingKey)
 				if err != nil {
-					log.WithError(err).Warn("failed to unblind output with given blind key")
+					s.warn(err, "failed to unblind output with given blind key")
 					continue
 				}
 				newUtxos = append(newUtxos, &domain.Utxo{
@@ -306,27 +324,15 @@ func (s *service) dbEventHandler(event dbEvent) {
 
 	chUtxos := s.getUtxoChannelByAccount(event.account)
 	if len(spentUtxos) > 0 {
-		// select {
 		chUtxos <- spentUtxos
-		// 	time.Sleep(time.Millisecond)
-		// default:
-		// }
 	}
 
 	if len(confirmedUtxos) > 0 {
-		// select {
 		chUtxos <- confirmedUtxos
-		// 	time.Sleep(time.Millisecond)
-		// default:
-		// }
 	}
 
 	if len(newUtxos) > 0 {
-		// select {
 		chUtxos <- newUtxos
-		// time.Sleep(time.Millisecond)
-		// default:
-		// }
 	}
 }
 
