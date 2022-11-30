@@ -93,7 +93,7 @@ func (d *db) publishEvent(event dbEvent) {
 	d.chLock.Lock()
 	defer d.chLock.Unlock()
 
-	d.chEvents <- event
+	go func() { d.chEvents <- event }()
 }
 
 func (d *db) registerEventHandler(handler func(event dbEvent)) {

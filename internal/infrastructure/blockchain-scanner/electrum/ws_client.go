@@ -78,10 +78,8 @@ func (c *wsClient) connect() {
 				scriptHash := resp.Params.([]interface{})[0].(string)
 				account := c.chHandler.getAccountByScriptHash(scriptHash)
 				chReports := c.chHandler.getChReportsForAccount(account)
-				select {
-				case chReports <- accountReport{account, scriptHash}:
-				default:
-				}
+
+				go func() { chReports <- accountReport{account, scriptHash} }()
 				continue
 			case "blockchain.headers.subscribe":
 				buf, _ := json.Marshal(resp.Params.([]interface{})[0])
@@ -94,10 +92,7 @@ func (c *wsClient) connect() {
 		}
 
 		chReports := c.chHandler.getChReportsForReqId(uint32(resp.Id))
-		select {
-		case chReports <- resp:
-		default:
-		}
+		go func() { chReports <- resp }()
 	}
 }
 

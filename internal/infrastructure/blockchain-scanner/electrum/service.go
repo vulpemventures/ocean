@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	log "github.com/sirupsen/logrus"
@@ -310,29 +309,28 @@ func (s *service) dbEventHandler(event dbEvent) {
 		hash = blockHash.String()
 		blockHeight = uint64(event.tx.Height)
 	}
-	select {
-	case chTx <- &domain.Transaction{
-		TxID:        event.tx.Txid,
-		TxHex:       txHex,
-		BlockHash:   hash,
-		BlockHeight: blockHeight,
-		Accounts:    map[string]struct{}{event.account: {}},
-	}:
-		time.Sleep(time.Millisecond)
-	default:
-	}
+
+	go func() {
+		chTx <- &domain.Transaction{
+			TxID:        event.tx.Txid,
+			TxHex:       txHex,
+			BlockHash:   hash,
+			BlockHeight: blockHeight,
+			Accounts:    map[string]struct{}{event.account: {}},
+		}
+	}()
 
 	chUtxos := s.getUtxoChannelByAccount(event.account)
 	if len(spentUtxos) > 0 {
-		chUtxos <- spentUtxos
+		go func() { chUtxos <- spentUtxos }()
 	}
 
 	if len(confirmedUtxos) > 0 {
-		chUtxos <- confirmedUtxos
+		go func() { chUtxos <- confirmedUtxos }()
 	}
 
 	if len(newUtxos) > 0 {
-		chUtxos <- newUtxos
+		go func() { chUtxos <- newUtxos }()
 	}
 }
 
