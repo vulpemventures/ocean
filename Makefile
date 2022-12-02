@@ -61,7 +61,7 @@ help:
 #### Postgres database ####
 ## pg: starts postgres db inside docker container
 pg:
-	docker run --name oceand-pg -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres
+	docker run --name oceand-pg -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=oceand-db -d postgres
 
 ## droppg: stop and remove postgres container
 droppg:
