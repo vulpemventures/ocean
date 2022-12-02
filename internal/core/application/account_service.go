@@ -307,7 +307,7 @@ func (as *AccountService) listenToUtxoChannel(
 				)
 			}
 			if count > 0 {
-				as.log("confirmed %d utxos for account %s", count, accountName)
+				as.log("confirmed %d utxo(s) for account %s", count, accountName)
 				continue
 			}
 		}
@@ -319,7 +319,7 @@ func (as *AccountService) listenToUtxoChannel(
 			as.warn(err, "error while adding new utxos for account %s", accountName)
 		}
 		if count > 0 {
-			as.log("added %d utxos for account %s", count, accountName)
+			as.log("added %d utxo(s) for account %s", count, accountName)
 		}
 	}
 }

@@ -45,7 +45,7 @@ func testGetUtxoChannel(t *testing.T) {
 	time.Sleep(time.Second)
 
 	keys := application.Utxos(utxos).Keys()
-	repoManager.UtxoRepository().LockUtxos(ctx, keys, time.Now().Unix())
+	repoManager.UtxoRepository().LockUtxos(ctx, keys, time.Now().Unix(), 0)
 
 	time.Sleep(time.Second)
 

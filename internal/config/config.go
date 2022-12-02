@@ -16,8 +16,8 @@ import (
 const (
 	// DatadirKey is the key to customize the ocean datadir.
 	DatadirKey = "DATADIR"
-	// DatabaseTypeKey is the key to customize the type of database to use.
-	DatabaseTypeKey = "DATABASE_TYPE"
+	// DbTypeKey is the key to customize the type of database to use.
+	DbTypeKey = "DB_TYPE"
 	// BlockchainScannerTypeKey is the key to customize the type of blockchain
 	// scanner to use.
 	BlockchainScannerTypeKey = "BLOCKCHAIN_SCANNER_TYPE"
@@ -65,18 +65,6 @@ const (
 	// ElectrumUrlKey is the key for the electrum server endpoint consumed by the
 	// electrum blockchain scanner.
 	ElectrumUrlKey = "ELECTRUM_URL"
-
-	// DbLocation is the folder inside the datadir containing db files.
-	DbLocation = "db"
-	// TLSLocation is the folder inside the datadir containing TLS key and
-	// certificate.
-	TLSLocation = "tls"
-	// ScannerLocation is the folder inside the datadir containing blockchain
-	// scanner files.
-	ScannerLocation = "blockchain"
-	// ProfilerLocation is the folder inside the datadir containing profiler
-	// stats files.
-	ProfilerLocation = "stats"
 	// DbUserKey is user used to connect to db
 	DbUserKey = "DB_USER"
 	// DbPassKey is password used to connect to db
@@ -89,6 +77,18 @@ const (
 	DbNameKey = "DB_NAME"
 	// DbMigrationPath is the path to migration files
 	DbMigrationPath = "DB_MIGRATION_PATH"
+
+	// DbLocation is the folder inside the datadir containing db files.
+	DbLocation = "db"
+	// TLSLocation is the folder inside the datadir containing TLS key and
+	// certificate.
+	TLSLocation = "tls"
+	// ScannerLocation is the folder inside the datadir containing blockchain
+	// scanner files.
+	ScannerLocation = "blockchain"
+	// ProfilerLocation is the folder inside the datadir containing profiler
+	// stats files.
+	ProfilerLocation = "stats"
 )
 
 var (
@@ -134,7 +134,7 @@ func init() {
 	vip.AutomaticEnv()
 
 	vip.SetDefault(DatadirKey, defaultDatadir)
-	vip.SetDefault(DatabaseTypeKey, defaultDbType)
+	vip.SetDefault(DbTypeKey, defaultDbType)
 	vip.SetDefault(BlockchainScannerTypeKey, defaultBcScannerType)
 	vip.SetDefault(PortKey, defaultPort)
 	vip.SetDefault(NetworkKey, defaultNetwork)
@@ -195,7 +195,7 @@ func validate() error {
 		}
 	}
 
-	dbType := GetString(DatabaseTypeKey)
+	dbType := GetString(DbTypeKey)
 	if _, ok := SupportedDbs[dbType]; !ok {
 		return fmt.Errorf("unsupported database type, must be one of %s", SupportedDbs)
 	}

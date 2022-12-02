@@ -1,7 +1,6 @@
 package main
 
 import (
-	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	appconfig "github.com/vulpemventures/ocean/internal/app-config"
 	"github.com/vulpemventures/ocean/internal/config"
 	electrum_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/electrum"
+	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"github.com/vulpemventures/ocean/internal/interfaces"
 	grpc_interface "github.com/vulpemventures/ocean/internal/interfaces/grpc"
 	"github.com/vulpemventures/ocean/pkg/profiler"
@@ -26,7 +26,7 @@ var (
 	date    string
 
 	// Config from env vars.
-	dbType             = config.GetString(config.DatabaseTypeKey)
+	dbType             = config.GetString(config.DbTypeKey)
 	bcScannerType      = config.GetString(config.BlockchainScannerTypeKey)
 	logLevel           = config.GetInt(config.LogLevelKey)
 	datadir            = config.GetDatadir()
