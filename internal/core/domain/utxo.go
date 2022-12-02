@@ -69,20 +69,21 @@ type UtxoStatus struct {
 // the name of the account owning it.
 type Utxo struct {
 	UtxoKey
-	Value           uint64
-	Asset           string
-	ValueCommitment []byte
-	AssetCommitment []byte
-	ValueBlinder    []byte
-	AssetBlinder    []byte
-	Script          []byte
-	Nonce           []byte
-	RangeProof      []byte
-	SurjectionProof []byte
-	AccountName     string
-	LockTimestamp   int64
-	SpentStatus     UtxoStatus
-	ConfirmedStatus UtxoStatus
+	Value               uint64
+	Asset               string
+	ValueCommitment     []byte
+	AssetCommitment     []byte
+	ValueBlinder        []byte
+	AssetBlinder        []byte
+	Script              []byte
+	Nonce               []byte
+	RangeProof          []byte
+	SurjectionProof     []byte
+	AccountName         string
+	LockTimestamp       int64
+	LockExpiryTimestamp int64
+	SpentStatus         UtxoStatus
+	ConfirmedStatus     UtxoStatus
 }
 
 // IsSpent returns whether the utxo have been spent.
@@ -116,7 +117,7 @@ func (u *Utxo) CanUnlock() bool {
 	if !u.IsLocked() {
 		return true
 	}
-	return time.Now().After(time.Unix(u.LockTimestamp, 0))
+	return time.Now().After(time.Unix(u.LockExpiryTimestamp, 0))
 }
 
 // Key returns the UtxoKey of the current utxo.
@@ -172,13 +173,19 @@ func (u *Utxo) Confirm(status UtxoStatus) error {
 }
 
 // Lock marks the current utxo as locked.
-func (u *Utxo) Lock(timestamp int64) {
+func (u *Utxo) Lock(timestamp, expiryTimestamp int64) {
 	if !u.IsLocked() {
 		u.LockTimestamp = timestamp
+		u.LockExpiryTimestamp = expiryTimestamp
 	}
 }
 
 // Unlock marks the current locked utxo as unlocked.
 func (u *Utxo) Unlock() {
+	if !u.CanUnlock() {
+		return
+	}
+
 	u.LockTimestamp = 0
+	u.LockExpiryTimestamp = 0
 }

@@ -152,11 +152,11 @@ func testConfirmUtxos(t *testing.T, repo domain.UtxoRepository) {
 
 func testLockUtxos(t *testing.T, repo domain.UtxoRepository) {
 	t.Run("lock_utxos", func(t *testing.T) {
-		count, err := repo.LockUtxos(ctx, utxoKeys, time.Now().Unix())
+		count, err := repo.LockUtxos(ctx, utxoKeys, time.Now().Unix(), 0)
 		require.NoError(t, err)
 		require.Equal(t, len(newUtxos), count)
 
-		count, err = repo.LockUtxos(ctx, utxoKeys, time.Now().Unix())
+		count, err = repo.LockUtxos(ctx, utxoKeys, time.Now().Unix(), 0)
 		require.NoError(t, err)
 		require.Zero(t, count)
 

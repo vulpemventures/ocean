@@ -146,9 +146,10 @@ func (r *utxoRepository) ConfirmUtxos(
 }
 
 func (r *utxoRepository) LockUtxos(
-	ctx context.Context, utxoKeys []domain.UtxoKey, timestamp int64,
+	ctx context.Context,
+	utxoKeys []domain.UtxoKey, timestamp, expiryTimestamp int64,
 ) (int, error) {
-	return r.lockUtxos(ctx, utxoKeys, timestamp)
+	return r.lockUtxos(ctx, utxoKeys, timestamp, expiryTimestamp)
 }
 
 func (r *utxoRepository) UnlockUtxos(
@@ -260,12 +261,13 @@ func (r *utxoRepository) confirmUtxos(
 }
 
 func (r *utxoRepository) lockUtxos(
-	ctx context.Context, utxoKeys []domain.UtxoKey, timestamp int64,
+	ctx context.Context,
+	utxoKeys []domain.UtxoKey, timestamp, expiryTimestamp int64,
 ) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0)
 	for _, key := range utxoKeys {
-		done, info, err := r.lockUtxo(ctx, key, timestamp)
+		done, info, err := r.lockUtxo(ctx, key, timestamp, expiryTimestamp)
 		if err != nil {
 			return -1, err
 		}
@@ -370,7 +372,7 @@ func (r *utxoRepository) confirmUtxo(
 }
 
 func (r *utxoRepository) lockUtxo(
-	ctx context.Context, key domain.UtxoKey, timestamp int64,
+	ctx context.Context, key domain.UtxoKey, timestamp, expiryTimestamp int64,
 ) (bool, *domain.UtxoInfo, error) {
 	query := badgerhold.Where("TxID").Eq(key.TxID).And("VOut").Eq(key.VOut)
 	utxos, err := r.findUtxos(ctx, query)
@@ -387,7 +389,7 @@ func (r *utxoRepository) lockUtxo(
 		return false, nil, nil
 	}
 
-	utxo.Lock(timestamp)
+	utxo.Lock(timestamp, expiryTimestamp)
 	if err := r.updateUtxo(ctx, utxo); err != nil {
 		return false, nil, err
 	}

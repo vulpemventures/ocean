@@ -29,19 +29,19 @@ var (
 
 // TransactionService is responsible for operations related to one or more
 // accounts:
-// 	* Get info about a wallet-related transaction.
-// 	* Select a subset of the utxos of an existing account to cover a target amount. The selected utxos will be temporary locked to prevent double spending them.
-// 	* Estimate the fee amount for a transation composed by X inputs and Y outputs. It is required that the inputs owned by the wallet are locked utxos.
-// 	* Sign a raw transaction (in hex format). It is required that the inputs of the tx owned by the wallet are locked utxos.
-// 	* Broadcast a raw transaction (in hex format). It is required that the inputs of the tx owned by the wallet are locked utxos.
-// 	* Create a partial transaction (v2) given a list of inputs and outputs. It is required that the inputs of the tx owned by the wallet are locked utxos.
-// 	* Add inputs or outputs to partial transaction (v2). It is required that the inputs of the tx owned by the wallet are locked utxos.
-// 	* Blind a partial transaction (v2) either as non-last or last blinder. It is required that the inputs of the tx owned by the wallet are locked utxos.
-// 	* Sign a partial transaction (v2). It is required that the inputs of the tx owned by the wallet are locked utxos.
-// 	* Craft a finalized transaction to transfer some funds from an existing account to somewhere else, given a list of outputs.
+//   - Get info about a wallet-related transaction.
+//   - Select a subset of the utxos of an existing account to cover a target amount. The selected utxos will be temporary locked to prevent double spending them.
+//   - Estimate the fee amount for a transation composed by X inputs and Y outputs. It is required that the inputs owned by the wallet are locked utxos.
+//   - Sign a raw transaction (in hex format). It is required that the inputs of the tx owned by the wallet are locked utxos.
+//   - Broadcast a raw transaction (in hex format). It is required that the inputs of the tx owned by the wallet are locked utxos.
+//   - Create a partial transaction (v2) given a list of inputs and outputs. It is required that the inputs of the tx owned by the wallet are locked utxos.
+//   - Add inputs or outputs to partial transaction (v2). It is required that the inputs of the tx owned by the wallet are locked utxos.
+//   - Blind a partial transaction (v2) either as non-last or last blinder. It is required that the inputs of the tx owned by the wallet are locked utxos.
+//   - Sign a partial transaction (v2). It is required that the inputs of the tx owned by the wallet are locked utxos.
+//   - Craft a finalized transaction to transfer some funds from an existing account to somewhere else, given a list of outputs.
 //
 // The service registers 1 handler for the following utxo event:
-// 	* domain.UtxoLocked - whenever one or more utxos are locked, the service spawns a so-called unlocker, a goroutine wating for X seconds before unlocking them if necessary. The operation is just skipped if the utxos have been spent meanwhile.
+//   - domain.UtxoLocked - whenever one or more utxos are locked, the service spawns a so-called unlocker, a goroutine wating for X seconds before unlocking them if necessary. The operation is just skipped if the utxos have been spent meanwhile.
 //
 // The service guarantees that any locked utxo is eventually unlocked ASAP
 // after the waiting time expires.
@@ -70,40 +70,7 @@ func NewTransactionService(
 		repoManager, bcScanner, net, rootPath, utxoExpiryDuration, logFn,
 	}
 	svc.registerHandlerForUtxoEvents()
-
-	ctx := context.Background()
-	w, _ := repoManager.WalletRepository().GetWallet(ctx)
-	if w == nil {
-		return svc
-	}
-
-	for accountName := range w.AccountKeysByName {
-		utxos, _ := repoManager.UtxoRepository().GetLockedUtxosForAccount(
-			ctx, accountName,
-		)
-		if len(utxos) > 0 {
-			utxosToUnlock := make([]domain.UtxoKey, 0, len(utxos))
-			utxosToSpawnUnlocker := make([]domain.UtxoKey, 0, len(utxos))
-			for _, u := range utxos {
-				if u.CanUnlock() {
-					utxosToUnlock = append(utxosToUnlock, u.Key())
-				} else {
-					utxosToSpawnUnlocker = append(utxosToSpawnUnlocker, u.Key())
-				}
-			}
-
-			if len(utxosToUnlock) > 0 {
-				count, _ := repoManager.UtxoRepository().UnlockUtxos(ctx, utxosToUnlock)
-				svc.log(
-					"unlocked %d utxo(s) for account %s (%s)",
-					count, accountName, UtxoKeys(utxosToUnlock),
-				)
-			}
-			if len(utxosToSpawnUnlocker) > 0 {
-				svc.spawnUtxoUnlocker(utxosToSpawnUnlocker)
-			}
-		}
-	}
+	svc.registerHandlerForWalletEvents()
 
 	return svc
 }
@@ -142,10 +109,11 @@ func (ts *TransactionService) SelectUtxos(
 	if err != nil {
 		return nil, 0, -1, err
 	}
-	now := time.Now().Unix()
+	now := time.Now()
+	lockExpiration := now.Add(ts.utxoExpiryDuration)
 	keys := Utxos(utxos).Keys()
 	count, err := ts.repoManager.UtxoRepository().LockUtxos(
-		ctx, keys, now,
+		ctx, keys, now.Unix(), lockExpiration.Unix(),
 	)
 	if err != nil {
 		return nil, 0, -1, err
@@ -601,8 +569,11 @@ func (ts *TransactionService) Transfer(
 	}
 
 	keys := Utxos(selectedUtxos).Keys()
-	now := time.Now().Unix()
-	count, err := ts.repoManager.UtxoRepository().LockUtxos(ctx, keys, now)
+	now := time.Now()
+	lockExpiration := now.Add(ts.utxoExpiryDuration)
+	count, err := ts.repoManager.UtxoRepository().LockUtxos(
+		ctx, keys, now.Unix(), lockExpiration.Unix(),
+	)
 	if err != nil {
 		return "", err
 	}
@@ -616,6 +587,14 @@ func (ts *TransactionService) Transfer(
 	return txHex, nil
 }
 
+func (ts *TransactionService) registerHandlerForWalletEvents() {
+	ts.repoManager.RegisterHandlerForWalletEvent(
+		domain.WalletUnlocked, func(_ domain.WalletEvent) {
+			ts.scheduleUtxoUnlocker()
+		},
+	)
+}
+
 func (ts *TransactionService) registerHandlerForUtxoEvents() {
 	ts.repoManager.RegisterHandlerForUtxoEvent(
 		domain.UtxoLocked, func(event domain.UtxoEvent) {
@@ -623,6 +602,56 @@ func (ts *TransactionService) registerHandlerForUtxoEvents() {
 			ts.spawnUtxoUnlocker(keys)
 		},
 	)
+}
+
+// scheduleUtxoUnlocker waits 5 seconds before whether unlocking or spawning an
+// unlocker for all the locked utxos of each account.
+// Since this method is called when the service is istantiated, the idea is to
+// to give the account service enough time to receive notification from the
+// blockchain scanner and spend the locked utxos.
+func (ts *TransactionService) scheduleUtxoUnlocker() {
+	ticker := time.NewTicker(5 * time.Second)
+	done := make(chan struct{})
+
+	select {
+	case <-ticker.C:
+		ctx := context.Background()
+		utxoRepo := ts.repoManager.UtxoRepository()
+		w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)
+
+		for accountName := range w.AccountKeysByName {
+			utxos, _ := utxoRepo.GetLockedUtxosForAccount(
+				ctx, accountName,
+			)
+			if len(utxos) > 0 {
+				utxosToUnlock := make([]domain.UtxoKey, 0, len(utxos))
+				utxosToSpawnUnlocker := make([]domain.UtxoKey, 0, len(utxos))
+				for _, u := range utxos {
+					if u.CanUnlock() {
+						utxosToUnlock = append(utxosToUnlock, u.Key())
+					} else {
+						utxosToSpawnUnlocker = append(utxosToSpawnUnlocker, u.Key())
+					}
+				}
+
+				if len(utxosToUnlock) > 0 {
+					count, _ := utxoRepo.UnlockUtxos(ctx, utxosToUnlock)
+					ts.log(
+						"unlocked %d utxo(s) for account %s (%s)",
+						count, accountName, UtxoKeys(utxosToUnlock),
+					)
+				}
+				if len(utxosToSpawnUnlocker) > 0 {
+					ts.spawnUtxoUnlocker(utxosToSpawnUnlocker)
+				}
+			}
+		}
+
+		done <- struct{}{}
+	case <-done:
+		ticker.Stop()
+		return
+	}
 }
 
 // spawnUtxoUnlocker groups the locked utxos identified by the given keys by their

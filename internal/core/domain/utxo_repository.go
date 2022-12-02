@@ -68,7 +68,7 @@ type UtxoRepository interface {
 	ConfirmUtxos(ctx context.Context, utxoKeys []UtxoKey, status UtxoStatus) (int, error)
 	// LockUtxos updates the status of the given list of utxos to "locked".
 	// Generates a UtxoLocked event if successfull.
-	LockUtxos(ctx context.Context, utxoKeys []UtxoKey, timestamp int64) (int, error)
+	LockUtxos(ctx context.Context, utxoKeys []UtxoKey, timestamp, expiryTimestamp int64) (int, error)
 	// UnlockUtxos updates the status of the given list of utxos to "unlocked".
 	// Generates a UtxoUnlocked event if successfull.
 	UnlockUtxos(ctx context.Context, utxoKeys []UtxoKey) (int, error)

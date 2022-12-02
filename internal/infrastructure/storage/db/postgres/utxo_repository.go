@@ -3,7 +3,6 @@ package postgresdb
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -35,8 +34,7 @@ func NewUtxoRepositoryPgImpl(pgxPool *pgxpool.Pool) domain.UtxoRepository {
 }
 
 func (u *utxoRepositoryPg) AddUtxos(
-	ctx context.Context,
-	utxos []*domain.Utxo,
+	ctx context.Context, utxos []*domain.Utxo,
 ) (int, error) {
 	count := 0
 
@@ -54,26 +52,22 @@ func (u *utxoRepositoryPg) AddUtxos(
 
 		querierWithTx := u.querier.WithTx(tx)
 
-		lockTime := time.Time{}
-		if v.LockTimestamp > 0 {
-			lockTime = time.Unix(v.LockTimestamp, 0)
-		}
-
 		req := queries.InsertUtxoParams{
-			TxID:            v.TxID,
-			Vout:            int32(v.VOut),
-			Value:           int64(v.Value),
-			Asset:           v.Asset,
-			ValueCommitment: v.ValueCommitment,
-			AssetCommitment: v.AssetCommitment,
-			ValueBlinder:    v.ValueBlinder,
-			AssetBlinder:    v.AssetBlinder,
-			Script:          v.Script,
-			Nonce:           v.Nonce,
-			RangeProof:      v.RangeProof,
-			SurjectionProof: v.SurjectionProof,
-			AccountName:     v.AccountName,
-			LockTimestamp:   lockTime,
+			TxID:                v.TxID,
+			Vout:                int32(v.VOut),
+			Value:               int64(v.Value),
+			Asset:               v.Asset,
+			ValueCommitment:     v.ValueCommitment,
+			AssetCommitment:     v.AssetCommitment,
+			ValueBlinder:        v.ValueBlinder,
+			AssetBlinder:        v.AssetBlinder,
+			Script:              v.Script,
+			Nonce:               v.Nonce,
+			RangeProof:          v.RangeProof,
+			SurjectionProof:     v.SurjectionProof,
+			AccountName:         v.AccountName,
+			LockTimestamp:       v.LockTimestamp,
+			LockExpiryTimestamp: v.LockExpiryTimestamp,
 		}
 		utxo, err := querierWithTx.InsertUtxo(ctx, req)
 		if err != nil {
@@ -86,14 +80,9 @@ func (u *utxoRepositoryPg) AddUtxos(
 		}
 
 		if v.IsSpent() {
-			blockTime := time.Time{}
-			if v.SpentStatus.BlockTime > 0 {
-				blockTime = time.Unix(v.SpentStatus.BlockTime, 0)
-			}
-
 			if _, err := querierWithTx.InsertUtxoStatus(ctx, queries.InsertUtxoStatusParams{
 				BlockHeight: int32(v.SpentStatus.BlockHeight),
-				BlockTime:   blockTime,
+				BlockTime:   v.SpentStatus.BlockTime,
 				BlockHash:   v.SpentStatus.BlockHash,
 				Status:      utxoSpent,
 				FkUtxoID:    utxo.ID,
@@ -104,14 +93,9 @@ func (u *utxoRepositoryPg) AddUtxos(
 		}
 
 		if v.IsConfirmed() {
-			blockTime := time.Time{}
-			if v.ConfirmedStatus.BlockTime > 0 {
-				blockTime = time.Unix(v.ConfirmedStatus.BlockTime, 0)
-			}
-
 			if _, err := querierWithTx.InsertUtxoStatus(ctx, queries.InsertUtxoStatusParams{
 				BlockHeight: int32(v.ConfirmedStatus.BlockHeight),
-				BlockTime:   blockTime,
+				BlockTime:   v.ConfirmedStatus.BlockTime,
 				BlockHash:   v.ConfirmedStatus.BlockHash,
 				Status:      utxoConfirmed,
 				FkUtxoID:    utxo.ID,
@@ -163,18 +147,19 @@ func (u *utxoRepositoryPg) GetUtxosByKey(
 				TxID: utxo[0].TxID,
 				VOut: uint32(utxo[0].Vout),
 			},
-			Value:           uint64(utxo[0].Value),
-			Asset:           utxo[0].Asset,
-			ValueCommitment: utxo[0].ValueCommitment,
-			AssetCommitment: utxo[0].AssetCommitment,
-			ValueBlinder:    utxo[0].ValueBlinder,
-			AssetBlinder:    utxo[0].AssetBlinder,
-			Script:          utxo[0].Script,
-			Nonce:           utxo[0].Nonce,
-			RangeProof:      utxo[0].RangeProof,
-			SurjectionProof: utxo[0].SurjectionProof,
-			AccountName:     utxo[0].AccountName,
-			LockTimestamp:   utxo[0].LockTimestamp.Unix(),
+			Value:               uint64(utxo[0].Value),
+			Asset:               utxo[0].Asset,
+			ValueCommitment:     utxo[0].ValueCommitment,
+			AssetCommitment:     utxo[0].AssetCommitment,
+			ValueBlinder:        utxo[0].ValueBlinder,
+			AssetBlinder:        utxo[0].AssetBlinder,
+			Script:              utxo[0].Script,
+			Nonce:               utxo[0].Nonce,
+			RangeProof:          utxo[0].RangeProof,
+			SurjectionProof:     utxo[0].SurjectionProof,
+			AccountName:         utxo[0].AccountName,
+			LockTimestamp:       utxo[0].LockTimestamp,
+			LockExpiryTimestamp: utxo[0].LockExpiryTimestamp,
 		}
 
 		for _, v := range utxo {
@@ -183,13 +168,13 @@ func (u *utxoRepositoryPg) GetUtxosByKey(
 				case utxoSpent:
 					ut.SpentStatus = domain.UtxoStatus{
 						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Time.Unix(),
+						BlockTime:   v.BlockTime.Int64,
 						BlockHash:   v.BlockHash.String,
 					}
 				case utxoConfirmed:
 					ut.ConfirmedStatus = domain.UtxoStatus{
 						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Time.Unix(),
+						BlockTime:   v.BlockTime.Int64,
 						BlockHash:   v.BlockHash.String,
 					}
 				}
@@ -202,7 +187,9 @@ func (u *utxoRepositoryPg) GetUtxosByKey(
 	return utxos, nil
 }
 
-func (u *utxoRepositoryPg) GetAllUtxos(ctx context.Context) ([]*domain.Utxo, error) {
+func (u *utxoRepositoryPg) GetAllUtxos(
+	ctx context.Context,
+) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
 	utxos, err := u.querier.GetAllUtxos(ctx)
 	if err != nil {
@@ -234,19 +221,20 @@ func (u *utxoRepositoryPg) convertToUtxos(
 		utxo, ok := utxosByKey[key]
 		if !ok {
 			utxo = &domain.Utxo{
-				UtxoKey:         key,
-				Value:           uint64(v.Value),
-				Asset:           v.Asset,
-				ValueCommitment: v.ValueCommitment,
-				AssetCommitment: v.AssetCommitment,
-				ValueBlinder:    v.ValueBlinder,
-				AssetBlinder:    v.AssetBlinder,
-				Script:          v.Script,
-				Nonce:           v.Nonce,
-				RangeProof:      v.RangeProof,
-				SurjectionProof: v.SurjectionProof,
-				AccountName:     v.AccountName,
-				LockTimestamp:   v.LockTimestamp.Unix(),
+				UtxoKey:             key,
+				Value:               uint64(v.Value),
+				Asset:               v.Asset,
+				ValueCommitment:     v.ValueCommitment,
+				AssetCommitment:     v.AssetCommitment,
+				ValueBlinder:        v.ValueBlinder,
+				AssetBlinder:        v.AssetBlinder,
+				Script:              v.Script,
+				Nonce:               v.Nonce,
+				RangeProof:          v.RangeProof,
+				SurjectionProof:     v.SurjectionProof,
+				AccountName:         v.AccountName,
+				LockTimestamp:       v.LockTimestamp,
+				LockExpiryTimestamp: v.LockExpiryTimestamp,
 			}
 			utxosByKey[key] = utxo
 			if v.Status.Valid {
@@ -254,13 +242,13 @@ func (u *utxoRepositoryPg) convertToUtxos(
 				case utxoSpent:
 					utxo.SpentStatus = domain.UtxoStatus{
 						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Time.Unix(),
+						BlockTime:   v.BlockTime.Int64,
 						BlockHash:   v.BlockHash.String,
 					}
 				case utxoConfirmed:
 					utxo.ConfirmedStatus = domain.UtxoStatus{
 						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Time.Unix(),
+						BlockTime:   v.BlockTime.Int64,
 						BlockHash:   v.BlockHash.String,
 					}
 				}
@@ -271,13 +259,13 @@ func (u *utxoRepositoryPg) convertToUtxos(
 				case utxoSpent:
 					utxo.SpentStatus = domain.UtxoStatus{
 						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Time.Unix(),
+						BlockTime:   v.BlockTime.Int64,
 						BlockHash:   v.BlockHash.String,
 					}
 				case utxoConfirmed:
 					utxo.ConfirmedStatus = domain.UtxoStatus{
 						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Time.Unix(),
+						BlockTime:   v.BlockTime.Int64,
 						BlockHash:   v.BlockHash.String,
 					}
 				}
@@ -312,8 +300,7 @@ func (u *utxoRepositoryPg) GetSpendableUtxos(
 }
 
 func (u *utxoRepositoryPg) GetAllUtxosForAccount(
-	ctx context.Context,
-	account string,
+	ctx context.Context, account string,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
 	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
@@ -343,8 +330,7 @@ func (u *utxoRepositoryPg) GetAllUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
-	ctx context.Context,
-	account string,
+	ctx context.Context, account string,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
 	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
@@ -376,8 +362,7 @@ func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
-	ctx context.Context,
-	account string,
+	ctx context.Context, account string,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
 	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
@@ -409,8 +394,7 @@ func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetBalanceForAccount(
-	ctx context.Context,
-	account string,
+	ctx context.Context, account string,
 ) (map[string]*domain.Balance, error) {
 	resp := make(map[string]*domain.Balance)
 	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
@@ -457,39 +441,32 @@ func (u *utxoRepositoryPg) GetBalanceForAccount(
 }
 
 func (u *utxoRepositoryPg) SpendUtxos(
-	ctx context.Context,
-	utxoKeys []domain.UtxoKey,
-	status domain.UtxoStatus,
+	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
 ) (int, error) {
 	return u.spendUtxos(ctx, utxoKeys, status)
 }
 
 func (u *utxoRepositoryPg) ConfirmUtxos(
-	ctx context.Context,
-	utxoKeys []domain.UtxoKey,
-	status domain.UtxoStatus,
+	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
 ) (int, error) {
 	return u.confirmUtxos(ctx, utxoKeys, status)
 }
 
 func (u *utxoRepositoryPg) LockUtxos(
 	ctx context.Context,
-	utxoKeys []domain.UtxoKey,
-	timestamp int64,
+	utxoKeys []domain.UtxoKey, timestamp, expiryTimestamp int64,
 ) (int, error) {
-	return u.lockUtxos(ctx, utxoKeys, timestamp)
+	return u.lockUtxos(ctx, utxoKeys, timestamp, expiryTimestamp)
 }
 
 func (u *utxoRepositoryPg) UnlockUtxos(
-	ctx context.Context,
-	utxoKeys []domain.UtxoKey,
+	ctx context.Context, utxoKeys []domain.UtxoKey,
 ) (int, error) {
 	return u.unlockUtxos(ctx, utxoKeys)
 }
 
 func (u *utxoRepositoryPg) DeleteUtxosForAccount(
-	ctx context.Context,
-	accountName string,
+	ctx context.Context, accountName string,
 ) error {
 	conn, err := u.pgxPool.Acquire(ctx)
 	if err != nil {
@@ -607,26 +584,22 @@ func (u *utxoRepositoryPg) spendUtxo(
 func (u *utxoRepositoryPg) updateUtxo(
 	ctx context.Context, utxo *domain.Utxo,
 ) error {
-	lockTime := time.Time{}
-	if utxo.LockTimestamp > 0 {
-		lockTime = time.Unix(utxo.LockTimestamp, 0)
-	}
-
 	ut, err := u.querier.UpdateUtxo(ctx, queries.UpdateUtxoParams{
-		Value:           int64(utxo.Value),
-		Asset:           utxo.Asset,
-		ValueCommitment: utxo.ValueCommitment,
-		AssetCommitment: utxo.AssetCommitment,
-		ValueBlinder:    utxo.ValueBlinder,
-		AssetBlinder:    utxo.AssetBlinder,
-		Script:          utxo.Script,
-		Nonce:           utxo.Nonce,
-		RangeProof:      utxo.RangeProof,
-		SurjectionProof: utxo.SurjectionProof,
-		AccountName:     utxo.AccountName,
-		LockTimestamp:   lockTime,
-		TxID:            utxo.TxID,
-		Vout:            int32(utxo.VOut),
+		Value:               int64(utxo.Value),
+		Asset:               utxo.Asset,
+		ValueCommitment:     utxo.ValueCommitment,
+		AssetCommitment:     utxo.AssetCommitment,
+		ValueBlinder:        utxo.ValueBlinder,
+		AssetBlinder:        utxo.AssetBlinder,
+		Script:              utxo.Script,
+		Nonce:               utxo.Nonce,
+		RangeProof:          utxo.RangeProof,
+		SurjectionProof:     utxo.SurjectionProof,
+		AccountName:         utxo.AccountName,
+		LockTimestamp:       utxo.LockTimestamp,
+		LockExpiryTimestamp: utxo.LockExpiryTimestamp,
+		TxID:                utxo.TxID,
+		Vout:                int32(utxo.VOut),
 	})
 	if err != nil {
 		return err
@@ -636,14 +609,10 @@ func (u *utxoRepositoryPg) updateUtxo(
 		return err
 	}
 
-	blockTime := time.Time{}
-	if utxo.SpentStatus.BlockTime > 0 {
-		blockTime = time.Unix(utxo.SpentStatus.BlockTime, 0)
-	}
 	if utxo.IsSpent() {
 		if _, err := u.querier.InsertUtxoStatus(ctx, queries.InsertUtxoStatusParams{
 			BlockHeight: int32(utxo.SpentStatus.BlockHeight),
-			BlockTime:   blockTime,
+			BlockTime:   utxo.SpentStatus.BlockTime,
 			BlockHash:   utxo.SpentStatus.BlockHash,
 			Status:      utxoSpent,
 			FkUtxoID:    ut.ID,
@@ -653,9 +622,9 @@ func (u *utxoRepositoryPg) updateUtxo(
 	}
 	if utxo.IsConfirmed() {
 		if _, err := u.querier.InsertUtxoStatus(ctx, queries.InsertUtxoStatusParams{
-			BlockHeight: int32(utxo.SpentStatus.BlockHeight),
-			BlockTime:   blockTime,
-			BlockHash:   utxo.SpentStatus.BlockHash,
+			BlockHeight: int32(utxo.ConfirmedStatus.BlockHeight),
+			BlockTime:   utxo.ConfirmedStatus.BlockTime,
+			BlockHash:   utxo.ConfirmedStatus.BlockHash,
 			Status:      utxoConfirmed,
 			FkUtxoID:    ut.ID,
 		}); err != nil {
@@ -721,12 +690,12 @@ func (u *utxoRepositoryPg) confirmUtxo(
 }
 
 func (u *utxoRepositoryPg) lockUtxos(
-	ctx context.Context, utxoKeys []domain.UtxoKey, timestamp int64,
+	ctx context.Context, utxoKeys []domain.UtxoKey, timestamp, expiryTimestamp int64,
 ) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0)
 	for _, key := range utxoKeys {
-		done, info, err := u.lockUtxo(ctx, key, timestamp)
+		done, info, err := u.lockUtxo(ctx, key, timestamp, expiryTimestamp)
 		if err != nil {
 			return -1, err
 		}
@@ -747,7 +716,7 @@ func (u *utxoRepositoryPg) lockUtxos(
 }
 
 func (u *utxoRepositoryPg) lockUtxo(
-	ctx context.Context, key domain.UtxoKey, timestamp int64,
+	ctx context.Context, key domain.UtxoKey, timestamp, expiryTimestamp int64,
 ) (bool, *domain.UtxoInfo, error) {
 	utxos, err := u.GetUtxosByKey(ctx, []domain.UtxoKey{key})
 	if err != nil {
@@ -763,7 +732,7 @@ func (u *utxoRepositoryPg) lockUtxo(
 		return false, nil, nil
 	}
 
-	utxo.Lock(timestamp)
+	utxo.Lock(timestamp, expiryTimestamp)
 	if err := u.updateUtxo(ctx, utxo); err != nil {
 		return false, nil, err
 	}
@@ -826,25 +795,26 @@ func (u *utxoRepositoryPg) unlockUtxo(
 
 func toGetAllUtxosRow(v queries.GetUtxosForAccountRow) queries.GetAllUtxosRow {
 	return queries.GetAllUtxosRow{
-		TxID:            v.TxID,
-		Vout:            v.Vout,
-		Value:           v.Value,
-		Asset:           v.Asset,
-		ValueCommitment: v.ValueCommitment,
-		AssetCommitment: v.AssetCommitment,
-		ValueBlinder:    v.ValueBlinder,
-		AssetBlinder:    v.AssetBlinder,
-		Script:          v.Script,
-		Nonce:           v.Nonce,
-		RangeProof:      v.RangeProof,
-		SurjectionProof: v.SurjectionProof,
-		AccountName:     v.AccountName,
-		LockTimestamp:   v.LockTimestamp,
-		ID_2:            v.ID_2,
-		BlockHeight:     v.BlockHeight,
-		BlockTime:       v.BlockTime,
-		BlockHash:       v.BlockHash,
-		Status:          v.Status,
-		FkUtxoID:        v.FkUtxoID,
+		TxID:                v.TxID,
+		Vout:                v.Vout,
+		Value:               v.Value,
+		Asset:               v.Asset,
+		ValueCommitment:     v.ValueCommitment,
+		AssetCommitment:     v.AssetCommitment,
+		ValueBlinder:        v.ValueBlinder,
+		AssetBlinder:        v.AssetBlinder,
+		Script:              v.Script,
+		Nonce:               v.Nonce,
+		RangeProof:          v.RangeProof,
+		SurjectionProof:     v.SurjectionProof,
+		AccountName:         v.AccountName,
+		LockTimestamp:       v.LockTimestamp,
+		LockExpiryTimestamp: v.LockExpiryTimestamp,
+		ID_2:                v.ID_2,
+		BlockHeight:         v.BlockHeight,
+		BlockTime:           v.BlockTime,
+		BlockHash:           v.BlockHash,
+		Status:              v.Status,
+		FkUtxoID:            v.FkUtxoID,
 	}
 }

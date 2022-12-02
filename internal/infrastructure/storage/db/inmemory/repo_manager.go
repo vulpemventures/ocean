@@ -73,8 +73,11 @@ func (rm *repoManager) listenToWalletEvents() {
 	for event := range rm.walletRepository.chEvents {
 		time.Sleep(time.Millisecond)
 
-		if handler, ok := rm.walletEventHandlers.get(int(event.EventType)); ok {
-			handler.(ports.WalletEventHandler)(event)
+		if handlers, ok := rm.walletEventHandlers.get(int(event.EventType)); ok {
+			for i := range handlers {
+				handler := handlers[i]
+				go handler.(ports.WalletEventHandler)(event)
+			}
 		}
 	}
 }
@@ -83,8 +86,11 @@ func (rm *repoManager) listenToUtxoEvents() {
 	for event := range rm.utxoRepository.chEvents {
 		time.Sleep(time.Millisecond)
 
-		if handler, ok := rm.utxoEventHandlers.get(int(event.EventType)); ok {
-			handler.(ports.UtxoEventHandler)(event)
+		if handlers, ok := rm.utxoEventHandlers.get(int(event.EventType)); ok {
+			for i := range handlers {
+				handler := handlers[i]
+				go handler.(ports.UtxoEventHandler)(event)
+			}
 		}
 	}
 }
@@ -93,8 +99,11 @@ func (rm *repoManager) listenToTxEvents() {
 	for event := range rm.txRepository.chEvents {
 		time.Sleep(time.Millisecond)
 
-		if handler, ok := rm.txEventHandlers.get(int(event.EventType)); ok {
-			handler.(ports.TxEventHandler)(event)
+		if handlers, ok := rm.txEventHandlers.get(int(event.EventType)); ok {
+			for i := range handlers {
+				handler := handlers[i]
+				go handler.(ports.TxEventHandler)(event)
+			}
 		}
 	}
 }
@@ -108,13 +117,13 @@ func (rm *repoManager) Close() {
 // handlerMap is a util type to prevent race conditions when registering
 // or retrieving handlers for events.
 type handlerMap struct {
-	handlersByEventType map[int]interface{}
+	handlersByEventType map[int][]interface{}
 	lock                *sync.RWMutex
 }
 
 func newHandlerMap() *handlerMap {
 	return &handlerMap{
-		handlersByEventType: make(map[int]interface{}),
+		handlersByEventType: make(map[int][]interface{}),
 		lock:                &sync.RWMutex{},
 	}
 }
@@ -122,12 +131,10 @@ func newHandlerMap() *handlerMap {
 func (m *handlerMap) set(key int, val interface{}) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	if _, ok := m.handlersByEventType[key]; !ok {
-		m.handlersByEventType[key] = val
-	}
+	m.handlersByEventType[key] = append(m.handlersByEventType[key], val)
 }
 
-func (m *handlerMap) get(key int) (interface{}, bool) {
+func (m *handlerMap) get(key int) ([]interface{}, bool) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 	val, ok := m.handlersByEventType[key]
