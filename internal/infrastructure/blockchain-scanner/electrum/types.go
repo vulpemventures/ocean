@@ -114,16 +114,23 @@ func newChHandler() *chHandler {
 	}
 }
 
+func (h *chHandler) addChReportForAccount(account string) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	if _, ok := h.chReportsByAccount[account]; ok {
+		return
+	}
+
+	h.chReportsByAccount[account] = make(chan accountReport)
+}
+
 func (h *chHandler) addAccountScriptHash(account, scriptHash string) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
-	if _, ok := h.accountByScript[account]; ok {
+	if _, ok := h.accountByScript[scriptHash]; ok {
 		return
-	}
-
-	if _, ok := h.chReportsByAccount[account]; !ok {
-		h.chReportsByAccount[account] = make(chan accountReport)
 	}
 
 	h.accountByScript[scriptHash] = account
@@ -140,13 +147,6 @@ func (h *chHandler) addRequest(req request) {
 	}
 
 	h.chReportsByReqId[id] = make(chan response)
-}
-
-func (h *chHandler) getAccountScriptHashes(account string) []string {
-	h.lock.RLock()
-	defer h.lock.RUnlock()
-
-	return h.scriptsByAccount[account]
 }
 
 func (h *chHandler) getAccountByScriptHash(script string) string {

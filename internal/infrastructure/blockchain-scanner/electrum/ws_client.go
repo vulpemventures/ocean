@@ -1,6 +1,7 @@
 package electrum_scanner
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -54,45 +55,61 @@ func newWSClient(addr string) (electrumClient, error) {
 	}, nil
 }
 
-func (c *wsClient) connect() {
+func (c *wsClient) listen() {
+	var incompleteResp []byte
 	for {
 		var resp response
-		if err := c.conn.ReadJSON(&resp); err != nil {
-			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+		_, msg, err := c.conn.ReadMessage()
+		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseNoStatusReceived) {
 				log.WithError(err).Fatal("connection dropped")
 			}
 			if errors.Is(err, net.ErrClosed) {
 				return
 			}
-			c.warn(err, "failed to read JSON message from socket")
-			continue
 		}
-		if err := resp.error(); err != nil {
-			c.warn(err, "got response error from socket")
-			continue
-		}
-
-		if len(resp.Method) > 0 {
-			switch resp.Method {
-			case "blockchain.scripthash.subscribe":
-				scriptHash := resp.Params.([]interface{})[0].(string)
-				account := c.chHandler.getAccountByScriptHash(scriptHash)
-				chReports := c.chHandler.getChReportsForAccount(account)
-
-				go func() { chReports <- accountReport{account, scriptHash} }()
-				continue
-			case "blockchain.headers.subscribe":
-				buf, _ := json.Marshal(resp.Params.([]interface{})[0])
-				var block blockInfo
-				json.Unmarshal(buf, &block)
-
-				c.updateChainTip(block)
+		for _, m := range bytes.Split(msg, []byte{delim}) {
+			if len(m) == 0 {
 				continue
 			}
-		}
 
-		chReports := c.chHandler.getChReportsForReqId(uint32(resp.Id))
-		go func() { chReports <- resp }()
+			if len(incompleteResp) > 0 {
+				m = append(incompleteResp, m...)
+			}
+
+			if err := json.Unmarshal(m, &resp); err != nil {
+				incompleteResp = m
+				continue
+			}
+
+			incompleteResp = make([]byte, 0)
+			if err := resp.error(); err != nil {
+				c.warn(err, "got response error from socket")
+				continue
+			}
+
+			if len(resp.Method) > 0 {
+				switch resp.Method {
+				case "blockchain.scripthash.subscribe":
+					scriptHash := resp.Params.([]interface{})[0].(string)
+					account := c.chHandler.getAccountByScriptHash(scriptHash)
+					chReports := c.chHandler.getChReportsForAccount(account)
+
+					go func() { chReports <- accountReport{account, scriptHash} }()
+					continue
+				case "blockchain.headers.subscribe":
+					buf, _ := json.Marshal(resp.Params.([]interface{})[0])
+					var block blockInfo
+					json.Unmarshal(buf, &block)
+
+					c.updateChainTip(block)
+					continue
+				}
+			}
+
+			chReports := c.chHandler.getChReportsForReqId(uint32(resp.Id))
+			go func() { chReports <- resp }()
+		}
 	}
 }
 
@@ -141,14 +158,18 @@ func (c *wsClient) subscribeForAccount(
 		history[scriptHash] = addrHistory
 	}
 
+	if c.chHandler.getChReportsForAccount(accountName) == nil {
+		c.chHandler.addChReportForAccount(accountName)
+	}
 	return c.chHandler.getChReportsForAccount(accountName), history
 }
 
 func (c *wsClient) unsubscribeForAccount(accountName string) {
-	hashes := c.chHandler.getAccountScriptHashes(accountName)
-	for _, scriptHash := range hashes {
-		c.unsubscribeForScript(accountName, scriptHash)
-	}
+	// hashes := c.chHandler.getAccountScriptHashes(accountName)
+	// for _, scriptHash := range hashes {
+	// 	c.unsubscribeForScript(accountName, scriptHash)
+	// }
+	c.chHandler.clearAccount(accountName)
 }
 
 func (c *wsClient) getScriptHashHistory(scriptHash string) ([]txInfo, error) {
@@ -251,18 +272,17 @@ func (c *wsClient) subscribeForScript(accountName, scriptHash string) error {
 	return nil
 }
 
-func (c *wsClient) unsubscribeForScript(accountName, scriptHash string) {
-	req := c.newRequest("blockchain.scripthash.unsubscribe", scriptHash)
-	if err := c.conn.WriteJSON(req); err != nil {
-		c.warn(
-			err, "failed to subscribe for script %s of account %s",
-			scriptHash, accountName,
-		)
-		return
-	}
-
-	c.chHandler.clearAccount(accountName)
-}
+// func (c *wsClient) unsubscribeForScript(accountName, scriptHash string) {
+// 	req := c.newRequest("blockchain.scripthash.unsubscribe", scriptHash)
+// 	buf, _ := json.Marshal(req)
+// 	if err := c.conn.WriteMessage(websocket.TextMessage, buf); err != nil {
+// 		c.warn(
+// 			err, "failed to subscribe for script %s of account %s",
+// 			scriptHash, accountName,
+// 		)
+// 		return
+// 	}
+// }
 
 func (c *wsClient) request(method string, params ...interface{}) (*response, error) {
 	req := c.newRequest(method, params...)

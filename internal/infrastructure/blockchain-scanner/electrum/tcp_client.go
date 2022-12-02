@@ -71,7 +71,7 @@ func newTCPClient(addr string) (electrumClient, error) {
 	}, nil
 }
 
-func (c *tcpClient) connect() {
+func (c *tcpClient) listen() {
 	conn := bufio.NewReader(c.conn)
 	for {
 		var resp response
@@ -162,14 +162,20 @@ func (c *tcpClient) subscribeForAccount(
 		history[scriptHash] = addrHistory
 	}
 
+	if c.chHandler.getChReportsForAccount(accountName) == nil {
+		c.chHandler.addChReportForAccount(accountName)
+	}
+
 	return c.chHandler.getChReportsForAccount(accountName), history
 }
 
 func (c *tcpClient) unsubscribeForAccount(accountName string) {
-	hashes := c.chHandler.getAccountScriptHashes(accountName)
-	for _, scriptHash := range hashes {
-		c.unsubscribeForScript(accountName, scriptHash)
-	}
+	// TODO: uncomment this if ElectrumX servers will support this in the future.
+	// hashes := c.chHandler.getAccountScriptHashes(accountName)
+	// for _, scriptHash := range hashes {
+	// 	c.unsubscribeForScript(accountName, scriptHash)
+	// }
+	c.chHandler.clearAccount(accountName)
 }
 
 func (c *tcpClient) subscribeForScript(accountName, scriptHash string) error {
@@ -184,19 +190,18 @@ func (c *tcpClient) subscribeForScript(accountName, scriptHash string) error {
 	return nil
 }
 
-func (c *tcpClient) unsubscribeForScript(accountName, scriptHash string) {
-	req := c.newRequest("blockchain.scripthash.unsubscribe", scriptHash)
-	reqBytes, _ := json.Marshal(req)
-	if _, err := c.conn.Write(reqBytes); err != nil {
-		c.warn(
-			err, "failed to subscribe for script %s of account %s",
-			scriptHash, accountName,
-		)
-		return
-	}
-
-	c.chHandler.clearAccount(accountName)
-}
+// Not supported by common ElectrumX servers
+// func (c *tcpClient) unsubscribeForScript(accountName, scriptHash string) {
+// 	req := c.newJSONRequest("blockchain.scripthash.unsubscribe", scriptHash)
+// 	reqBytes, _ := json.Marshal(req)
+// 	if _, err := c.conn.Write(reqBytes); err != nil {
+// 		c.warn(
+// 			err, "failed to unsubscribe for script %s of account %s",
+// 			scriptHash, accountName,
+// 		)
+// 		return
+// 	}
+// }
 
 func (c *tcpClient) getScriptHashHistory(scriptHash string) ([]txInfo, error) {
 	resp, err := c.request("blockchain.scripthash.get_history", scriptHash)
@@ -287,7 +292,7 @@ func (c *tcpClient) broadcastTx(txHex string) (string, error) {
 }
 
 func (c *tcpClient) request(method string, params ...interface{}) (*response, error) {
-	req := c.newRequest(method, params...)
+	req := c.newJSONRequest(method, params...)
 	reqBytes, _ := json.Marshal(req)
 	reqBytes = append(reqBytes, delim)
 	if _, err := c.conn.Write(reqBytes); err != nil {
@@ -309,7 +314,7 @@ func (c *tcpClient) request(method string, params ...interface{}) (*response, er
 	}
 }
 
-func (c *tcpClient) newRequest(method string, params ...interface{}) request {
+func (c *tcpClient) newJSONRequest(method string, params ...interface{}) request {
 	params = append([]interface{}{}, params...)
 	return request{atomic.AddUint64(&c.nextId, 1), method, params}
 }

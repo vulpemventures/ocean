@@ -97,7 +97,7 @@ func NewService(args ServiceArgs) (ports.BlockchainScanner, error) {
 func (s *service) Start() {
 	s.log("start listening to messages from electrum server")
 
-	go s.client.connect()
+	go s.client.listen()
 	s.client.subscribeForBlocks()
 }
 
@@ -131,8 +131,6 @@ func (s *service) WatchForUtxos(
 
 func (s *service) StopWatchForAccount(accountName string) {
 	s.client.unsubscribeForAccount(accountName)
-	accountCh, _ := s.getAccountChannel(accountName)
-	close(accountCh)
 }
 
 func (s *service) GetUtxoChannel(accountName string) chan []*domain.Utxo {
@@ -231,7 +229,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 	var blockHash *chainhash.Hash
 	var blockTimestamp int64
 
-	if event.eventType == txConfirmed {
+	if event.tx.Height > 0 {
 		blockHash, blockTimestamp, err = s.client.getBlockInfo(
 			uint32(event.tx.Height),
 		)
@@ -254,7 +252,9 @@ func (s *service) dbEventHandler(event dbEvent) {
 				},
 			})
 		}
+	}
 
+	if event.eventType == txConfirmed {
 		for i, out := range tx.Outputs {
 			if hex.EncodeToString(out.Script) == addrInfo.Script {
 				confirmedUtxos = append(confirmedUtxos, &domain.Utxo{
@@ -272,7 +272,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 		}
 	}
 
-	if event.eventType == txUnconfirmed {
+	if event.eventType == txAdded {
 		for i, out := range tx.Outputs {
 			if hex.EncodeToString(out.Script) == addrInfo.Script {
 				var nonce, valueCommit, assetCommit []byte
@@ -284,6 +284,15 @@ func (s *service) dbEventHandler(event dbEvent) {
 					s.warn(err, "failed to unblind output with given blind key")
 					continue
 				}
+				var confirmedStatus domain.UtxoStatus
+				if event.tx.Height > 0 {
+					confirmedStatus = domain.UtxoStatus{
+						BlockHash:   blockHash.String(),
+						BlockTime:   blockTimestamp,
+						BlockHeight: uint64(event.tx.Height),
+					}
+				}
+
 				newUtxos = append(newUtxos, &domain.Utxo{
 					UtxoKey: domain.UtxoKey{
 						TxID: event.tx.Txid,
@@ -291,10 +300,14 @@ func (s *service) dbEventHandler(event dbEvent) {
 					},
 					Asset:           elementsutil.TxIDFromBytes(unblindedData.Asset),
 					Value:           unblindedData.Value,
-					ValueCommitment: valueCommit,
 					AssetCommitment: assetCommit,
+					ValueCommitment: valueCommit,
+					AssetBlinder:    unblindedData.AssetBlindingFactor,
+					ValueBlinder:    unblindedData.ValueBlindingFactor,
 					Nonce:           nonce,
 					Script:          out.Script,
+					AccountName:     event.account,
+					ConfirmedStatus: confirmedStatus,
 				})
 			}
 		}

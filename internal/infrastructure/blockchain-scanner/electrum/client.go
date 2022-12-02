@@ -7,7 +7,7 @@ import (
 )
 
 type electrumClient interface {
-	connect()
+	listen()
 	close()
 
 	subscribeForBlocks()

@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	txUnconfirmed dbEventType = iota
+	txAdded dbEventType = iota
 	txConfirmed
 )
 
@@ -13,8 +13,8 @@ type dbEventType int
 
 func (t dbEventType) String() string {
 	switch t {
-	case txUnconfirmed:
-		return "TX_UNCONFIRMED"
+	case txAdded:
+		return "TX_ADDED"
 	case txConfirmed:
 		return "TX_CONFIRMED"
 	default:
@@ -70,11 +70,12 @@ func (d *db) updateAccountTxHistory(account, scriptHash string, newHistory []txI
 			continue
 		}
 
+		_, isTxTracked := d.txHistoryByAccount[account][tx.Txid]
 		d.txHistoryByAccount[account][tx.Txid] = tx.Height
 
-		eventType := txUnconfirmed
-		if tx.Height > 0 {
-			eventType = txConfirmed
+		eventType := txConfirmed
+		if !isTxTracked {
+			eventType = txAdded
 		}
 		event := dbEvent{eventType, tx, account, scriptHash}
 		go d.publishEvent(event)
