@@ -29,6 +29,11 @@ type dbEvent struct {
 	scriptHash string
 }
 
+// db stores the transaction history of every watched account.
+// The entire history is the composition of the tx history of every single
+// account address (represented by script hashes).
+// A transaction is represented by an object containing its hash and the height
+// of the block in which it's included if confirmed (0 or -1 otherwise).
 type db struct {
 	lock   *sync.RWMutex
 	chLock *sync.RWMutex
@@ -52,6 +57,9 @@ func newDb() *db {
 	return db
 }
 
+// updateAccountTxHistory updates the history of an account address and
+// generates an event for every tx that has either been added to the store or
+// has changed status (ie. it was in mempool and later was confirmed).
 func (d *db) updateAccountTxHistory(account, scriptHash string, newHistory []txInfo) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
