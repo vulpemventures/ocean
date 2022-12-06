@@ -610,47 +610,43 @@ func (ts *TransactionService) registerHandlerForUtxoEvents() {
 // to give the account service enough time to receive notification from the
 // blockchain scanner and spend the locked utxos.
 func (ts *TransactionService) scheduleUtxoUnlocker() {
-	ticker := time.NewTicker(5 * time.Second)
-	done := make(chan struct{})
+	time.Sleep(5 * time.Second)
 
-	select {
-	case <-ticker.C:
-		ctx := context.Background()
-		utxoRepo := ts.repoManager.UtxoRepository()
-		w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)
+	ctx := context.Background()
+	utxoRepo := ts.repoManager.UtxoRepository()
+	w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)
 
-		for accountName := range w.AccountKeysByName {
-			utxos, _ := utxoRepo.GetLockedUtxosForAccount(
-				ctx, accountName,
-			)
-			if len(utxos) > 0 {
-				utxosToUnlock := make([]domain.UtxoKey, 0, len(utxos))
-				utxosToSpawnUnlocker := make([]domain.UtxoKey, 0, len(utxos))
-				for _, u := range utxos {
-					if u.CanUnlock() {
-						utxosToUnlock = append(utxosToUnlock, u.Key())
-					} else {
-						utxosToSpawnUnlocker = append(utxosToSpawnUnlocker, u.Key())
-					}
+	for accountName := range w.AccountKeysByName {
+		utxos, _ := utxoRepo.GetLockedUtxosForAccount(
+			ctx, accountName,
+		)
+		if len(utxos) > 0 {
+			utxosToUnlock := make([]domain.UtxoKey, 0, len(utxos))
+			utxosToSpawnUnlocker := make([]domain.UtxoKey, 0, len(utxos))
+			for _, u := range utxos {
+				if u.CanUnlock() {
+					utxosToUnlock = append(utxosToUnlock, u.Key())
+				} else {
+					utxosToSpawnUnlocker = append(utxosToSpawnUnlocker, u.Key())
 				}
+			}
 
-				if len(utxosToUnlock) > 0 {
-					count, _ := utxoRepo.UnlockUtxos(ctx, utxosToUnlock)
+			if len(utxosToUnlock) > 0 {
+				count, err := utxoRepo.UnlockUtxos(ctx, utxosToUnlock)
+				if err != nil {
+					utxosToSpawnUnlocker = append(utxosToSpawnUnlocker, utxosToUnlock...)
+				}
+				if count > 0 {
 					ts.log(
 						"unlocked %d utxo(s) for account %s (%s)",
 						count, accountName, UtxoKeys(utxosToUnlock),
 					)
 				}
-				if len(utxosToSpawnUnlocker) > 0 {
-					ts.spawnUtxoUnlocker(utxosToSpawnUnlocker)
-				}
+			}
+			if len(utxosToSpawnUnlocker) > 0 {
+				ts.spawnUtxoUnlocker(utxosToSpawnUnlocker)
 			}
 		}
-
-		done <- struct{}{}
-	case <-done:
-		ticker.Stop()
-		return
 	}
 }
 
@@ -673,7 +669,7 @@ func (ts *TransactionService) spawnUtxoUnlocker(utxoKeys []domain.UtxoKey) {
 		unlockTime := ts.utxoExpiryDuration - time.Since(time.Unix(timestamp, 0))
 		t := time.NewTicker(unlockTime)
 		quitChan := make(chan struct{})
-		go func() {
+		go func(keys []domain.UtxoKey, t *time.Ticker, quitChan chan struct{}) {
 			ts.log("spawning unlocker for utxo(s) %s", UtxoKeys(keys))
 			ts.log(fmt.Sprintf(
 				"utxo(s) will be eventually unlocked in ~%.0f seconds",
@@ -689,10 +685,11 @@ func (ts *TransactionService) spawnUtxoUnlocker(utxoKeys []domain.UtxoKey) {
 					utxosToUnlock := make([]domain.UtxoKey, 0, len(utxos))
 					spentUtxos := make([]domain.UtxoKey, 0, len(utxos))
 					for _, u := range utxos {
-						if !u.IsSpent() && u.IsLocked() {
-							utxosToUnlock = append(utxosToUnlock, u.Key())
-						} else {
+						if u.IsSpent() {
 							spentUtxos = append(spentUtxos, u.Key())
+
+						} else if u.IsLocked() {
+							utxosToUnlock = append(utxosToUnlock, u.Key())
 						}
 					}
 
@@ -726,7 +723,7 @@ func (ts *TransactionService) spawnUtxoUnlocker(utxoKeys []domain.UtxoKey) {
 					}
 				}
 			}
-		}()
+		}(keys, t, quitChan)
 	}
 }
 
