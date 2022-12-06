@@ -88,11 +88,6 @@ func (c *tcpClient) listen() {
 			continue
 		}
 
-		if err := resp.error(); err != nil {
-			c.warn(err, "got response error from socket")
-			continue
-		}
-
 		if len(resp.Method) > 0 {
 			switch resp.Method {
 			case "blockchain.scripthash.subscribe":
