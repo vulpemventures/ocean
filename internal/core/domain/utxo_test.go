@@ -36,7 +36,7 @@ func TestLockUnlockUtxo(t *testing.T) {
 	u := domain.Utxo{}
 	require.False(t, u.IsLocked())
 
-	u.Lock(time.Now().Unix())
+	u.Lock(time.Now().Unix(), 0)
 	require.True(t, u.IsLocked())
 
 	u.Unlock()

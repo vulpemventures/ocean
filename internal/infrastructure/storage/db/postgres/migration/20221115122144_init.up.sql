@@ -55,14 +55,15 @@ CREATE TABLE utxo (
     range_proof bytea,
     surjection_proof bytea,
     account_name varchar(50) NOT NULL,
-    lock_timestamp timestamp NOT NULL,
+    lock_timestamp BIGINT NOT NULL,
+    lock_expiry_timestamp BIGINT NOT NULL,
     UNIQUE (tx_id, vout)
 );
 
 CREATE TABLE utxo_status (
     id SERIAL PRIMARY KEY,
     block_height INTEGER NOT NULL,
-    block_time timestamp NOT NULL,
+    block_time BIGINT NOT NULL,
     block_hash varchar(64) NOT NULL,
     status integer NOT NULL,
     fk_utxo_id integer NOT NULL,

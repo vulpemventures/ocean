@@ -14,12 +14,12 @@ import (
 
 // WalletService is responsible for operations related to the managment of the
 // wallet:
-// 	* Generate a new random 24-words mnemonic.
-// 	* Create a new wallet from scratch with given mnemonic and locked with the given password.
-// 	* Unlock the wallet with a password.
-// 	* Change the wallet password. It requires the wallet to be locked.
-// 	* Get the status of the wallet (initialized, unlocked, inSync).
-// 	* Get non-sensiive (network, native asset) and possibly sensitive info (root path, master blinding key and basic accounts' info) about the wallet. Sensitive info are returned only if the wallet is unlocked.
+//   - Generate a new random 24-words mnemonic.
+//   - Create a new wallet from scratch with given mnemonic and locked with the given password.
+//   - Unlock the wallet with a password.
+//   - Change the wallet password. It requires the wallet to be locked.
+//   - Get the status of the wallet (initialized, unlocked, inSync).
+//   - Get non-sensiive (network, native asset) and possibly sensitive info (root path, master blinding key and basic accounts' info) about the wallet. Sensitive info are returned only if the wallet is unlocked.
 //
 // This service doesn't register any handler for wallet events, rather it
 // allows its users to register their handler to manage situations like the
@@ -142,7 +142,7 @@ func (ws *WalletService) ChangePassword(
 
 func (ws *WalletService) RestoreWallet(
 	ctx context.Context, mnemonic []string, passpharse string,
-	birthdayBlockHash []byte,
+	birthdayBlockHeight uint32,
 ) (err error) {
 	defer func() {
 		if err == nil {
@@ -151,10 +151,6 @@ func (ws *WalletService) RestoreWallet(
 		}
 	}()
 
-	birthdayBlockHeight, err := ws.bcScanner.GetBlockHeight(birthdayBlockHash)
-	if err != nil {
-		return
-	}
 	// TODO: implement restoration
 
 	newWallet, err := domain.NewWallet(

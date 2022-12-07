@@ -120,8 +120,8 @@ func (s *service) StopWatchForAccount(accountName string) {
 	s.removeScanner(accountName)
 }
 
-func (s *service) GetUtxos(utxoList []domain.Utxo) ([]*domain.Utxo, error) {
-	utxos := make([]*domain.Utxo, 0, len(utxoList))
+func (s *service) GetUtxos(utxoList []domain.Utxo) ([]domain.Utxo, error) {
+	utxos := make([]domain.Utxo, 0, len(utxoList))
 	for _, u := range utxoList {
 		key := u.UtxoKey
 		addr := addressFromScript(u.Script, s.args.network())
@@ -145,7 +145,7 @@ func (s *service) GetUtxos(utxoList []domain.Utxo) ([]*domain.Utxo, error) {
 		tx, _ := transaction.NewTxFromHex(txHex)
 
 		out := tx.Outputs[key.VOut]
-		utxo := &domain.Utxo{
+		utxo := domain.Utxo{
 			UtxoKey: key,
 			Script:  out.Script,
 		}
@@ -195,18 +195,6 @@ func (s *service) GetLatestBlock() ([]byte, uint32, error) {
 	}
 	hash, _ := block.Hash()
 	return hash.CloneBytes(), block.Height, nil
-}
-
-func (s *service) GetBlockHeight(blockHash []byte) (uint32, error) {
-	hash, err := chainhash.NewHash(blockHash)
-	if err != nil {
-		return 0, err
-	}
-	block, err := s.headersRepo.GetBlockHeader(context.Background(), *hash)
-	if err != nil {
-		return 0, err
-	}
-	return block.Height, nil
 }
 
 func (s *service) GetBlockHash(height uint32) ([]byte, error) {

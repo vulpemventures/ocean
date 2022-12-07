@@ -36,13 +36,11 @@ type BlockchainScanner interface {
 
 	// GetLatestBlock returns the header of the latest block of the blockchain.
 	GetLatestBlock() ([]byte, uint32, error)
-	// GetBlockHeight returns the height of the block identified by its hash.
-	GetBlockHeight(hash []byte) (uint32, error)
 	// GetBlockHash returns the hash of the block identified by its height.
 	GetBlockHash(height uint32) ([]byte, error)
 	// GetUtxos is a sync function to get info about the utxos represented by
 	// given outpoints (UtxoKeys).
-	GetUtxos(utxos []domain.Utxo) ([]*domain.Utxo, error)
+	GetUtxos(utxos []domain.Utxo) ([]domain.Utxo, error)
 	// BroadcastTransaction sends the given raw tx (in hex string) over the
 	// network in order to be included in a later block of the Liquid blockchain.
 	BroadcastTransaction(txHex string) (string, error)

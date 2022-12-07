@@ -4,9 +4,7 @@
 
 package queries
 
-import (
-	"time"
-)
+import ()
 
 type Account struct {
 	Name              string
@@ -38,27 +36,28 @@ type TxInputAccount struct {
 }
 
 type Utxo struct {
-	ID              int32
-	TxID            string
-	Vout            int32
-	Value           int64
-	Asset           string
-	ValueCommitment []byte
-	AssetCommitment []byte
-	ValueBlinder    []byte
-	AssetBlinder    []byte
-	Script          []byte
-	Nonce           []byte
-	RangeProof      []byte
-	SurjectionProof []byte
-	AccountName     string
-	LockTimestamp   time.Time
+	ID                  int32
+	TxID                string
+	Vout                int32
+	Value               int64
+	Asset               string
+	ValueCommitment     []byte
+	AssetCommitment     []byte
+	ValueBlinder        []byte
+	AssetBlinder        []byte
+	Script              []byte
+	Nonce               []byte
+	RangeProof          []byte
+	SurjectionProof     []byte
+	AccountName         string
+	LockTimestamp       int64
+	LockExpiryTimestamp int64
 }
 
 type UtxoStatus struct {
 	ID          int32
 	BlockHeight int32
-	BlockTime   time.Time
+	BlockTime   int64
 	BlockHash   string
 	Status      int32
 	FkUtxoID    int32

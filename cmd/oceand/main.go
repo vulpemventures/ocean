@@ -1,7 +1,6 @@
 package main
 
 import (
-	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -13,7 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	appconfig "github.com/vulpemventures/ocean/internal/app-config"
 	"github.com/vulpemventures/ocean/internal/config"
-	elements_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/elements"
+	electrum_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/electrum"
+	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"github.com/vulpemventures/ocean/internal/interfaces"
 	grpc_interface "github.com/vulpemventures/ocean/internal/interfaces/grpc"
 	"github.com/vulpemventures/ocean/pkg/profiler"
@@ -26,7 +26,7 @@ var (
 	date    string
 
 	// Config from env vars.
-	dbType             = config.GetString(config.DatabaseTypeKey)
+	dbType             = config.GetString(config.DbTypeKey)
 	bcScannerType      = config.GetString(config.BlockchainScannerTypeKey)
 	logLevel           = config.GetInt(config.LogLevelKey)
 	datadir            = config.GetDatadir()
@@ -36,15 +36,11 @@ var (
 	noTLS              = config.GetBool(config.NoTLSKey)
 	noProfiler         = config.GetBool(config.NoProfilerKey)
 	tlsDir             = filepath.Join(datadir, config.TLSLocation)
-	scannerDir         = filepath.Join(datadir, config.ScannerLocation)
 	profilerDir        = filepath.Join(datadir, config.ProfilerLocation)
-	filtersDir         = filepath.Join(scannerDir, "filters")
-	blockHeadersDir    = filepath.Join(scannerDir, "headers")
-	esploraUrl         = config.GetString(config.EsploraUrlKey)
+	electrumUrl        = config.GetString(config.ElectrumUrlKey)
 	tlsExtraIPs        = config.GetStringSlice(config.TLSExtraIPKey)
 	tlsExtraDomains    = config.GetStringSlice(config.TLSExtraDomainKey)
 	statsInterval      = time.Duration(config.GetInt(config.StatsIntervalKey)) * time.Second
-	nodeRpcAddr        = config.GetString(config.ElementsNodeRpcAddrKey)
 	utxoExpiryDuration = time.Duration(config.GetInt(config.UtxoExpiryDurationKey))
 	rootPath           = config.GetRootPath()
 	dbUser             = config.GetString(config.DbUserKey)
@@ -72,12 +68,8 @@ func main() {
 		defer profilerSvc.Stop()
 	}
 
-	bcScannerConfig := elements_scanner.ServiceArgs{
-		RpcAddr:             nodeRpcAddr,
-		Network:             network.Name,
-		FiltersDatadir:      filtersDir,
-		BlockHeadersDatadir: blockHeadersDir,
-		EsploraUrl:          esploraUrl,
+	bcScannerConfig := electrum_scanner.ServiceArgs{
+		Addr: electrumUrl,
 	}
 	serviceCfg := grpc_interface.ServiceConfig{
 		Port:         port,

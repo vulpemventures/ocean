@@ -114,11 +114,11 @@ func (m *mockBcScanner) GetBlockHeight(hash []byte) (uint32, error) {
 	return res, args.Error(1)
 }
 
-func (m *mockBcScanner) GetUtxos(utxos []domain.Utxo) ([]*domain.Utxo, error) {
+func (m *mockBcScanner) GetUtxos(utxos []domain.Utxo) ([]domain.Utxo, error) {
 	args := m.Called(utxos)
-	var res []*domain.Utxo
+	var res []domain.Utxo
 	if a := args.Get(0); a != nil {
-		res = a.([]*domain.Utxo)
+		res = a.([]domain.Utxo)
 	}
 	return res, args.Error(1)
 }

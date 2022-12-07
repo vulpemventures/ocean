@@ -155,12 +155,12 @@ func (r *utxoRepository) ConfirmUtxos(
 }
 
 func (r *utxoRepository) LockUtxos(
-	_ context.Context, utxos []domain.UtxoKey, timestamp int64,
+	_ context.Context, utxos []domain.UtxoKey, timestamp, expiryTimestamp int64,
 ) (int, error) {
 	r.store.lock.Lock()
 	defer r.store.lock.Unlock()
 
-	return r.lockUtxos(utxos, timestamp)
+	return r.lockUtxos(utxos, timestamp, expiryTimestamp)
 }
 
 func (r *utxoRepository) UnlockUtxos(
@@ -327,7 +327,7 @@ func (r *utxoRepository) confirmUtxos(
 }
 
 func (r *utxoRepository) lockUtxos(
-	keys []domain.UtxoKey, timestamp int64,
+	keys []domain.UtxoKey, timestamp, expiryTimestamp int64,
 ) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0, len(keys))
@@ -341,7 +341,7 @@ func (r *utxoRepository) lockUtxos(
 			continue
 		}
 
-		utxo.Lock(timestamp)
+		utxo.Lock(timestamp, expiryTimestamp)
 		utxosInfo = append(utxosInfo, utxo.Info())
 		count++
 	}

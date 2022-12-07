@@ -84,10 +84,10 @@ message RestoreWalletRequest{
   // The password to decrypt HD wallet. After restoration, the wallet is locked
   // and the same password is required to unlock it.
   string password = 2;
-  // The hash of the block at original wallet creation time. This will be the 
+  // The height of the block at original wallet creation time. This will be the 
   // starting block for the wallet rescan.
   // If not given, will rescan from genesis block.
-  string birthday_block_hash = 3;
+  uint32 birthday_block_height = 3;
 }
 message RestoreWalletResponse{}
 

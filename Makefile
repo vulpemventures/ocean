@@ -38,8 +38,7 @@ run: clean
 	export OCEAN_LOG_LEVEL=5; \
 	export OCEAN_NO_TLS=true; \
 	export OCEAN_STATS_INTERVAL=120; \
-	export OCEAN_ESPLORA_URL=http://localhost:3001; \
-	export OCEAN_NODE_RPC_ADDR=http://admin1:123@localhost:18884; \
+	export OCEAN_ELECTRUM_URL=tcp://localhost:50001; \
 	export OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
 	go run ./cmd/oceand
 
@@ -62,7 +61,7 @@ help:
 #### Postgres database ####
 ## pg: starts postgres db inside docker container
 pg:
-	docker run --name oceand-pg -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres
+	docker run --name oceand-pg -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=oceand-db -d postgres
 
 ## droppg: stop and remove postgres container
 droppg:
