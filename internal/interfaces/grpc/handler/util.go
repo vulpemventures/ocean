@@ -44,7 +44,7 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 		list = append(list, &pb.AccountInfo{
 			Name:           a.Key.Name,
 			Index:          a.Key.Index,
-			Xpub:           a.Xpub,
+			Xpubs:          []string{a.Xpub},
 			DerivationPath: a.DerivationPath,
 		})
 	}

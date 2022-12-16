@@ -18,8 +18,8 @@ message AccountInfo {
   uint32 index = 2;
   // Derivation path.
   string derivation_path = 3;
-  // XPub.
-  string xpub = 4;
+  // Xpubs.
+  repeated string xpubs = 4;
 }
 
 message BalanceInfo {
