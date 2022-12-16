@@ -20,10 +20,10 @@ type service struct {
 
 	lock *sync.RWMutex
 
-	addressByScriptHash    map[string]domain.AddressInfo
-	utxoChannelByAccount   map[string]chan []*domain.Utxo
-	txChannelByAccount     map[string]chan *domain.Transaction
-	reportChannelByAccount map[string]chan accountReport
+	accountAddressesByScriptHash map[string]map[string]domain.AddressInfo
+	utxoChannelByAccount         map[string]chan []*domain.Utxo
+	txChannelByAccount           map[string]chan *domain.Transaction
+	reportChannelByAccount       map[string]chan accountReport
 
 	log  func(format string, a ...interface{})
 	warn func(err error, format string, a ...interface{})
@@ -65,10 +65,12 @@ func NewService(args ServiceArgs) (ports.BlockchainScanner, error) {
 
 	db := newDb()
 	lock := &sync.RWMutex{}
-	addressByScriptHash := make(map[string]domain.AddressInfo)
 	utxoChannelByAccount := make(map[string]chan []*domain.Utxo)
 	txChannelByAccount := make(map[string]chan *domain.Transaction)
 	reportChannelByAccount := make(map[string]chan accountReport)
+	accountAddressesByScriptHash := make(
+		map[string]map[string]domain.AddressInfo,
+	)
 
 	client, err := args.client()
 	if err != nil {
@@ -85,7 +87,7 @@ func NewService(args ServiceArgs) (ports.BlockchainScanner, error) {
 	}
 
 	svc := &service{
-		client, db, lock, addressByScriptHash,
+		client, db, lock, accountAddressesByScriptHash,
 		utxoChannelByAccount, txChannelByAccount, reportChannelByAccount,
 		logFn, warnFn,
 	}
@@ -121,7 +123,7 @@ func (s *service) WatchForAccount(
 	for scriptHash, history := range txHistory {
 		s.db.updateAccountTxHistory(accountName, scriptHash, history)
 	}
-	s.setAddressesByScriptHash(addresses)
+	s.setAddressesByScriptHash(accountName, addresses)
 }
 
 func (s *service) WatchForUtxos(
@@ -221,7 +223,6 @@ func (s *service) dbEventHandler(event dbEvent) {
 		s.warn(err, "failed to fetch tx for event %+v", event)
 		return
 	}
-	addrInfo := s.getAddressByScriptHash(event.scriptHash)
 
 	newUtxos := make([]*domain.Utxo, 0)
 	spentUtxos := make([]*domain.Utxo, 0)
@@ -256,59 +257,67 @@ func (s *service) dbEventHandler(event dbEvent) {
 
 	if event.eventType == txConfirmed {
 		for i, out := range tx.Outputs {
-			if hex.EncodeToString(out.Script) == addrInfo.Script {
-				confirmedUtxos = append(confirmedUtxos, &domain.Utxo{
-					UtxoKey: domain.UtxoKey{
-						TxID: event.tx.Txid,
-						VOut: uint32(i),
-					},
-					ConfirmedStatus: domain.UtxoStatus{
-						BlockHash:   blockHash.String(),
-						BlockTime:   blockTimestamp,
-						BlockHeight: uint64(event.tx.Height),
-					},
-				})
+			if len(out.Script) > 0 {
+				scriptHash := calcScriptHash(hex.EncodeToString(out.Script))
+				addrInfo := s.getAddressByScriptHash(event.account, scriptHash)
+				if addrInfo != nil {
+					confirmedUtxos = append(confirmedUtxos, &domain.Utxo{
+						UtxoKey: domain.UtxoKey{
+							TxID: event.tx.Txid,
+							VOut: uint32(i),
+						},
+						ConfirmedStatus: domain.UtxoStatus{
+							BlockHash:   blockHash.String(),
+							BlockTime:   blockTimestamp,
+							BlockHeight: uint64(event.tx.Height),
+						},
+					})
+				}
 			}
 		}
 	}
 
 	if event.eventType == txAdded {
 		for i, out := range tx.Outputs {
-			if hex.EncodeToString(out.Script) == addrInfo.Script {
-				var nonce, valueCommit, assetCommit []byte
-				if out.IsConfidential() {
-					nonce, valueCommit, assetCommit = out.Nonce, out.Value, out.Asset
-				}
-				unblindedData, err := confidential.UnblindOutputWithKey(out, addrInfo.BlindingKey)
-				if err != nil {
-					s.warn(err, "failed to unblind output with given blind key")
-					continue
-				}
-				var confirmedStatus domain.UtxoStatus
-				if event.tx.Height > 0 {
-					confirmedStatus = domain.UtxoStatus{
-						BlockHash:   blockHash.String(),
-						BlockTime:   blockTimestamp,
-						BlockHeight: uint64(event.tx.Height),
+			if len(out.Script) > 0 {
+				scriptHash := calcScriptHash(hex.EncodeToString(out.Script))
+				addrInfo := s.getAddressByScriptHash(event.account, scriptHash)
+				if addrInfo != nil {
+					var nonce, valueCommit, assetCommit []byte
+					if out.IsConfidential() {
+						nonce, valueCommit, assetCommit = out.Nonce, out.Value, out.Asset
 					}
-				}
+					unblindedData, err := confidential.UnblindOutputWithKey(out, addrInfo.BlindingKey)
+					if err != nil {
+						s.warn(err, "failed to unblind output with given blind key")
+						continue
+					}
+					var confirmedStatus domain.UtxoStatus
+					if event.tx.Height > 0 {
+						confirmedStatus = domain.UtxoStatus{
+							BlockHash:   blockHash.String(),
+							BlockTime:   blockTimestamp,
+							BlockHeight: uint64(event.tx.Height),
+						}
+					}
 
-				newUtxos = append(newUtxos, &domain.Utxo{
-					UtxoKey: domain.UtxoKey{
-						TxID: event.tx.Txid,
-						VOut: uint32(i),
-					},
-					Asset:           elementsutil.TxIDFromBytes(unblindedData.Asset),
-					Value:           unblindedData.Value,
-					AssetCommitment: assetCommit,
-					ValueCommitment: valueCommit,
-					AssetBlinder:    unblindedData.AssetBlindingFactor,
-					ValueBlinder:    unblindedData.ValueBlindingFactor,
-					Nonce:           nonce,
-					Script:          out.Script,
-					AccountName:     event.account,
-					ConfirmedStatus: confirmedStatus,
-				})
+					newUtxos = append(newUtxos, &domain.Utxo{
+						UtxoKey: domain.UtxoKey{
+							TxID: event.tx.Txid,
+							VOut: uint32(i),
+						},
+						Asset:           elementsutil.TxIDFromBytes(unblindedData.Asset),
+						Value:           unblindedData.Value,
+						AssetCommitment: assetCommit,
+						ValueCommitment: valueCommit,
+						AssetBlinder:    unblindedData.AssetBlindingFactor,
+						ValueBlinder:    unblindedData.ValueBlindingFactor,
+						Nonce:           nonce,
+						Script:          out.Script,
+						AccountName:     event.account,
+						ConfirmedStatus: confirmedStatus,
+					})
+				}
 			}
 		}
 	}
@@ -347,22 +356,26 @@ func (s *service) dbEventHandler(event dbEvent) {
 	}
 }
 
-func (s *service) getAddressByScriptHash(scriptHash string) *domain.AddressInfo {
+func (s *service) getAddressByScriptHash(account, scriptHash string) *domain.AddressInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	info, ok := s.addressByScriptHash[scriptHash]
+	info, ok := s.accountAddressesByScriptHash[account][scriptHash]
 	if !ok {
 		return nil
 	}
 	return &info
 }
 
-func (s *service) setAddressesByScriptHash(addresses []domain.AddressInfo) {
+func (s *service) setAddressesByScriptHash(account string, addresses []domain.AddressInfo) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
+	if _, ok := s.accountAddressesByScriptHash[account]; !ok {
+		s.accountAddressesByScriptHash[account] = make(map[string]domain.AddressInfo)
+	}
+
 	for _, addr := range addresses {
-		s.addressByScriptHash[calcScriptHash(addr.Script)] = addr
+		s.accountAddressesByScriptHash[account][calcScriptHash(addr.Script)] = addr
 	}
 }

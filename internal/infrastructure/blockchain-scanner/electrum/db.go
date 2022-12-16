@@ -74,7 +74,7 @@ func (d *db) updateAccountTxHistory(account, scriptHash string, newHistory []txI
 		// equals to the one of the block in which they are contained.
 		// If the tx is stored in the db and is confirmed, we don't have nothing
 		// to do and we can skip to the next tx of the given history.
-		if height := prevHistory[account][tx.Txid]; height > 0 {
+		if height, ok := prevHistory[account][tx.Txid]; ok && height == tx.Height {
 			continue
 		}
 
