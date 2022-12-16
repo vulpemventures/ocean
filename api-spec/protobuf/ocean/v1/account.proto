@@ -11,6 +11,9 @@ service AccountService {
   // CreateAccountBIP44 creates a new BIP44 account.
   rpc CreateAccountBIP44(CreateAccountBIP44Request) returns (CreateAccountBIP44Response);
 
+  // CreateAccountMultiSig creates a new multisig account.
+  rpc CreateAccountMultiSig(CreateAccountMultiSigRequest) returns (CreateAccountMultiSigResponse);
+
   // CreateAccountCustom creates a new custom account for which loading a template.
   rpc CreateAccountCustom(CreateAccountCustomRequest) returns (CreateAccountCustomResponse);
 
@@ -52,6 +55,21 @@ message CreateAccountBIP44Response{
   string xpub = 3;
   // Derivation path
   string derivation_path = 4;
+}
+
+message CreateAccountMultiSigRequest{
+  // Name of the account.
+  string name = 1;
+}
+message CreateAccountMultiSigResponse{
+  // Account name.
+  string account_name = 1;
+  // Account index.
+  uint32 account_index = 2;
+  // The custom derivation path of the new account.
+  string derivation_path = 3;
+  // List of xpubs of the multisig account.
+  repeated string xpubs = 4;
 }
 
 message CreateAccountCustomRequest{
