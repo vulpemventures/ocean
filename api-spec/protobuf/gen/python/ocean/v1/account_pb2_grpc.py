@@ -22,6 +22,11 @@ class AccountServiceStub(object):
                 request_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Request.SerializeToString,
                 response_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Response.FromString,
                 )
+        self.CreateAccountMultiSig = channel.unary_unary(
+                '/ocean.v1.AccountService/CreateAccountMultiSig',
+                request_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountMultiSigRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountMultiSigResponse.FromString,
+                )
         self.CreateAccountCustom = channel.unary_unary(
                 '/ocean.v1.AccountService/CreateAccountCustom',
                 request_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomRequest.SerializeToString,
@@ -72,6 +77,13 @@ class AccountServiceServicer(object):
 
     def CreateAccountBIP44(self, request, context):
         """CreateAccountBIP44 creates a new BIP44 account.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CreateAccountMultiSig(self, request, context):
+        """CreateAccountMultiSig creates a new multisig account.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -144,6 +156,11 @@ def add_AccountServiceServicer_to_server(servicer, server):
                     request_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Request.FromString,
                     response_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Response.SerializeToString,
             ),
+            'CreateAccountMultiSig': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateAccountMultiSig,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountMultiSigRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountMultiSigResponse.SerializeToString,
+            ),
             'CreateAccountCustom': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateAccountCustom,
                     request_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomRequest.FromString,
@@ -211,6 +228,23 @@ class AccountService(object):
         return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/CreateAccountBIP44',
             ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Request.SerializeToString,
             ocean_dot_v1_dot_account__pb2.CreateAccountBIP44Response.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def CreateAccountMultiSig(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/CreateAccountMultiSig',
+            ocean_dot_v1_dot_account__pb2.CreateAccountMultiSigRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.CreateAccountMultiSigResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

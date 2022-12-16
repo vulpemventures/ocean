@@ -2,6 +2,7 @@ package grpc_handler
 
 import (
 	"context"
+	"fmt"
 
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/vulpemventures/ocean/internal/core/application"
@@ -37,10 +38,16 @@ func (a *account) CreateAccountBIP44(
 	}, nil
 }
 
+func (a *account) CreateAccountMultiSig(
+	ctx context.Context, req *pb.CreateAccountMultiSigRequest,
+) (*pb.CreateAccountMultiSigResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (a *account) CreateAccountCustom(
 	ctx context.Context, req *pb.CreateAccountCustomRequest,
 ) (*pb.CreateAccountCustomResponse, error) {
-	return &pb.CreateAccountCustomResponse{}, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (a *account) SetAccountTemplate(
