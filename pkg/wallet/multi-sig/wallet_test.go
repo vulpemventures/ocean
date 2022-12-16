@@ -1,15 +1,16 @@
-package wallet_test
+package multisig_test
 
 import (
 	"strings"
 	"testing"
 
+	wallet "github.com/equitas-foundation/bamp-ocean/pkg/wallet/multi-sig"
 	"github.com/stretchr/testify/require"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
-const (
-	testRootPath = "m/84'/1'"
+var (
+	testRootPath = "m/48'/1'/0'/2'"
+	xpubs        = []string{"xpub6EuX7TBEwhFgifQY24vFeMRqeWHGyGCupztDxk7G2ECAqGQ22Fik8E811p8GrM2LfajQzLidXy4qECxhdcxChkjiKhnq2fiVMVjdfSoZQwg"}
 )
 
 func TestNewWallet(t *testing.T) {
@@ -18,7 +19,10 @@ func TestNewWallet(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{
+			RootPath: testRootPath,
+			Xpubs:    xpubs,
+		})
 		require.NoError(t, err)
 
 		mnemonic, err := w.Mnemonic()
@@ -31,7 +35,6 @@ func TestNewWallet(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-
 		require.Equal(t, *w, *otherWallet)
 	})
 
@@ -54,10 +57,25 @@ func TestNewWallet(t *testing.T) {
 			},
 			{
 				args: wallet.NewWalletFromMnemonicArgs{
+					Mnemonic: strings.Split("legal winner thank year wave sausage worth useful legal winner thank yellow", " "),
+					RootPath: testRootPath,
+				},
+				err: wallet.ErrMissingCosignerXpubs,
+			},
+			{
+				args: wallet.NewWalletFromMnemonicArgs{
 					RootPath: testRootPath,
 					Mnemonic: strings.Split("legal winner thank year wave sausage worth useful legal winner thank yellow yellow", " "),
 				},
 				err: wallet.ErrInvalidMnemonic,
+			},
+			{
+				args: wallet.NewWalletFromMnemonicArgs{
+					Mnemonic: strings.Split("legal winner thank year wave sausage worth useful legal winner thank yellow", " "),
+					RootPath: testRootPath,
+					Xpubs:    []string{"not a valid xpub"},
+				},
+				err: wallet.ErrInvalidXpub,
 			},
 		}
 		for _, tt := range tests {

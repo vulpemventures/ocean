@@ -9,6 +9,12 @@ import (
 	"github.com/vulpemventures/go-elements/psetv2"
 )
 
+var (
+	ErrMissingOwnedInputs       = fmt.Errorf("missing list of owned inputs")
+	ErrMissingBlindingMasterKey = fmt.Errorf("missing blinding master key")
+	ErrBlindInvalidInputIndex   = fmt.Errorf("input index to blind is out of range")
+)
+
 type BlindPsetWithOwnedInputsArgs struct {
 	PsetBase64         string
 	OwnedInputsByIndex map[uint32]Input
@@ -30,7 +36,7 @@ func (a BlindPsetWithOwnedInputsArgs) validate() error {
 		if int(i) >= int(ptx.Global.InputCount) {
 			return ErrBlindInvalidInputIndex
 		}
-		if err := in.validate(); err != nil {
+		if err := in.Validate(); err != nil {
 			return err
 		}
 	}
@@ -59,7 +65,7 @@ func (a BlindPsetWithOwnedInputsArgs) inputIndexes() []uint32 {
 	return ownedInputIndexes
 }
 
-func (w *Wallet) BlindPsetWithOwnedInputs(
+func BlindPsetWithOwnedInputs(
 	args BlindPsetWithOwnedInputsArgs,
 ) (string, error) {
 	if err := args.validate(); err != nil {
@@ -67,8 +73,11 @@ func (w *Wallet) BlindPsetWithOwnedInputs(
 	}
 
 	ptx, _ := psetv2.NewPsetFromBase64(args.PsetBase64)
-	ownedInputIndexes := args.inputIndexes()
+	if !ptx.NeedsBlinding() {
+		return args.PsetBase64, nil
+	}
 
+	ownedInputIndexes := args.inputIndexes()
 	ownedInputsByIndex := args.ownedInputs()
 	inputIndexes := ownedInputIndexes
 
@@ -80,7 +89,7 @@ func (w *Wallet) BlindPsetWithOwnedInputs(
 		return "", err
 	}
 
-	outputIndexesToBlind := w.getOutputIndexesToBlind(ptx, inputIndexes)
+	outputIndexesToBlind := getOutputIndexesToBlind(ptx, inputIndexes)
 	ownedInputs, err := blindingGenerator.UnblindInputs(ptx, inputIndexes)
 	if err != nil {
 		return "", err
@@ -112,6 +121,7 @@ func (w *Wallet) BlindPsetWithOwnedInputs(
 
 type BlindPsetWithMasterKeyArgs struct {
 	PsetBase64        string
+	BlindingMasterKey []byte
 	ExtraBlindingKeys map[string][]byte
 	LastBlinder       bool
 }
@@ -122,6 +132,9 @@ func (a BlindPsetWithMasterKeyArgs) validate() error {
 	}
 	if _, err := psetv2.NewPsetFromBase64(a.PsetBase64); err != nil {
 		return err
+	}
+	if len(a.BlindingMasterKey) <= 0 {
+		return ErrMissingBlindingMasterKey
 	}
 	return nil
 }
@@ -149,7 +162,7 @@ func (a BlindPsetWithMasterKeyArgs) inputIndexes() ([]uint32, []uint32) {
 	return ownedIns, notOwnedIns
 }
 
-func (w *Wallet) BlindPsetWithMasterKey(
+func BlindPsetWithMasterKey(
 	args BlindPsetWithMasterKeyArgs,
 ) (string, error) {
 	if err := args.validate(); err != nil {
@@ -157,9 +170,12 @@ func (w *Wallet) BlindPsetWithMasterKey(
 	}
 
 	ptx, _ := psetv2.NewPsetFromBase64(args.PsetBase64)
-	ownedInputIndexes, notOwnedInputIndexes := args.inputIndexes()
+	if !ptx.NeedsBlinding() {
+		return args.PsetBase64, nil
+	}
 
-	extraInputs, err := w.unblindNotOwnedInputs(
+	ownedInputIndexes, notOwnedInputIndexes := args.inputIndexes()
+	extraInputs, err := unblindNotOwnedInputs(
 		ptx, args.ExtraBlindingKeys, notOwnedInputIndexes,
 	)
 	if err != nil {
@@ -168,7 +184,7 @@ func (w *Wallet) BlindPsetWithMasterKey(
 
 	blindingValidator := confidential.NewZKPValidator()
 	blindingGenerator, err := confidential.NewZKPGeneratorFromMasterBlindingKey(
-		w.blindingMasterKey, nil,
+		args.BlindingMasterKey, nil,
 	)
 	if err != nil {
 		return "", err
@@ -184,7 +200,7 @@ func (w *Wallet) BlindPsetWithMasterKey(
 		inputIndexes = append(inputIndexes, notOwnedInputIndexes...)
 	}
 
-	outputIndexesToBlind := w.getOutputIndexesToBlind(
+	outputIndexesToBlind := getOutputIndexesToBlind(
 		ptx, inputIndexes,
 	)
 
@@ -215,7 +231,7 @@ func (w *Wallet) BlindPsetWithMasterKey(
 	return ptx.ToBase64()
 }
 
-func (w *Wallet) unblindNotOwnedInputs(
+func unblindNotOwnedInputs(
 	ptx *psetv2.Pset, blindKeysByScript map[string][]byte, inputIndexes []uint32,
 ) ([]psetv2.OwnedInput, error) {
 	if len(blindKeysByScript) == 0 {
@@ -245,7 +261,7 @@ func (w *Wallet) unblindNotOwnedInputs(
 	return revealedOuts, nil
 }
 
-func (w *Wallet) getOutputIndexesToBlind(
+func getOutputIndexesToBlind(
 	ptx *psetv2.Pset, ownedInputIndexes []uint32,
 ) []uint32 {
 	ownedOuts := make([]uint32, 0)

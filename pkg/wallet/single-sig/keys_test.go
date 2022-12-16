@@ -1,13 +1,13 @@
-package wallet_test
+package singlesig_test
 
 import (
 	"encoding/hex"
 	"testing"
 
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
+	wallet "github.com/equitas-foundation/bamp-ocean/pkg/wallet/single-sig"
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/go-elements/network"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 func TestAccountExtendedKey(t *testing.T) {

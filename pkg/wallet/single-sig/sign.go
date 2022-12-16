@@ -1,4 +1,4 @@
-package wallet
+package singlesig
 
 import (
 	"encoding/hex"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/equitas-foundation/bamp-ocean/pkg/wallet"
+	path "github.com/equitas-foundation/bamp-ocean/pkg/wallet/derivation-path"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/payment"
 	"github.com/vulpemventures/go-elements/psetv2"
@@ -14,7 +16,7 @@ import (
 
 type SignTransactionArgs struct {
 	TxHex        string
-	InputsToSign map[uint32]Input
+	InputsToSign map[uint32]wallet.Input
 	SigHashType  txscript.SigHashType
 }
 
@@ -36,7 +38,7 @@ func (a SignTransactionArgs) validate() error {
 				"invalid input %d: %s", index, ErrMissingDerivationPath,
 			)
 		}
-		derivationPath, err := ParseDerivationPath(in.DerivationPath)
+		derivationPath, err := path.ParseDerivationPath(in.DerivationPath)
 		if err != nil {
 			return fmt.Errorf(
 				"invalid derivation path '%s' for input %d: %v",
@@ -94,19 +96,19 @@ func (a SignPsetArgs) validate() error {
 		return ErrMissingDerivationPaths
 	}
 
-	for script, path := range a.DerivationPathMap {
-		derivationPath, err := ParseDerivationPath(path)
+	for script, pathStr := range a.DerivationPathMap {
+		derivationPath, err := path.ParseDerivationPath(pathStr)
 		if err != nil {
 			return fmt.Errorf(
 				"invalid derivation path '%s' for script '%s': %v",
-				path, script, err,
+				pathStr, script, err,
 			)
 		}
 		err = checkDerivationPath(derivationPath)
 		if err != nil {
 			return fmt.Errorf(
 				"invalid derivation path '%s' for script '%s': %v",
-				path, script, err,
+				pathStr, script, err,
 			)
 		}
 	}
@@ -146,7 +148,7 @@ func (w *Wallet) SignPset(args SignPsetArgs) (string, error) {
 }
 
 func (w *Wallet) signTxInput(
-	tx *transaction.Transaction, inIndex uint32, input Input,
+	tx *transaction.Transaction, inIndex uint32, input wallet.Input,
 	sighashType txscript.SigHashType,
 ) error {
 	prvkey, pubkey, err := w.DeriveSigningKeyPair(DeriveSigningKeyPairArgs{
