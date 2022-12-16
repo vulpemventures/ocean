@@ -45,6 +45,9 @@ service AccountService {
 message CreateAccountBIP44Request{
   // Name of the account.
   string name = 1;
+  // List of xpubs of other parties involved in the multisg along with ocean and
+  // the cosigner it interacts with.
+  repeated string extra_xpubs = 2;
 }
 message CreateAccountBIP44Response{
   // Account name.
