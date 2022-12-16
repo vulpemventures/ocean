@@ -16,17 +16,12 @@ clean:
 	@echo "Cleaning..."
 	@go clean
 
-docker-proto-lint:
-	@docker run --rm --volume "$(shell pwd):/workspace" --workdir /workspace bufbuild/buf lint
-
-docker-proto: docker-proto-lint
+docker-proto:
 	@docker run --rm --volume "$(shell pwd):/workspace" --workdir /workspace bufbuild/buf generate
 
-proto: proto-lint
-	@buf generate
-
-proto-lint:
-	@buf lint
+proto:
+	@buf generate buf.build/equitas-foundation/bamp
+	@buf generate buf.build/vulpemventures/ocean
 
 fmt:
 	@echo "Gofmt..."
@@ -34,12 +29,14 @@ fmt:
 
 run: clean
 	@echo "Running oceand..."
-	@export OCEAN_NETWORK=regtest; \
-	export OCEAN_LOG_LEVEL=5; \
-	export OCEAN_NO_TLS=true; \
-	export OCEAN_STATS_INTERVAL=120; \
-	export OCEAN_ELECTRUM_URL=tcp://localhost:50001; \
-	export OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
+	@export BAMP_OCEAN_NETWORK=regtest; \
+	export BAMP_OCEAN_LOG_LEVEL=5; \
+	export BAMP_OCEAN_NO_TLS=true; \
+	export BAMP_OCEAN_STATS_INTERVAL=120; \
+	export BAMP_OCEAN_ELECTRUM_URL=tcp://localhost:50001; \
+	export BAMP_OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
+	export BAMP_OCEAN_COSIGNER_ADDR=localhost:8831; \
+	export BAMP_OCEAN_DB_PORT=5433; \
 	go run ./cmd/oceand
 
 test: fmt

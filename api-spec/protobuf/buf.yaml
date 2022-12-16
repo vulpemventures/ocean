@@ -1,9 +1,0 @@
-version: v1
-name: buf.build/vulpemventures/ocean
-breaking:
-  use:
-    - FILE
-  ignore_unstable_packages: true
-lint:
-  use:
-    - DEFAULT
