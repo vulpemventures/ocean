@@ -1,4 +1,9 @@
-package wallet
+package singlesig
+
+import (
+	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
+	"github.com/vulpemventures/ocean/pkg/wallet/mnemonic"
+)
 
 // Wallet is the data structure representing an HD wallet of an Elements based
 // network.
@@ -16,10 +21,12 @@ func (a NewWalletArgs) validate() error {
 	if a.RootPath == "" {
 		return ErrMissingRootPath
 	}
-	if _, err := ParseRootDerivationPath(a.RootPath); err != nil {
+	if _, err := path.ParseRootDerivationPath(a.RootPath); err != nil {
 		return err
 	}
-	if _, err := NewMnemonic(NewMnemonicArgs{EntropySize: 256}); err != nil {
+	if _, err := mnemonic.NewMnemonic(mnemonic.NewMnemonicArgs{
+		EntropySize: 256,
+	}); err != nil {
 		return err
 	}
 	return nil
@@ -31,9 +38,11 @@ func NewWallet(args NewWalletArgs) (*Wallet, error) {
 		return nil, err
 	}
 
-	mnemonic, _ := NewMnemonic(NewMnemonicArgs{EntropySize: 256})
+	mnemonic, _ := mnemonic.NewMnemonic(mnemonic.NewMnemonicArgs{
+		EntropySize: 256,
+	})
 	seed := generateSeedFromMnemonic(mnemonic)
-	rootPath, _ := ParseRootDerivationPath(args.RootPath)
+	rootPath, _ := path.ParseRootDerivationPath(args.RootPath)
 	signingMasterKey, err := generateSigningMasterKey(seed, rootPath)
 	if err != nil {
 		return nil, err
@@ -59,7 +68,7 @@ func (a NewWalletFromMnemonicArgs) validate() error {
 	if a.RootPath == "" {
 		return ErrMissingRootPath
 	}
-	if _, err := ParseRootDerivationPath(a.RootPath); err != nil {
+	if _, err := path.ParseRootDerivationPath(a.RootPath); err != nil {
 		return err
 	}
 	if len(a.Mnemonic) == 0 {
@@ -79,7 +88,7 @@ func NewWalletFromMnemonic(args NewWalletFromMnemonicArgs) (*Wallet, error) {
 	}
 
 	seed := generateSeedFromMnemonic(args.Mnemonic)
-	rootPath, _ := ParseRootDerivationPath(args.RootPath)
+	rootPath, _ := path.ParseRootDerivationPath(args.RootPath)
 	signingMasterKey, err := generateSigningMasterKey(seed, rootPath)
 	if err != nil {
 		return nil, err

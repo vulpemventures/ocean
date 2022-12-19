@@ -9,7 +9,8 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 	"github.com/vulpemventures/go-elements/network"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
+	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
+	singlesig "github.com/vulpemventures/ocean/pkg/wallet/single-sig"
 )
 
 const (
@@ -85,7 +86,7 @@ func NewWallet(
 		return nil, ErrWalletInvalidNetwork
 	}
 
-	if _, err := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	if _, err := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: rootPath,
 		Mnemonic: mnemonic,
 	}); err != nil {
@@ -150,7 +151,7 @@ func (w *Wallet) GetMasterBlindingKey() (string, error) {
 	}
 
 	mnemonic := MnemonicStore.Get()
-	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
@@ -232,14 +233,14 @@ func (w *Wallet) CreateAccount(name string, birthdayBlock uint32) (*Account, err
 
 	mnemonic := MnemonicStore.Get()
 
-	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
-	xpub, _ := ww.AccountExtendedPublicKey(wallet.ExtendedKeyArgs{Account: w.NextAccountIndex})
+	xpub, _ := ww.AccountExtendedPublicKey(singlesig.ExtendedKeyArgs{Account: w.NextAccountIndex})
 
 	accountKey := AccountKey{name, w.NextAccountIndex}
-	derivationPath, _ := wallet.ParseDerivationPath(w.RootPath)
+	derivationPath, _ := path.ParseDerivationPath(w.RootPath)
 	derivationPath = append(derivationPath, w.NextAccountIndex+hdkeychain.HardenedKeyStart)
 	bdayBlock := w.BirthdayBlockHeight
 	if birthdayBlock > bdayBlock {
@@ -335,7 +336,7 @@ func (w *Wallet) deriveNextAddressForAccount(
 	}
 
 	mnemonic, _ := w.GetMnemonic()
-	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
@@ -349,7 +350,7 @@ func (w *Wallet) deriveNextAddressForAccount(
 		account.Info.Key.Index, chainIndex, addressIndex,
 	)
 	net := networkFromName(w.NetworkName)
-	addr, script, err := ww.DeriveConfidentialAddress(wallet.DeriveConfidentialAddressArgs{
+	addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
 		DerivationPath: derivationPath,
 		Network:        net,
 	})
@@ -357,7 +358,7 @@ func (w *Wallet) deriveNextAddressForAccount(
 		return nil, err
 	}
 
-	blindingKey, _, _ := ww.DeriveBlindingKeyPair(wallet.DeriveBlindingKeyPairArgs{
+	blindingKey, _, _ := ww.DeriveBlindingKeyPair(singlesig.DeriveBlindingKeyPairArgs{
 		Script: script,
 	})
 
@@ -387,7 +388,7 @@ func (w *Wallet) allDerivedAddressesForAccount(
 
 	net := networkFromName(w.NetworkName)
 	mnemonic, _ := w.GetMnemonic()
-	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
@@ -402,14 +403,14 @@ func (w *Wallet) allDerivedAddressesForAccount(
 			"%d'/%d/%d",
 			account.Info.Key.Index, externalChain, i,
 		)
-		addr, script, err := ww.DeriveConfidentialAddress(wallet.DeriveConfidentialAddressArgs{
+		addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
 			DerivationPath: derivationPath,
 			Network:        net,
 		})
 		if err != nil {
 			return nil, err
 		}
-		key, _, _ := ww.DeriveBlindingKeyPair(wallet.DeriveBlindingKeyPairArgs{
+		key, _, _ := ww.DeriveBlindingKeyPair(singlesig.DeriveBlindingKeyPairArgs{
 			Script: script,
 		})
 		info = append(info, AddressInfo{
@@ -426,14 +427,14 @@ func (w *Wallet) allDerivedAddressesForAccount(
 				"%d'/%d/%d",
 				account.Info.Key.Index, internalChain, i,
 			)
-			addr, script, err := ww.DeriveConfidentialAddress(wallet.DeriveConfidentialAddressArgs{
+			addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
 				DerivationPath: derivationPath,
 				Network:        net,
 			})
 			if err != nil {
 				return nil, err
 			}
-			key, _, _ := ww.DeriveBlindingKeyPair(wallet.DeriveBlindingKeyPairArgs{
+			key, _, _ := ww.DeriveBlindingKeyPair(singlesig.DeriveBlindingKeyPairArgs{
 				Script: script,
 			})
 			info = append(info, AddressInfo{

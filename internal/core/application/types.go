@@ -10,7 +10,7 @@ import (
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
 	ss_selector "github.com/vulpemventures/ocean/internal/infrastructure/coin-selector/smallest-subset"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
+	wallet "github.com/vulpemventures/ocean/pkg/wallet"
 )
 
 const (

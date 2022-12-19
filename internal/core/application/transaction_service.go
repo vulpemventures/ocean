@@ -16,7 +16,8 @@ import (
 	"github.com/vulpemventures/go-elements/transaction"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
+	wallet "github.com/vulpemventures/ocean/pkg/wallet"
+	singlesig "github.com/vulpemventures/ocean/pkg/wallet/single-sig"
 )
 
 var (
@@ -169,7 +170,7 @@ func (ts *TransactionService) SignTransaction(
 		return "", err
 	}
 
-	return w.SignTransaction(wallet.SignTransactionArgs{
+	return w.SignTransaction(singlesig.SignTransactionArgs{
 		TxHex:        txHex,
 		InputsToSign: inputs,
 		SigHashType:  txscript.SigHashType(sighashType),
@@ -200,8 +201,7 @@ func (ts *TransactionService) BroadcastTransaction(
 func (ts *TransactionService) CreatePset(
 	ctx context.Context, inputs Inputs, outputs Outputs,
 ) (string, error) {
-	w, err := ts.getWallet(ctx)
-	if err != nil {
+	if _, err := ts.getWallet(ctx); err != nil {
 		return "", err
 	}
 
@@ -214,7 +214,7 @@ func (ts *TransactionService) CreatePset(
 		return "", fmt.Errorf("no utxos found with given keys")
 	}
 
-	return w.CreatePset(wallet.CreatePsetArgs{
+	return wallet.CreatePset(wallet.CreatePsetArgs{
 		Inputs:  walletInputs,
 		Outputs: outputs.toWalletOutputs(),
 	})
@@ -223,8 +223,7 @@ func (ts *TransactionService) CreatePset(
 func (ts *TransactionService) UpdatePset(
 	ctx context.Context, ptx string, inputs Inputs, outputs Outputs,
 ) (string, error) {
-	w, err := ts.getWallet(ctx)
-	if err != nil {
+	if _, err := ts.getWallet(ctx); err != nil {
 		return "", err
 	}
 
@@ -237,7 +236,7 @@ func (ts *TransactionService) UpdatePset(
 		return "", fmt.Errorf("no utxos found with given keys")
 	}
 
-	return w.UpdatePset(wallet.UpdatePsetArgs{
+	return wallet.UpdatePset(wallet.UpdatePsetArgs{
 		PsetBase64: ptx,
 		Inputs:     walletInputs,
 		Outputs:    outputs.toWalletOutputs(),
@@ -248,8 +247,7 @@ func (ts *TransactionService) BlindPset(
 	ctx context.Context,
 	ptx string, extraUnblindedInputs []UnblindedInput, lastBlinder bool,
 ) (string, error) {
-	w, err := ts.getWallet(ctx)
-	if err != nil {
+	if _, err := ts.getWallet(ctx); err != nil {
 		return "", err
 	}
 
@@ -285,7 +283,7 @@ func (ts *TransactionService) BlindPset(
 		}
 	}
 
-	return w.BlindPsetWithOwnedInputs(
+	return wallet.BlindPsetWithOwnedInputs(
 		wallet.BlindPsetWithOwnedInputsArgs{
 			PsetBase64:         ptx,
 			OwnedInputsByIndex: walletInputs,
@@ -312,7 +310,7 @@ func (ts *TransactionService) SignPset(
 		derivationPaths[script] = in.DerivationPath
 	}
 
-	return w.SignPset(wallet.SignPsetArgs{
+	return w.SignPset(singlesig.SignPsetArgs{
 		PsetBase64:        ptx,
 		DerivationPathMap: derivationPaths,
 		SigHashType:       txscript.SigHashType(sighashType),
@@ -534,7 +532,7 @@ func (ts *TransactionService) Transfer(
 		Amount: feeAmount,
 	})
 
-	ptx, err := w.CreatePset(wallet.CreatePsetArgs{
+	ptx, err := wallet.CreatePset(wallet.CreatePsetArgs{
 		Inputs:  inputs,
 		Outputs: outs,
 	})
@@ -542,7 +540,7 @@ func (ts *TransactionService) Transfer(
 		return "", err
 	}
 
-	blindedPtx, err := w.BlindPsetWithOwnedInputs(
+	blindedPtx, err := wallet.BlindPsetWithOwnedInputs(
 		wallet.BlindPsetWithOwnedInputsArgs{
 			PsetBase64:         ptx,
 			OwnedInputsByIndex: inputsByIndex,
@@ -553,7 +551,7 @@ func (ts *TransactionService) Transfer(
 		return "", err
 	}
 
-	signedPtx, err := w.SignPset(wallet.SignPsetArgs{
+	signedPtx, err := w.SignPset(singlesig.SignPsetArgs{
 		PsetBase64:        blindedPtx,
 		DerivationPathMap: account.DerivationPathByScript,
 	})
@@ -729,7 +727,7 @@ func (ts *TransactionService) spawnUtxoUnlocker(utxoKeys []domain.UtxoKey) {
 
 func (ts *TransactionService) getWallet(
 	ctx context.Context,
-) (*wallet.Wallet, error) {
+) (*singlesig.Wallet, error) {
 	w, err := ts.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
@@ -739,7 +737,7 @@ func (ts *TransactionService) getWallet(
 		return nil, err
 	}
 
-	return wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	return singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: ts.rootPath,
 		Mnemonic: mnemonic,
 	})
