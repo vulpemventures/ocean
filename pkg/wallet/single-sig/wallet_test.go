@@ -1,11 +1,11 @@
-package wallet_test
+package singlesig_test
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
+	wallet "github.com/vulpemventures/ocean/pkg/wallet/single-sig"
 )
 
 const (

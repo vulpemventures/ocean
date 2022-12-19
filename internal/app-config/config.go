@@ -2,7 +2,6 @@ package appconfig
 
 import (
 	"fmt"
-	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -15,7 +14,8 @@ import (
 	neutrino_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/neutrino"
 	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/inmemory"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
+	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
+	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
 )
 
 // AppConfig is the struct holding all configuration options for
@@ -86,7 +86,7 @@ func (c *AppConfig) Validate() error {
 	if c.RootPath == "" {
 		return fmt.Errorf("missing root path")
 	}
-	if _, err := wallet.ParseRootDerivationPath(c.RootPath); err != nil {
+	if _, err := path.ParseRootDerivationPath(c.RootPath); err != nil {
 		return err
 	}
 

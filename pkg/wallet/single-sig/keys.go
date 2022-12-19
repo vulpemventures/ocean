@@ -1,4 +1,4 @@
-package wallet
+package singlesig
 
 import (
 	"encoding/hex"
@@ -9,6 +9,7 @@ import (
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/go-elements/payment"
 	"github.com/vulpemventures/go-elements/slip77"
+	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
 )
 
 type ExtendedKeyArgs struct {
@@ -82,7 +83,7 @@ type DeriveSigningKeyPairArgs struct {
 }
 
 func (a DeriveSigningKeyPairArgs) validate() error {
-	derivationPath, err := ParseDerivationPath(a.DerivationPath)
+	derivationPath, err := path.ParseDerivationPath(a.DerivationPath)
 	if err != nil {
 		return err
 	}
@@ -108,7 +109,7 @@ func (w *Wallet) DeriveSigningKeyPair(args DeriveSigningKeyPairArgs) (
 		return nil, nil, err
 	}
 
-	derivationPath, _ := ParseDerivationPath(args.DerivationPath)
+	derivationPath, _ := path.ParseDerivationPath(args.DerivationPath)
 	for _, step := range derivationPath {
 		hdNode, err = hdNode.Derive(step)
 		if err != nil {
@@ -169,7 +170,7 @@ type DeriveConfidentialAddressArgs struct {
 }
 
 func (a DeriveConfidentialAddressArgs) validate() error {
-	derivationPath, err := ParseDerivationPath(a.DerivationPath)
+	derivationPath, err := path.ParseDerivationPath(a.DerivationPath)
 	if err != nil {
 		return err
 	}
@@ -236,7 +237,7 @@ func (w *Wallet) extendedPrivateKey(
 	return masterKey.Derive(step)
 }
 
-func checkDerivationPath(path DerivationPath) error {
+func checkDerivationPath(path path.DerivationPath) error {
 	if len(path) != 3 {
 		return ErrInvalidDerivationPathLength
 	}

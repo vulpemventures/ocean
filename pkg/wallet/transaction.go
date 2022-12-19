@@ -3,122 +3,16 @@ package wallet
 import (
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/vulpemventures/go-elements/address"
-	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/psetv2"
-	"github.com/vulpemventures/go-elements/transaction"
 )
 
 var (
-	// DummyFeeAmount is used as the fee amount to cover when coin-selecting the
-	// inputs to use to cover the true fee amount, which, instead, is calculated
-	// with more precision from the tx size.
-	// The real fee amount strictly depends on the number of tx inputs and
-	// outputs, and even input types.
-	// This value is thought for transactions on TDEX network, whose are composed
-	// by at least 3 inputs and 6 outputs.
-	// If all inputs are wrapped or native segwit, is shouls be unlikely for the
-	// tx virtual size to be higher than 700 vB/sat, taking into account that
-	// this pkg supports ONLY native segwit scripts/addresses.
-	// For any other case this value can be tweaked at will.
-	DummyFeeAmount uint64 = 700
+	ErrMissingPset       = fmt.Errorf("missing pset base64")
+	ErrMissingInputs     = fmt.Errorf("at least one input is mandatory to create a partial transaction with one or more confidential outputs")
+	ErrInvalidSignatures = fmt.Errorf("transaction contains invalid signature(s)")
+
+	DummyFeeAmount = uint64(700)
 )
-
-// Input is the data structure representing an input to be added to a partial
-// transaction, therefore including the previous outpoint as long as all the
-// info about the prevout itself (and the derivation path generating its script
-// as extra info).
-type Input struct {
-	TxID            string
-	TxIndex         uint32
-	Value           uint64
-	Asset           string
-	Script          []byte
-	ValueBlinder    []byte
-	AssetBlinder    []byte
-	ValueCommitment []byte
-	AssetCommitment []byte
-	Nonce           []byte
-	RangeProof      []byte
-	SurjectionProof []byte
-	DerivationPath  string
-}
-
-func (i Input) validate() error {
-	if i.TxID == "" {
-		return ErrInputMissingTxid
-	}
-	buf, err := elementsutil.TxIDToBytes(i.TxID)
-	if err != nil {
-		return err
-	}
-	if len(buf) != 32 {
-		return ErrInputInvalidTxid
-	}
-	return nil
-}
-
-func (i Input) prevout() *transaction.TxOutput {
-	value := i.ValueCommitment
-	if len(value) == 0 {
-		value, _ = elementsutil.ValueToBytes(i.Value)
-	}
-	asset := i.AssetCommitment
-	if len(asset) == 0 {
-		asset, _ = elementsutil.AssetHashToBytes(i.Asset)
-	}
-	nonce := i.Nonce
-	if len(nonce) == 0 {
-		nonce = make([]byte, 1)
-	}
-	return &transaction.TxOutput{
-		Asset:  asset,
-		Value:  value,
-		Script: i.Script,
-		Nonce:  nonce,
-	}
-}
-
-func (i Input) scriptType() int {
-	return scriptTypes[address.GetScriptType(i.Script)]
-}
-
-// Output is the data structure representing an output to be added to a partial
-// transaction, therefore inclusing asset, amount and address.
-type Output psetv2.OutputArgs
-
-func (o Output) validate() error {
-	if o.Asset == "" {
-		return ErrOutputMissingAsset
-	}
-	asset, err := elementsutil.AssetHashToBytes(o.Asset)
-	if err != nil {
-		return err
-	}
-	if len(asset) != 33 {
-		return ErrOutputInvalidAsset
-	}
-	if len(o.Script) > 0 {
-		if _, err := address.ParseScript(o.Script); err != nil {
-			return ErrOutputInvalidScript
-		}
-	}
-	if len(o.BlindingKey) > 0 {
-		if _, err := btcec.ParsePubKey(o.BlindingKey); err != nil {
-			return ErrOutputInvalidBlindingKey
-		}
-	}
-	return nil
-}
-
-func (o Output) isConfidential() bool {
-	return len(o.BlindingKey) > 0
-}
-
-func (o Output) scriptSize() int {
-	return varSliceSerializeSize(o.Script)
-}
 
 type CreatePsetArgs struct {
 	Inputs  []Input
@@ -127,16 +21,16 @@ type CreatePsetArgs struct {
 
 func (a CreatePsetArgs) validate() error {
 	for i, in := range a.Inputs {
-		if err := in.validate(); err != nil {
+		if err := in.Validate(); err != nil {
 			return fmt.Errorf("invalid input %d: %s", i, err)
 		}
 	}
 
 	for i, out := range a.Outputs {
-		if err := out.validate(); err != nil {
+		if err := out.Validate(); err != nil {
 			return fmt.Errorf("invalid output %d: %s", i, err)
 		}
-		if out.isConfidential() && len(a.Inputs) == 0 {
+		if out.IsConfidential() && len(a.Inputs) == 0 {
 			return ErrMissingInputs
 		}
 	}
@@ -164,7 +58,7 @@ func (a CreatePsetArgs) outputs() []psetv2.OutputArgs {
 }
 
 // CreatePset creates a new partial transaction with given inputs and outputs.
-func (w *Wallet) CreatePset(args CreatePsetArgs) (string, error) {
+func CreatePset(args CreatePsetArgs) (string, error) {
 	if err := args.validate(); err != nil {
 		return "", err
 	}
@@ -179,10 +73,13 @@ func (w *Wallet) CreatePset(args CreatePsetArgs) (string, error) {
 		return "", err
 	}
 	for i, in := range args.Inputs {
-		prevout := in.prevout()
+		prevout := in.Prevout()
 		updater.AddInWitnessUtxo(i, prevout)
 		if prevout.IsConfidential() {
 			updater.AddInUtxoRangeProof(i, in.RangeProof)
+		}
+		if len(in.RedeemScript) > 0 {
+			updater.AddInWitnessScript(i, in.RedeemScript)
 		}
 	}
 
@@ -204,13 +101,13 @@ func (a UpdatePsetArgs) validate() error {
 	}
 
 	for i, in := range a.Inputs {
-		if err := in.validate(); err != nil {
+		if err := in.Validate(); err != nil {
 			return fmt.Errorf("invalid input %d: %s", i, err)
 		}
 	}
 
 	for i, out := range a.Outputs {
-		if err := out.validate(); err != nil {
+		if err := out.Validate(); err != nil {
 			return fmt.Errorf("invalid output %d: %s", i, err)
 		}
 	}
@@ -238,7 +135,7 @@ func (a UpdatePsetArgs) outputs(blinderIndex uint32) []psetv2.OutputArgs {
 }
 
 // UpdatesPset adds inputs and outputs to the given partial transaction.
-func (w *Wallet) UpdatePset(args UpdatePsetArgs) (string, error) {
+func UpdatePset(args UpdatePsetArgs) (string, error) {
 	if err := args.validate(); err != nil {
 		return "", err
 	}
@@ -255,11 +152,20 @@ func (w *Wallet) UpdatePset(args UpdatePsetArgs) (string, error) {
 	}
 
 	for i, in := range args.Inputs {
-		prevout := in.prevout()
+		prevout := in.Prevout()
 		inIndex := int(nextInputIndex) + i
-		updater.AddInWitnessUtxo(inIndex, prevout)
+		if err := updater.AddInWitnessUtxo(inIndex, prevout); err != nil {
+			return "", err
+		}
 		if prevout.IsConfidential() {
-			updater.AddInUtxoRangeProof(inIndex, in.RangeProof)
+			if err := updater.AddInUtxoRangeProof(inIndex, in.RangeProof); err != nil {
+				return "", err
+			}
+		}
+		if len(in.RedeemScript) > 0 {
+			if err := updater.AddInWitnessScript(inIndex, in.RedeemScript); err != nil {
+				return "", err
+			}
 		}
 	}
 

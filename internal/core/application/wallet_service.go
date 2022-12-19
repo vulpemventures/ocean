@@ -9,7 +9,7 @@ import (
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
+	"github.com/vulpemventures/ocean/pkg/wallet/mnemonic"
 )
 
 // WalletService is responsible for operations related to the managment of the
@@ -59,7 +59,7 @@ func NewWalletService(
 }
 
 func (ws *WalletService) GenSeed(ctx context.Context) ([]string, error) {
-	return wallet.NewMnemonic(wallet.NewMnemonicArgs{})
+	return mnemonic.NewMnemonic(mnemonic.NewMnemonicArgs{})
 }
 
 func (ws *WalletService) CreateWallet(
