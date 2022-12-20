@@ -32,6 +32,7 @@ func TestNewWallet(t *testing.T) {
 			wallet.NewWalletFromMnemonicArgs{
 				RootPath: testRootPath,
 				Mnemonic: mnemonic,
+				Xpubs:    xpubs,
 			},
 		)
 		require.NoError(t, err)

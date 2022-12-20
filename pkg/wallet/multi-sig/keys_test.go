@@ -66,30 +66,22 @@ func TestDeriveSigningKeyPair(t *testing.T) {
 			err  error
 		}{
 			{
-				args: wallet.DeriveSigningKeyPairArgs{"0'"},
-				err:  wallet.ErrInvalidDerivationPathLength,
-			},
-			{
 				args: wallet.DeriveSigningKeyPairArgs{"0'/0"},
-				err:  wallet.ErrInvalidDerivationPathLength,
+				err:  wallet.ErrInvalidDerivationPathAccount,
 			},
 			{
 				args: wallet.DeriveSigningKeyPairArgs{"0'/0/0"},
 				err:  wallet.ErrInvalidDerivationPathLength,
 			},
 			{
-				args: wallet.DeriveSigningKeyPairArgs{"0"},
-				err:  wallet.ErrInvalidDerivationPathLength,
-			},
-			{
 				args: wallet.DeriveSigningKeyPairArgs{"0/0/0"},
-				err:  wallet.ErrInvalidDerivationPathAccount,
+				err:  wallet.ErrInvalidDerivationPathLength,
 			},
 		}
 
 		for _, tt := range tests {
 			privateKey, pubkeys, err := w.DeriveSigningKeyPair(tt.args)
-			require.EqualError(t, tt.err, err.Error())
+			require.EqualError(t, err, tt.err.Error())
 			require.Nil(t, privateKey)
 			require.Empty(t, pubkeys)
 		}
@@ -121,7 +113,10 @@ func TestDeriveBlindingKeyPair(t *testing.T) {
 	t.Run("invalid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{
+			RootPath: testRootPath,
+			Xpubs:    xpubs,
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -151,7 +146,10 @@ func TestDeriveConfidentialAddress(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{
+			RootPath: testRootPath,
+			Xpubs:    xpubs,
+		})
 		require.NoError(t, err)
 
 		args := wallet.DeriveConfidentialAddressArgs{
@@ -168,7 +166,10 @@ func TestDeriveConfidentialAddress(t *testing.T) {
 	t.Run("invalid", func(t *testing.T) {
 		t.Parallel()
 
-		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
+		w, err := wallet.NewWallet(wallet.NewWalletArgs{
+			RootPath: testRootPath,
+			Xpubs:    xpubs,
+		})
 		require.NoError(t, err)
 
 		tests := []struct {
