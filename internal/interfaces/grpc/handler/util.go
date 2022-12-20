@@ -4,10 +4,11 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	pb "github.com/equitas-foundation/bamp-ocean/api-spec/protobuf/gen/go/ocean/v1"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 	"github.com/vulpemventures/go-elements/address"
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
-	"github.com/vulpemventures/ocean/internal/core/application"
-	"github.com/vulpemventures/ocean/internal/core/domain"
+	"github.com/vulpemventures/go-elements/elementsutil"
 )
 
 func parseMnemonic(mnemonic string) (string, error) {
@@ -43,7 +44,7 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 		list = append(list, &pb.AccountInfo{
 			Name:           a.Key.Name,
 			Index:          a.Key.Index,
-			Xpub:           a.Xpub,
+			Xpubs:          a.Xpubs,
 			DerivationPath: a.DerivationPath,
 		})
 	}
@@ -86,12 +87,13 @@ func parseUtxos(utxos []domain.UtxoInfo) []*pb.Utxo {
 			Index:           u.Key().VOut,
 			Asset:           u.Asset,
 			Value:           u.Value,
-			Script:          u.Script,
-			AssetBlinder:    u.AssetBlinder,
-			ValueBlinder:    u.ValueBlinder,
+			Script:          hex.EncodeToString(u.Script),
+			AssetBlinder:    elementsutil.TxIDFromBytes(u.AssetBlinder),
+			ValueBlinder:    elementsutil.TxIDFromBytes(u.ValueBlinder),
 			AccountName:     u.AccountName,
 			SpentStatus:     spentStatus,
 			ConfirmedStatus: confirmedStatus,
+			RedeemScript:    hex.EncodeToString(u.RedeemScript),
 		})
 	}
 	return list

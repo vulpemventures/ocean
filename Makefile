@@ -36,7 +36,6 @@ run: clean
 	export BAMP_OCEAN_ELECTRUM_URL=tcp://localhost:50001; \
 	export BAMP_OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
 	export BAMP_OCEAN_COSIGNER_ADDR=localhost:8831; \
-	export BAMP_OCEAN_DB_PORT=5433; \
 	go run ./cmd/oceand
 
 test: fmt
