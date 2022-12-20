@@ -2,6 +2,7 @@ package grpc_handler
 
 import (
 	"context"
+	"fmt"
 
 	pb "github.com/equitas-foundation/bamp-ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
@@ -57,10 +58,16 @@ func (a *account) CreateAccountMultiSig(
 	}, nil
 }
 
+func (a *account) CreateAccountMultiSig(
+	ctx context.Context, req *pb.CreateAccountMultiSigRequest,
+) (*pb.CreateAccountMultiSigResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (a *account) CreateAccountCustom(
 	ctx context.Context, req *pb.CreateAccountCustomRequest,
 ) (*pb.CreateAccountCustomResponse, error) {
-	return &pb.CreateAccountCustomResponse{}, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (a *account) SetAccountTemplate(

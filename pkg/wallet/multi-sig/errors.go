@@ -17,12 +17,11 @@ var (
 	ErrMissingDerivationPaths   = fmt.Errorf("missing derivation path map")
 	ErrMissingCosignerXpubs     = fmt.Errorf("missing cosigner(s) xpub")
 
-	ErrInvalidEntropySize             = fmt.Errorf("entropy size must be a multiple of 32 in the range [128,256]")
 	ErrInvalidMnemonic                = fmt.Errorf("blinding mnemonic is invalid")
 	ErrInvalidRootPathLen             = fmt.Errorf("invalid root path length, must be in the form \"m/purpose'/coin_type'\"")
 	ErrInvalidRootPath                = fmt.Errorf("root path must contain only hardended values")
 	ErrRequiredAbsoluteDerivationPath = fmt.Errorf("path must be an absolute derivation starting with 'm/'")
-	ErrInvalidDerivationPathLength    = fmt.Errorf("derivation path must be a relative path in the form \"account'/branch/index\"")
+	ErrInvalidDerivationPathLength    = fmt.Errorf("derivation path must be a relative path in the form \"branch/index\"")
 	ErrInvalidDerivationPathAccount   = fmt.Errorf("derivation path for keys must be in format <chain>/<index>, ie 0/0")
 	ErrInvalidSignatures              = fmt.Errorf("transaction contains invalid signature(s)")
 	ErrInvalidXpub                    = fmt.Errorf("invalid cosigner xpub")

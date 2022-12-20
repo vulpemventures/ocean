@@ -407,13 +407,11 @@ func (ts *TransactionService) SignPset(
 				DerivationPathMap: derivationPaths,
 				SigHashType:       txscript.SigHashType(sighashType),
 			})
-			fmt.Println("KHBER", err)
 			if err != nil {
 				return "", err
 			}
 
 			tx, err = ts.cosigner.SignTx(ctx, tx)
-			fmt.Println("FNJAIJT", err)
 			if err != nil {
 				return "", err
 			}

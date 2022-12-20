@@ -17,7 +17,7 @@ func TestEstimateTxSize(t *testing.T) {
 		// https://blockstream.info/liquid/tx/3bf5b21f9b5785de089be6dc4963058b4734bf86a9434c9910ad739dbf742eb0
 		{
 			inputs: []wallet.Input{
-				{Script: h2b("16001483a220425cf9f653175e81e7438f57ba7483e262")},
+				{Script: h2b("a914b0b7baa5b46cad233ccbbefda6929153ae993e2c87"), ScriptSigSize: 23},
 			},
 			outputs: []wallet.Output{
 				{Script: h2b("a914ecc84d1102e0d11f3ab9448e994248291a3582df87"), BlindingKey: make([]byte, 33)},
@@ -28,8 +28,8 @@ func TestEstimateTxSize(t *testing.T) {
 		// https://blockstream.info/liquid/tx/06d4897d60128cccc588ccd5e1d62eba3d23b154ce8954e6b8057356c9eb9fa0
 		{
 			inputs: []wallet.Input{
-				{Script: h2b("1600142fab026d04a9f8534b5ee1c93129a085527ba7b8")},
-				{Script: h2b("160014d33bf8fad507164c32bd28ea6e295fa0f4bfee95")},
+				{Script: h2b("a9141fdb6f09fc61790000ba388b641d76c089ef7ceb87"), ScriptSigSize: 23},
+				{Script: h2b("a914977232a4afbced46958eda6c076cb8d128792b1d87"), ScriptSigSize: 23},
 			},
 			outputs: []wallet.Output{
 				{Script: h2b("00140a169de9d6f628331f312edb2d9ea0db4fe5233f"), BlindingKey: make([]byte, 33)},
