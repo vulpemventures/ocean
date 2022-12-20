@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/go-elements/network"
-	"github.com/vulpemventures/ocean/internal/core/domain"
 )
 
 var (
@@ -21,6 +21,7 @@ var (
 	}
 	regtest           = network.Regtest.Name
 	rootPath          = "m/84'/1'"
+	msRootPath        = "m/48'/1'"
 	password          = "password"
 	newPassword       = "newpassword"
 	wrongPassword     = "wrongpassword"
@@ -29,6 +30,7 @@ var (
 	passwordHash      = "b8affdb68657a0417b09a02dd209585480f5a920"
 	newPasswordHash   = "b34d0f1bcefa7d25beefec121165c765c41550f7"
 	birthdayBlock     = uint32(1)
+	cosignerXpub      = "xpub6EuX7TBEwhFgifQY24vFeMRqeWHGyGCupztDxk7G2ECAqGQ22Fik8E811p8GrM2LfajQzLidXy4qECxhdcxChkjiKhnq2fiVMVjdfSoZQwg"
 )
 
 func TestMain(m *testing.M) {
@@ -106,7 +108,7 @@ func TestNewWallet(t *testing.T) {
 
 		for _, tt := range tests {
 			v, err := domain.NewWallet(
-				tt.mnemonic, tt.password, "", tt.network, tt.birthdayBlock, nil,
+				tt.mnemonic, tt.password, "", "", tt.network, tt.birthdayBlock, nil,
 			)
 			require.Nil(t, v)
 			require.EqualError(t, err, tt.expectedError.Error())
@@ -173,7 +175,97 @@ func TestWalletAccount(t *testing.T) {
 	require.Equal(t, 0, int(account.Info.Key.Index))
 	require.Equal(t, accountName, account.Info.Key.Name)
 	require.Equal(t, "m/84'/1'/0'", account.Info.DerivationPath)
-	require.NotEmpty(t, account.Info.Xpub)
+	require.NotEmpty(t, account.Info.Xpubs)
+
+	err = w.Lock(password)
+	require.NoError(t, err)
+
+	gotAccount, err := w.GetAccount(accountName)
+	require.EqualError(t, domain.ErrWalletLocked, err.Error())
+	require.Nil(t, gotAccount)
+
+	w.Unlock(password)
+
+	gotAccount, err = w.GetAccount(accountName)
+	require.NoError(t, err)
+	require.Exactly(t, *account, *gotAccount)
+
+	err = w.Lock(password)
+	require.NoError(t, err)
+
+	allAddrInfo, err := w.AllDerivedAddressesForAccount(accountName)
+	require.EqualError(t, domain.ErrWalletLocked, err.Error())
+	require.Nil(t, allAddrInfo)
+
+	w.Unlock(password)
+
+	allAddrInfo, err = w.AllDerivedAddressesForAccount(accountName)
+	require.NoError(t, err)
+	require.Empty(t, allAddrInfo)
+
+	err = w.Lock(password)
+	require.NoError(t, err)
+
+	addrInfo, err := w.DeriveNextExternalAddressForAccount(accountName)
+	require.EqualError(t, domain.ErrWalletLocked, err.Error())
+	require.Nil(t, addrInfo)
+
+	w.Unlock(password)
+
+	addrInfo, err = w.DeriveNextExternalAddressForAccount(accountName)
+	require.NoError(t, err)
+	require.NotNil(t, addrInfo)
+	require.NotEmpty(t, addrInfo.Address)
+	require.NotEmpty(t, addrInfo.BlindingKey)
+	require.NotEmpty(t, addrInfo.Script)
+	require.NotEmpty(t, addrInfo.DerivationPath)
+	require.NotEmpty(t, addrInfo.AccountKey.Name)
+
+	allAddrInfo, err = w.AllDerivedAddressesForAccount(accountName)
+	require.NoError(t, err)
+	require.Len(t, allAddrInfo, 1)
+	require.Exactly(t, *addrInfo, allAddrInfo[0])
+
+	err = w.Lock(password)
+	require.NoError(t, err)
+
+	err = w.DeleteAccount(accountName)
+	require.EqualError(t, domain.ErrWalletLocked, err.Error())
+
+	w.Unlock(password)
+
+	err = w.DeleteAccount(accountName)
+	require.NoError(t, err)
+
+	_, err = w.GetAccount(accountName)
+	require.EqualError(t, domain.ErrAccountNotFound, err.Error())
+}
+
+func TestWalletMSAccount(t *testing.T) {
+	w, err := newTestWallet()
+	require.NoError(t, err)
+
+	err = w.Lock(password)
+	require.NoError(t, err)
+
+	accountName := "test1"
+	account, err := w.CreateMSAccount(accountName, cosignerXpub, 0)
+	require.EqualError(t, domain.ErrWalletLocked, err.Error())
+	require.Nil(t, account)
+
+	err = w.Unlock(password)
+	require.NoError(t, err)
+
+	account, err = w.CreateMSAccount(accountName, cosignerXpub, 0)
+	require.NoError(t, err)
+	require.NotNil(t, account)
+	require.Empty(t, account.NextExternalIndex)
+	require.Empty(t, account.NextInternalIndex)
+	require.Empty(t, account.DerivationPathByScript)
+	require.Equal(t, 0, int(account.Info.Key.Index))
+	require.Equal(t, accountName, account.Info.Key.Name)
+	require.Equal(t, "m/48'/1'/0'/2'", account.Info.DerivationPath)
+	require.Len(t, account.Info.Xpubs, 2)
 
 	err = w.Lock(password)
 	require.NoError(t, err)
@@ -240,7 +332,9 @@ func TestWalletAccount(t *testing.T) {
 }
 
 func newTestWallet() (*domain.Wallet, error) {
-	return domain.NewWallet(mnemonic, password, rootPath, regtest, birthdayBlock, nil)
+	return domain.NewWallet(
+		mnemonic, password, rootPath, msRootPath, regtest, birthdayBlock, nil,
+	)
 }
 
 func b2h(buf []byte) string {

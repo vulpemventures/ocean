@@ -1,13 +1,12 @@
 package multisig
 
 import (
-	"bytes"
 	"encoding/hex"
+	"sort"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	path "github.com/equitas-foundation/bamp-ocean/pkg/wallet/derivation-path"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/go-elements/payment"
@@ -80,6 +79,7 @@ func (w *Wallet) DeriveSigningKeyPair(args DeriveSigningKeyPairArgs) (
 	hdNode, _ := hdkeychain.NewKeyFromString(
 		base58.Encode(w.signingMasterKey),
 	)
+	walletXpub, _ := hdNode.Neuter()
 
 	derivationPath, _ := path.ParseDerivationPath(args.DerivationPath)
 	for _, step := range derivationPath {
@@ -91,40 +91,34 @@ func (w *Wallet) DeriveSigningKeyPair(args DeriveSigningKeyPairArgs) (
 		return nil, nil, err
 	}
 
-	pubKeys := []*secp256k1.PublicKey{privateKey.PubKey()}
+	xpubs := []string{walletXpub.String()}
 	for _, xpub := range w.xpubs {
-		hdNode, err := hdkeychain.NewKeyFromString(xpub)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		derivationPath, _ := path.ParseDerivationPath(args.DerivationPath)
-		for _, step := range derivationPath {
-			hdNode, err = hdNode.Derive(step)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-
-		publicKey, err := hdNode.ECPubKey()
-		if err != nil {
-			return nil, nil, err
-		}
-
-		found := false
-		for _, pk := range pubKeys {
-			if bytes.Equal(pk.SerializeCompressed(), publicKey.SerializeCompressed()) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			pubKeys = append(pubKeys, publicKey)
+		if xpub != xpubs[0] {
+			xpubs = append(xpubs, xpub)
 		}
 	}
 
-	prvKey := (*btcec.PrivateKey)(privateKey)
-	return prvKey, pubKeys, nil
+	sort.SliceStable(xpubs, func(i, j int) bool {
+		return xpubs[i] < xpubs[j]
+	})
+
+	pubKeys := make([]*btcec.PublicKey, 0, len(xpubs))
+	for _, xpub := range xpubs {
+		hdNode, _ := hdkeychain.NewKeyFromString(xpub)
+
+		derivationPath, _ := path.ParseDerivationPath(args.DerivationPath)
+		for _, step := range derivationPath {
+			hdNode, _ = hdNode.Derive(step)
+		}
+
+		pubKey, err := hdNode.ECPubKey()
+		if err != nil {
+			return nil, nil, err
+		}
+		pubKeys = append(pubKeys, pubKey)
+	}
+
+	return privateKey, pubKeys, nil
 }
 
 type DeriveBlindingKeyPairArgs struct {

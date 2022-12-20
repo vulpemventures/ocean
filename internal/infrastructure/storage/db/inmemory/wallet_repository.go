@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/vulpemventures/ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 )
 
 var (
@@ -131,13 +131,19 @@ func (r *walletRepository) UpdateWallet(
 }
 
 func (r *walletRepository) CreateAccount(
-	ctx context.Context, accountName string, birthdayBlock uint32,
+	ctx context.Context, accountName, xpub string, birthdayBlock uint32,
 ) (*domain.AccountInfo, error) {
 	var accountInfo *domain.AccountInfo
 
 	if err := r.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
-			account, err := w.CreateAccount(accountName, birthdayBlock)
+			var account *domain.Account
+			var err error
+			if len(xpub) > 0 {
+				account, err = w.CreateMSAccount(accountName, xpub, birthdayBlock)
+			} else {
+				account, err = w.CreateAccount(accountName, birthdayBlock)
+			}
 			if err != nil {
 				return nil, err
 			}

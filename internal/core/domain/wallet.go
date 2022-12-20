@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
+	path "github.com/equitas-foundation/bamp-ocean/pkg/wallet/derivation-path"
+	multisig "github.com/equitas-foundation/bamp-ocean/pkg/wallet/multi-sig"
+	singlesig "github.com/equitas-foundation/bamp-ocean/pkg/wallet/single-sig"
 	"github.com/vulpemventures/go-elements/network"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 const (
@@ -43,6 +46,7 @@ type AddressInfo struct {
 	BlindingKey    []byte
 	DerivationPath string
 	Script         string
+	RedeemScript   []byte
 }
 
 // Wallet is the data structure representing a secure HD wallet, ie. protected
@@ -52,11 +56,13 @@ type Wallet struct {
 	PasswordHash        []byte
 	BirthdayBlockHeight uint32
 	RootPath            string
+	MSRootPath          string
 	NetworkName         string
 	AccountsByKey       map[string]*Account
 	AccountKeysByIndex  map[uint32]string
 	AccountKeysByName   map[string]string
 	NextAccountIndex    uint32
+	NextMSAccountIndex  uint32
 }
 
 // NewWallet encrypts the provided mnemonic with the passhrase and returns a new
@@ -66,7 +72,7 @@ type Wallet struct {
 // The Wallet is locked by default since it is initialized without the mnemonic
 // in plain text.
 func NewWallet(
-	mnemonic []string, password, rootPath, network string,
+	mnemonic []string, password, rootPath, msRootPath, network string,
 	birthdayBlock uint32, accounts []Account,
 ) (*Wallet, error) {
 	if len(mnemonic) <= 0 {
@@ -85,7 +91,7 @@ func NewWallet(
 		return nil, ErrWalletInvalidNetwork
 	}
 
-	if _, err := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	if _, err := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: rootPath,
 		Mnemonic: mnemonic,
 	}); err != nil {
@@ -115,6 +121,7 @@ func NewWallet(
 		PasswordHash:        btcutil.Hash160([]byte(password)),
 		BirthdayBlockHeight: birthdayBlock,
 		RootPath:            rootPath,
+		MSRootPath:          msRootPath,
 		AccountsByKey:       accountsByKey,
 		AccountKeysByIndex:  accountKeysByIndex,
 		AccountKeysByName:   accountKeysByName,
@@ -150,7 +157,7 @@ func (w *Wallet) GetMasterBlindingKey() (string, error) {
 	}
 
 	mnemonic := MnemonicStore.Get()
-	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
@@ -232,20 +239,22 @@ func (w *Wallet) CreateAccount(name string, birthdayBlock uint32) (*Account, err
 
 	mnemonic := MnemonicStore.Get()
 
-	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
-	xpub, _ := ww.AccountExtendedPublicKey(wallet.ExtendedKeyArgs{Account: w.NextAccountIndex})
+	xpub, _ := ww.AccountExtendedPublicKey(singlesig.ExtendedKeyArgs{Account: w.NextAccountIndex})
 
 	accountKey := AccountKey{name, w.NextAccountIndex}
-	derivationPath, _ := wallet.ParseDerivationPath(w.RootPath)
+	derivationPath, _ := path.ParseDerivationPath(w.RootPath)
 	derivationPath = append(derivationPath, w.NextAccountIndex+hdkeychain.HardenedKeyStart)
 	bdayBlock := w.BirthdayBlockHeight
 	if birthdayBlock > bdayBlock {
 		bdayBlock = birthdayBlock
 	}
-	accountInfo := AccountInfo{accountKey, xpub, derivationPath.String()}
+	accountInfo := AccountInfo{
+		accountKey, []string{xpub}, derivationPath.String(),
+	}
 	account := &Account{
 		Info:                   accountInfo,
 		DerivationPathByScript: make(map[string]string),
@@ -259,13 +268,68 @@ func (w *Wallet) CreateAccount(name string, birthdayBlock uint32) (*Account, err
 	return account, nil
 }
 
+// CreateMSAccount creates a new multisig account with the given name and cosigner xpub
+// by preventing collisions with existing ones. If successful, returns the Account created.
+func (w *Wallet) CreateMSAccount(
+	name, cosignerXpub string, birthdayBlock uint32,
+) (*Account, error) {
+	if w.IsLocked() {
+		return nil, ErrWalletLocked
+	}
+	if _, ok := w.AccountKeysByName[name]; ok {
+		return nil, nil
+	}
+	if w.NextMSAccountIndex == hdkeychain.HardenedKeyStart {
+		return nil, ErrWalletMaxAccountNumberReached
+	}
+
+	mnemonic := MnemonicStore.Get()
+
+	derivationPath, _ := path.ParseRootDerivationPath(w.MSRootPath)
+	derivationPath = append(
+		derivationPath,
+		w.NextMSAccountIndex+hdkeychain.HardenedKeyStart, // account'
+		hdkeychain.HardenedKeyStart+2,                    // scriptType'
+	)
+	ww, _ := multisig.NewWalletFromMnemonic(multisig.NewWalletFromMnemonicArgs{
+		RootPath: derivationPath.String(),
+		Mnemonic: mnemonic,
+		Xpubs:    []string{cosignerXpub},
+	})
+
+	accountKey := AccountKey{name, w.NextMSAccountIndex}
+	xpub, _ := ww.AccountExtendedPublicKey()
+	bdayBlock := w.BirthdayBlockHeight
+	if birthdayBlock > bdayBlock {
+		bdayBlock = birthdayBlock
+	}
+	xpubs := []string{cosignerXpub, xpub}
+	sort.SliceStable(xpubs, func(i, j int) bool {
+		return xpubs[i] < xpubs[j]
+	})
+	accountInfo := AccountInfo{
+		accountKey, xpubs, derivationPath.String(),
+	}
+	account := &Account{
+		Info:                   accountInfo,
+		DerivationPathByScript: make(map[string]string),
+		BirthdayBlock:          bdayBlock,
+	}
+
+	w.AccountsByKey[accountKey.String()] = account
+	w.AccountKeysByIndex[accountKey.Index] = accountKey.String()
+	w.AccountKeysByName[accountKey.Name] = accountKey.String()
+	w.NextMSAccountIndex++
+	return account, nil
+}
+
 // GetAccount safely returns an Account identified by the given name.
 func (w *Wallet) GetAccount(accountName string) (*Account, error) {
 	return w.getAccount(accountName)
 }
 
 // DeleteAccount safely removes an Account and all related stored info from the
-// Wallet.
+// singlesig.
 func (w *Wallet) DeleteAccount(accountName string) error {
 	account, err := w.getAccount(accountName)
 	if err != nil {
@@ -334,8 +398,18 @@ func (w *Wallet) deriveNextAddressForAccount(
 		return nil, err
 	}
 
+	if account.IsMultiSig() {
+		return w.deriveNextAddressForMSAccount(account, chainIndex)
+	}
+
+	return w.deriveNextAddressForSSAccount(account, chainIndex)
+}
+
+func (w *Wallet) deriveNextAddressForSSAccount(
+	account *Account, chainIndex int,
+) (*AddressInfo, error) {
 	mnemonic, _ := w.GetMnemonic()
-	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
@@ -349,7 +423,7 @@ func (w *Wallet) deriveNextAddressForAccount(
 		account.Info.Key.Index, chainIndex, addressIndex,
 	)
 	net := networkFromName(w.NetworkName)
-	addr, script, err := ww.DeriveConfidentialAddress(wallet.DeriveConfidentialAddressArgs{
+	addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
 		DerivationPath: derivationPath,
 		Network:        net,
 	})
@@ -357,7 +431,7 @@ func (w *Wallet) deriveNextAddressForAccount(
 		return nil, err
 	}
 
-	blindingKey, _, _ := ww.DeriveBlindingKeyPair(wallet.DeriveBlindingKeyPairArgs{
+	blindingKey, _, _ := ww.DeriveBlindingKeyPair(singlesig.DeriveBlindingKeyPairArgs{
 		Script: script,
 	})
 
@@ -377,6 +451,59 @@ func (w *Wallet) deriveNextAddressForAccount(
 	}, nil
 }
 
+func (w *Wallet) deriveNextAddressForMSAccount(
+	account *Account, chainIndex int,
+) (*AddressInfo, error) {
+	mnemonic, _ := w.GetMnemonic()
+	wallet, _ := multisig.NewWalletFromMnemonic(
+		multisig.NewWalletFromMnemonicArgs{
+			RootPath: account.Info.DerivationPath,
+			Mnemonic: mnemonic,
+			Xpubs:    account.Info.Xpubs,
+		},
+	)
+
+	addressIndex := account.NextExternalIndex
+	if chainIndex == internalChain {
+		addressIndex = account.NextInternalIndex
+	}
+
+	derivationPath := fmt.Sprintf("%d/%d", chainIndex, addressIndex)
+
+	net := networkFromName(w.NetworkName)
+	addr, script, redeemScript, err := wallet.DeriveConfidentialAddress(
+		multisig.DeriveConfidentialAddressArgs{
+			DerivationPath: derivationPath,
+			Network:        net,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	blindingKey, _, _ := wallet.DeriveBlindingKeyPair(
+		multisig.DeriveBlindingKeyPairArgs{
+			Script: script,
+		},
+	)
+
+	account.addDerivationPath(hex.EncodeToString(script), derivationPath)
+	if chainIndex == internalChain {
+		account.incrementInternalIndex()
+	} else {
+		account.incrementExternalIndex()
+	}
+
+	return &AddressInfo{
+		AccountKey:     account.Info.Key,
+		Address:        addr,
+		Script:         hex.EncodeToString(script),
+		BlindingKey:    blindingKey.Serialize(),
+		DerivationPath: derivationPath,
+		RedeemScript:   redeemScript,
+	}, nil
+}
+
 func (w *Wallet) allDerivedAddressesForAccount(
 	accountName string, includeInternals bool,
 ) ([]AddressInfo, error) {
@@ -385,9 +512,18 @@ func (w *Wallet) allDerivedAddressesForAccount(
 		return nil, err
 	}
 
+	if account.IsMultiSig() {
+		return w.allDerivedAddressesForMSAccount(account, includeInternals)
+	}
+	return w.allDerivedAddressesForSSAccount(account, includeInternals)
+}
+
+func (w *Wallet) allDerivedAddressesForSSAccount(
+	account *Account, includeInternals bool,
+) ([]AddressInfo, error) {
 	net := networkFromName(w.NetworkName)
 	mnemonic, _ := w.GetMnemonic()
-	ww, _ := wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
+	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
@@ -402,14 +538,14 @@ func (w *Wallet) allDerivedAddressesForAccount(
 			"%d'/%d/%d",
 			account.Info.Key.Index, externalChain, i,
 		)
-		addr, script, err := ww.DeriveConfidentialAddress(wallet.DeriveConfidentialAddressArgs{
+		addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
 			DerivationPath: derivationPath,
 			Network:        net,
 		})
 		if err != nil {
 			return nil, err
 		}
-		key, _, _ := ww.DeriveBlindingKeyPair(wallet.DeriveBlindingKeyPairArgs{
+		key, _, _ := ww.DeriveBlindingKeyPair(singlesig.DeriveBlindingKeyPairArgs{
 			Script: script,
 		})
 		info = append(info, AddressInfo{
@@ -426,14 +562,14 @@ func (w *Wallet) allDerivedAddressesForAccount(
 				"%d'/%d/%d",
 				account.Info.Key.Index, internalChain, i,
 			)
-			addr, script, err := ww.DeriveConfidentialAddress(wallet.DeriveConfidentialAddressArgs{
+			addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
 				DerivationPath: derivationPath,
 				Network:        net,
 			})
 			if err != nil {
 				return nil, err
 			}
-			key, _, _ := ww.DeriveBlindingKeyPair(wallet.DeriveBlindingKeyPairArgs{
+			key, _, _ := ww.DeriveBlindingKeyPair(singlesig.DeriveBlindingKeyPairArgs{
 				Script: script,
 			})
 			info = append(info, AddressInfo{
@@ -442,6 +578,77 @@ func (w *Wallet) allDerivedAddressesForAccount(
 				BlindingKey:    key.Serialize(),
 				DerivationPath: derivationPath,
 				Script:         hex.EncodeToString(script),
+			})
+		}
+	}
+
+	return info, nil
+}
+
+func (w *Wallet) allDerivedAddressesForMSAccount(
+	account *Account, includeInternals bool,
+) ([]AddressInfo, error) {
+	net := networkFromName(w.NetworkName)
+	mnemonic, _ := w.GetMnemonic()
+	ww, _ := multisig.NewWalletFromMnemonic(multisig.NewWalletFromMnemonicArgs{
+		RootPath: account.Info.DerivationPath,
+		Mnemonic: mnemonic,
+		Xpubs:    account.Info.Xpubs,
+	})
+
+	infoLen := account.NextExternalIndex
+	if includeInternals {
+		infoLen += account.NextInternalIndex
+	}
+	info := make([]AddressInfo, 0, infoLen)
+	for i := 0; i < int(account.NextExternalIndex); i++ {
+		derivationPath := fmt.Sprintf("%d/%d", externalChain, i)
+		addr, script, redeemScript, err := ww.DeriveConfidentialAddress(
+			multisig.DeriveConfidentialAddressArgs{
+				DerivationPath: derivationPath,
+				Network:        net,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		blindingKey, _, _ := ww.DeriveBlindingKeyPair(
+			multisig.DeriveBlindingKeyPairArgs{
+				Script: script,
+			},
+		)
+		info = append(info, AddressInfo{
+			AccountKey:     account.Info.Key,
+			Address:        addr,
+			BlindingKey:    blindingKey.Serialize(),
+			DerivationPath: derivationPath,
+			Script:         hex.EncodeToString(script),
+			RedeemScript:   redeemScript,
+		})
+	}
+	if includeInternals {
+		for i := 0; i < int(account.NextInternalIndex); i++ {
+			derivationPath := fmt.Sprintf("%d/%d", internalChain, i)
+			addr, script, redeemScript, err := ww.DeriveConfidentialAddress(
+				multisig.DeriveConfidentialAddressArgs{
+					DerivationPath: derivationPath,
+					Network:        net,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			blindingKey, _, _ := ww.DeriveBlindingKeyPair(multisig.DeriveBlindingKeyPairArgs{
+				Script: script,
+			})
+			info = append(info, AddressInfo{
+				AccountKey:     account.Info.Key,
+				Address:        addr,
+				BlindingKey:    blindingKey.Serialize(),
+				DerivationPath: derivationPath,
+				Script:         hex.EncodeToString(script),
+				RedeemScript:   redeemScript,
 			})
 		}
 	}

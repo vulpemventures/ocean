@@ -3,18 +3,19 @@ package db_test
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"github.com/vulpemventures/go-elements/network"
-	"github.com/vulpemventures/ocean/internal/core/application"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
-	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/inmemory"
-	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	dbbadger "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/badger"
+	"github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/inmemory"
+	postgresdb "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/postgres"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"github.com/vulpemventures/go-elements/network"
 )
 
 var (
@@ -27,6 +28,7 @@ var (
 	password              = "password"
 	newPassword           = "newPassword"
 	rootPath              = "m/84'/1'"
+	msRootPath            = "m/48'/1'"
 	regtest               = network.Regtest.Name
 	birthdayBlock         = uint32(1)
 	ctx                   = context.Background()
@@ -94,7 +96,7 @@ func testManageWallet(t *testing.T, repo domain.WalletRepository) {
 		require.Nil(t, wallet)
 
 		w, _ := domain.NewWallet(
-			mnemonic, password, rootPath, regtest, birthdayBlock, nil,
+			mnemonic, password, rootPath, msRootPath, regtest, birthdayBlock, nil,
 		)
 		err = repo.CreateWallet(ctx, w)
 		require.NoError(t, err)
@@ -156,11 +158,11 @@ func testManageWalletAccount(t *testing.T, repo domain.WalletRepository) {
 		err := repo.DeleteAccount(ctx, accountName)
 		require.Error(t, err)
 
-		account, err := repo.CreateAccount(ctx, accountName, 0)
+		account, err := repo.CreateAccount(ctx, accountName, "", 0)
 		require.NoError(t, err)
 		require.NotNil(t, account)
 
-		account, err = repo.CreateAccount(ctx, account.Key.Name, 0)
+		account, err = repo.CreateAccount(ctx, account.Key.Name, "", 0)
 		require.Error(t, err)
 		require.Nil(t, account)
 	})

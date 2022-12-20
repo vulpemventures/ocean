@@ -7,17 +7,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	dbbadger "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/badger"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/go-elements/network"
-	"github.com/vulpemventures/ocean/internal/core/application"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
 )
 
 var (
 	rootPath    = "m/84'/1'"
+	msRootPath  = "m/48'/1'"
 	regtest     = &network.Regtest
 	ctx         = context.Background()
 	password    = "password"
@@ -34,6 +35,7 @@ var (
 	buildInfo           = application.BuildInfo{
 		Version: "test", Commit: "none", Date: "unknown",
 	}
+	cosignerXpub = "xpub6EuX7TBEwhFgifQY24vFeMRqeWHGyGCupztDxk7G2ECAqGQ22Fik8E811p8GrM2LfajQzLidXy4qECxhdcxChkjiKhnq2fiVMVjdfSoZQwg"
 )
 
 func TestMain(m *testing.M) {
@@ -235,7 +237,7 @@ func newRepoManagerForExistingWallet() (ports.RepoManager, error) {
 		{
 			Info: domain.AccountInfo{
 				Key:            domain.AccountKey{Name: "test1", Index: 0},
-				Xpub:           "xpub6CvgMkAYP4RFDuozj9Mji9ncsoTiHyf4mFVVJKAHSTeecsR9hwxKa1PkfayopR32SXJRKx1WJJkGjgndyPxhDRpBxJGwzXJCELybhPQxd8Y",
+				Xpubs:          []string{"xpub6CvgMkAYP4RFDuozj9Mji9ncsoTiHyf4mFVVJKAHSTeecsR9hwxKa1PkfayopR32SXJRKx1WJJkGjgndyPxhDRpBxJGwzXJCELybhPQxd8Y"},
 				DerivationPath: "m/84'/0'/0'",
 			},
 			NextExternalIndex: 2,
@@ -251,7 +253,7 @@ func newRepoManagerForExistingWallet() (ports.RepoManager, error) {
 		},
 	}
 	wallet, err := domain.NewWallet(
-		mnemonic, password, rootPath, regtest.Name, birthdayBlockHeight, accounts,
+		mnemonic, password, rootPath, msRootPath, regtest.Name, birthdayBlockHeight, accounts,
 	)
 	if err != nil {
 		return nil, err

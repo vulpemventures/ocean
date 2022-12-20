@@ -4,14 +4,16 @@ CREATE TABLE wallet (
     password_hash bytea NOT NULL,
     birthday_block_height INTEGER NOT NULL,
     root_path VARCHAR(64) NOT NULL,
+    ms_root_path VARCHAR(64) NOT NULL,
     network_name VARCHAR(64) NOT NULL,
-    next_account_index INTEGER NOT NULL
+    next_account_index INTEGER NOT NULL,
+    next_ms_account_index INTEGER NOT NULL
 );
 
 CREATE TABLE account (
     name VARCHAR(50) NOT NULL PRIMARY KEY,
     index INTEGER NOT NULL,
-    xpub VARCHAR(200) NOT NULL,
+    xpubs VARCHAR(200) ARRAY NOT NULL,
     derivation_path VARCHAR(200) NOT NULL,
     next_external_index INTEGER NOT NULL,
     next_internal_index INTEGER NOT NULL,
@@ -46,12 +48,13 @@ CREATE TABLE utxo (
     vout INTEGER NOT NULL,
     value BIGINT NOT NULL,
     asset VARCHAR(64) NOT NULL,
-    value_commitment bytea NOT NULL,
-    asset_commitment bytea NOT NULL,
+    value_commitment bytea,
+    asset_commitment bytea,
     value_blinder bytea NOT NULL,
     asset_blinder bytea NOT NULL,
     script bytea NOT NULL,
-    nonce bytea NOT NULL,
+    redeem_script bytea,
+    nonce bytea,
     range_proof bytea,
     surjection_proof bytea,
     account_name varchar(50) NOT NULL,

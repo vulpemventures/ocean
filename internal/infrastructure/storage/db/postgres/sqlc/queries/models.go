@@ -9,7 +9,7 @@ import ()
 type Account struct {
 	Name              string
 	Index             int32
-	Xpub              string
+	Xpubs             []string
 	DerivationPath    string
 	NextExternalIndex int32
 	NextInternalIndex int32
@@ -46,6 +46,7 @@ type Utxo struct {
 	ValueBlinder        []byte
 	AssetBlinder        []byte
 	Script              []byte
+	RedeemScript        []byte
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
@@ -69,6 +70,8 @@ type Wallet struct {
 	PasswordHash        []byte
 	BirthdayBlockHeight int32
 	RootPath            string
+	MsRootPath          string
 	NetworkName         string
 	NextAccountIndex    int32
+	NextMsAccountIndex  int32
 }

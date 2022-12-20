@@ -220,13 +220,13 @@ func (w *Wallet) signInput(
 	}
 	input := ptx.Inputs[inIndex]
 
-	prvkey, pubkeys, err := w.DeriveSigningKeyPair(DeriveSigningKeyPairArgs{
+	prvkey, _, err := w.DeriveSigningKeyPair(DeriveSigningKeyPairArgs{
 		DerivationPath: derivationPath,
 	})
-
 	if err != nil {
 		return err
 	}
+	pubkey := prvkey.PubKey()
 
 	unsingedTx, err := ptx.UnsignedTx()
 	if err != nil {
@@ -238,15 +238,7 @@ func (w *Wallet) signInput(
 	)
 
 	signature := ecdsa.Sign(prvkey, hashForSignature[:])
-	valid := false
-	for _, pubkey := range pubkeys {
-		if !signature.Verify(hashForSignature[:], pubkey) {
-			continue
-		}
-		valid = true
-		break
-	}
-	if !valid {
+	if !signature.Verify(hashForSignature[:], pubkey) {
 		return fmt.Errorf(
 			"signature verification failed for input %d",
 			inIndex,
@@ -255,6 +247,6 @@ func (w *Wallet) signInput(
 
 	sigWithSigHashType := append(signature.Serialize(), byte(input.SigHashType))
 	return signer.SignInput(
-		inIndex, sigWithSigHashType, pubkeys[0].SerializeCompressed(), nil, input.WitnessScript,
+		inIndex, sigWithSigHashType, pubkey.SerializeCompressed(), nil, input.WitnessScript,
 	)
 }

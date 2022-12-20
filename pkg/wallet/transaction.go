@@ -154,11 +154,18 @@ func UpdatePset(args UpdatePsetArgs) (string, error) {
 	for i, in := range args.Inputs {
 		prevout := in.Prevout()
 		inIndex := int(nextInputIndex) + i
-		updater.AddInWitnessUtxo(inIndex, prevout)
+		if err := updater.AddInWitnessUtxo(inIndex, prevout); err != nil {
+			return "", err
+		}
 		if prevout.IsConfidential() {
-			updater.AddInUtxoRangeProof(inIndex, in.RangeProof)
-			// TODO: use ad hoc methods once supported
-			updater.Pset.Inputs[inIndex].ExplicitAsset = in.Prevout().Asset[1:]
+			if err := updater.AddInUtxoRangeProof(inIndex, in.RangeProof); err != nil {
+				return "", err
+			}
+		}
+		if len(in.RedeemScript) > 0 {
+			if err := updater.AddInWitnessScript(inIndex, in.RedeemScript); err != nil {
+				return "", err
+			}
 		}
 	}
 
