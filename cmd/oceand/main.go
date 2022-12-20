@@ -9,14 +9,14 @@ import (
 
 	_ "net/http/pprof" // #nosec
 
+	appconfig "github.com/equitas-foundation/bamp-ocean/internal/app-config"
+	"github.com/equitas-foundation/bamp-ocean/internal/config"
+	electrum_scanner "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/blockchain-scanner/electrum"
+	postgresdb "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/postgres"
+	"github.com/equitas-foundation/bamp-ocean/internal/interfaces"
+	grpc_interface "github.com/equitas-foundation/bamp-ocean/internal/interfaces/grpc"
+	"github.com/equitas-foundation/bamp-ocean/pkg/profiler"
 	log "github.com/sirupsen/logrus"
-	appconfig "github.com/vulpemventures/ocean/internal/app-config"
-	"github.com/vulpemventures/ocean/internal/config"
-	electrum_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/electrum"
-	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
-	"github.com/vulpemventures/ocean/internal/interfaces"
-	grpc_interface "github.com/vulpemventures/ocean/internal/interfaces/grpc"
-	"github.com/vulpemventures/ocean/pkg/profiler"
 )
 
 var (
@@ -49,6 +49,7 @@ var (
 	dbPort             = config.GetInt(config.DbPortKey)
 	dbName             = config.GetString(config.DbNameKey)
 	migrationSourceURL = config.GetString(config.DbMigrationPath)
+	cosignerAddr       = config.GetString(config.CosignerAddrKey)
 )
 
 func main() {
@@ -85,6 +86,7 @@ func main() {
 		RootPath:              rootPath,
 		Network:               network,
 		UtxoExpiryDuration:    utxoExpiryDuration * time.Second,
+		CosignerAddr:          cosignerAddr,
 		RepoManagerType:       dbType,
 		BlockchainScannerType: bcScannerType,
 		RepoManagerConfig: postgresdb.DbConfig{
