@@ -1,6 +1,6 @@
 package ports
 
-import "github.com/vulpemventures/ocean/internal/core/domain"
+import "github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 
 // CoinSelector is the abstraction for any kind of service intended to return a
 // subset of the given utxos with target asset hash, covering the target amount

@@ -10,8 +10,8 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jackc/pgx/v4/pgxpool"
 
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )

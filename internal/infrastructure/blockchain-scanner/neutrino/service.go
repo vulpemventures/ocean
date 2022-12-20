@@ -13,6 +13,8 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/dgraph-io/badger/v3/options"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
 	log "github.com/sirupsen/logrus"
 	"github.com/timshannon/badgerhold/v4"
 	"github.com/vulpemventures/go-elements/transaction"
@@ -20,8 +22,6 @@ import (
 	"github.com/vulpemventures/neutrino-elements/pkg/node"
 	"github.com/vulpemventures/neutrino-elements/pkg/protocol"
 	"github.com/vulpemventures/neutrino-elements/pkg/repository"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
 )
 
 const (

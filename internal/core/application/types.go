@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	ss_selector "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/coin-selector/smallest-subset"
+	wallet "github.com/equitas-foundation/bamp-ocean/pkg/wallet"
 	"github.com/vulpemventures/go-elements/address"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	ss_selector "github.com/vulpemventures/ocean/internal/infrastructure/coin-selector/smallest-subset"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 const (

@@ -2,8 +2,8 @@ package electrum_scanner
 
 import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 	"github.com/vulpemventures/go-elements/transaction"
-	"github.com/vulpemventures/ocean/internal/core/domain"
 )
 
 type electrumClient interface {

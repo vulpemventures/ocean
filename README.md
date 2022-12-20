@@ -47,12 +47,12 @@ $ make test
 
 ## Release
 
-Precompiled binaries are published with each [release](https://github.com/vulpemventures/ocean/releases).
+Precompiled binaries are published with each [release](https://github.com/equitas-foundation/bamp-ocean/releases).
 
 ## Versioning
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the
-[tags on this repository](https://github.com/vulpemventures/ocean/tags). 
+[tags on this repository](https://github.com/equitas-foundation/bamp-ocean/tags). 
 
 ## License
 

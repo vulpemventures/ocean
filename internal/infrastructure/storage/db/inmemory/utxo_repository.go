@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/vulpemventures/ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 )
 
 type utxoInmemoryStore struct {

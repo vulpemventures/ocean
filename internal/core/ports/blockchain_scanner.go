@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"github.com/vulpemventures/ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 )
 
 // BlockchainScanner is the abstraction for any kind of service representing an

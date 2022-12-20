@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"math"
 
+	pb "github.com/equitas-foundation/bamp-ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/spf13/cobra"
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 )
 
 var (

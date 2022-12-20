@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 	"github.com/stretchr/testify/mock"
-	"github.com/vulpemventures/ocean/internal/core/domain"
 )
 
 // MnemonicStore

@@ -3,11 +3,11 @@ package interfaces
 import (
 	"fmt"
 
-	appconfig "github.com/vulpemventures/ocean/internal/app-config"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	cypher "github.com/vulpemventures/ocean/internal/infrastructure/mnemonic-cypher/aes128"
-	store "github.com/vulpemventures/ocean/internal/infrastructure/mnemonic-store/in-memory"
-	grpc_interface "github.com/vulpemventures/ocean/internal/interfaces/grpc"
+	appconfig "github.com/equitas-foundation/bamp-ocean/internal/app-config"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	cypher "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/mnemonic-cypher/aes128"
+	store "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/mnemonic-store/in-memory"
+	grpc_interface "github.com/equitas-foundation/bamp-ocean/internal/interfaces/grpc"
 )
 
 // Service interface defines the methods that every kind of interface, whether

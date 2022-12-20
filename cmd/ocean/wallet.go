@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/btcsuite/btcd/btcutil"
+	pb "github.com/equitas-foundation/bamp-ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/spf13/cobra"
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 )
 
 var (

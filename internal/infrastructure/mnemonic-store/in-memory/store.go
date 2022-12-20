@@ -3,7 +3,7 @@ package mnemonic_store
 import (
 	"strings"
 
-	"github.com/vulpemventures/ocean/internal/config"
+	"github.com/equitas-foundation/bamp-ocean/internal/config"
 )
 
 const (
