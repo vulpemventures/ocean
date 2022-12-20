@@ -1,16 +1,17 @@
 package application_test
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"math/big"
 	"strings"
 	"sync"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 	"github.com/stretchr/testify/mock"
 	"github.com/vulpemventures/go-elements/address"
-	"github.com/vulpemventures/ocean/internal/core/application"
-	"github.com/vulpemventures/ocean/internal/core/domain"
 )
 
 // ports.BlockchainScanner
@@ -125,6 +126,42 @@ func (m *mockBcScanner) GetUtxos(utxos []domain.Utxo) ([]domain.Utxo, error) {
 
 func (m *mockBcScanner) BroadcastTransaction(txHex string) (string, error) {
 	args := m.Called(txHex)
+	var res string
+	if a := args.Get(0); a != nil {
+		res = a.(string)
+	}
+	return res, args.Error(1)
+}
+
+// ports.Cosigner
+type mockCosigner struct {
+	mock.Mock
+}
+
+func newMockedCosigner() *mockCosigner {
+	return &mockCosigner{}
+}
+
+func (m *mockCosigner) GetXpub(ctx context.Context) (string, error) {
+	args := m.Called(ctx)
+	var res string
+	if a := args.Get(0); a != nil {
+		res = a.(string)
+	}
+	return res, args.Error(1)
+}
+
+func (m *mockCosigner) RegisterMultiSig(
+	ctx context.Context, descriptor string,
+) error {
+	args := m.Called(ctx, descriptor)
+	return args.Error(0)
+}
+
+func (m *mockCosigner) SignTx(
+	ctx context.Context, tx string,
+) (string, error) {
+	args := m.Called(ctx, tx)
 	var res string
 	if a := args.Get(0); a != nil {
 		res = a.(string)

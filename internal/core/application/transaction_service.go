@@ -8,15 +8,17 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	wallet "github.com/equitas-foundation/bamp-ocean/pkg/wallet"
+	multisig "github.com/equitas-foundation/bamp-ocean/pkg/wallet/multi-sig"
+	singlesig "github.com/equitas-foundation/bamp-ocean/pkg/wallet/single-sig"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/go-elements/psetv2"
 	"github.com/vulpemventures/go-elements/transaction"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 var (
@@ -51,6 +53,7 @@ var (
 type TransactionService struct {
 	repoManager        ports.RepoManager
 	bcScanner          ports.BlockchainScanner
+	cosigner           ports.Cosigner
 	network            *network.Network
 	rootPath           string
 	utxoExpiryDuration time.Duration
@@ -60,6 +63,7 @@ type TransactionService struct {
 
 func NewTransactionService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
+	cosigner ports.Cosigner,
 	net *network.Network, rootPath string, utxoExpiryDuration time.Duration,
 ) *TransactionService {
 	logFn := func(format string, a ...interface{}) {
@@ -67,7 +71,7 @@ func NewTransactionService(
 		log.Debugf(format, a...)
 	}
 	svc := &TransactionService{
-		repoManager, bcScanner, net, rootPath, utxoExpiryDuration, logFn,
+		repoManager, bcScanner, cosigner, net, rootPath, utxoExpiryDuration, logFn,
 	}
 	svc.registerHandlerForUtxoEvents()
 	svc.registerHandlerForWalletEvents()
@@ -132,12 +136,13 @@ func (ts *TransactionService) SelectUtxos(
 func (ts *TransactionService) EstimateFees(
 	ctx context.Context, ins Inputs, outs Outputs, millisatsPerByte uint64,
 ) (uint64, error) {
-	if _, err := ts.getWallet(ctx); err != nil {
+	w, err := ts.repoManager.WalletRepository().GetWallet(ctx)
+	if err != nil {
 		return 0, err
 	}
 
 	lockedUtxosOnly := true
-	walletInputs, err := ts.getWalletInputs(ctx, ins, !lockedUtxosOnly)
+	walletInputs, err := ts.getWalletInputs(ctx, w, ins, !lockedUtxosOnly)
 	if err != nil {
 		return 0, err
 	}
@@ -159,21 +164,59 @@ func (ts *TransactionService) EstimateFees(
 func (ts *TransactionService) SignTransaction(
 	ctx context.Context, txHex string, sighashType uint32,
 ) (string, error) {
-	w, err := ts.getWallet(ctx)
+	w, err := ts.repoManager.WalletRepository().GetWallet(ctx)
+	if err != nil {
+		return "", err
+	}
+	mnemonic, err := w.GetMnemonic()
 	if err != nil {
 		return "", err
 	}
 
-	inputs, err := ts.findLockedInputs(ctx, txHex)
+	ssInputs, msInputs, err := ts.findLockedInputs(ctx, w, txHex)
 	if err != nil {
 		return "", err
 	}
 
-	return w.SignTransaction(wallet.SignTransactionArgs{
-		TxHex:        txHex,
-		InputsToSign: inputs,
-		SigHashType:  txscript.SigHashType(sighashType),
-	})
+	tx := txHex
+	if len(ssInputs) > 0 {
+		ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
+			RootPath: ts.rootPath,
+			Mnemonic: mnemonic,
+		})
+		tx, err = ww.SignTransaction(singlesig.SignTransactionArgs{
+			TxHex:        txHex,
+			InputsToSign: ssInputs,
+			SigHashType:  txscript.SigHashType(sighashType),
+		})
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if len(msInputs) > 0 {
+		for _, a := range msInputs {
+			ww, _ := multisig.NewWalletFromMnemonic(multisig.NewWalletFromMnemonicArgs{
+				RootPath: a.account.Info.DerivationPath,
+				Mnemonic: mnemonic,
+				Xpubs:    a.account.Info.Xpubs,
+			})
+			tx, err = ww.SignTransaction(multisig.SignTransactionArgs{
+				TxHex:        tx,
+				InputsToSign: a.inputs,
+				SigHashType:  txscript.SigHashType(sighashType),
+			})
+			if err != nil {
+				return "", err
+			}
+			tx, err = ts.cosigner.SignTx(ctx, tx)
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
+	return tx, nil
 }
 
 func (ts *TransactionService) BroadcastTransaction(
@@ -200,13 +243,13 @@ func (ts *TransactionService) BroadcastTransaction(
 func (ts *TransactionService) CreatePset(
 	ctx context.Context, inputs Inputs, outputs Outputs,
 ) (string, error) {
-	w, err := ts.getWallet(ctx)
+	w, err := ts.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return "", err
 	}
 
 	lockedUtxosOnly := true
-	walletInputs, err := ts.getWalletInputs(ctx, inputs, lockedUtxosOnly)
+	walletInputs, err := ts.getWalletInputs(ctx, w, inputs, lockedUtxosOnly)
 	if err != nil {
 		return "", err
 	}
@@ -214,7 +257,7 @@ func (ts *TransactionService) CreatePset(
 		return "", fmt.Errorf("no utxos found with given keys")
 	}
 
-	return w.CreatePset(wallet.CreatePsetArgs{
+	return wallet.CreatePset(wallet.CreatePsetArgs{
 		Inputs:  walletInputs,
 		Outputs: outputs.toWalletOutputs(),
 	})
@@ -223,13 +266,13 @@ func (ts *TransactionService) CreatePset(
 func (ts *TransactionService) UpdatePset(
 	ctx context.Context, ptx string, inputs Inputs, outputs Outputs,
 ) (string, error) {
-	w, err := ts.getWallet(ctx)
+	w, err := ts.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return "", err
 	}
 
 	lockedInputsOnly := true
-	walletInputs, err := ts.getWalletInputs(ctx, inputs, lockedInputsOnly)
+	walletInputs, err := ts.getWalletInputs(ctx, w, inputs, lockedInputsOnly)
 	if err != nil {
 		return "", err
 	}
@@ -237,7 +280,7 @@ func (ts *TransactionService) UpdatePset(
 		return "", fmt.Errorf("no utxos found with given keys")
 	}
 
-	return w.UpdatePset(wallet.UpdatePsetArgs{
+	return wallet.UpdatePset(wallet.UpdatePsetArgs{
 		PsetBase64: ptx,
 		Inputs:     walletInputs,
 		Outputs:    outputs.toWalletOutputs(),
@@ -248,14 +291,24 @@ func (ts *TransactionService) BlindPset(
 	ctx context.Context,
 	ptx string, extraUnblindedInputs []UnblindedInput, lastBlinder bool,
 ) (string, error) {
-	w, err := ts.getWallet(ctx)
+	w, err := ts.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	walletInputs, err := ts.findLockedInputs(ctx, ptx)
+	ssInputs, msInputs, err := ts.findLockedInputs(ctx, w, ptx)
 	if err != nil {
 		return "", err
+	}
+
+	walletInputs := make(map[uint32]wallet.Input)
+	for i, in := range ssInputs {
+		walletInputs[i] = in
+	}
+	for _, v := range msInputs {
+		for i, in := range v.inputs {
+			walletInputs[i] = in
+		}
 	}
 
 	pset, _ := psetv2.NewPsetFromBase64(ptx)
@@ -285,7 +338,7 @@ func (ts *TransactionService) BlindPset(
 		}
 	}
 
-	return w.BlindPsetWithOwnedInputs(
+	return wallet.BlindPsetWithOwnedInputs(
 		wallet.BlindPsetWithOwnedInputsArgs{
 			PsetBase64:         ptx,
 			OwnedInputsByIndex: walletInputs,
@@ -297,33 +350,88 @@ func (ts *TransactionService) BlindPset(
 func (ts *TransactionService) SignPset(
 	ctx context.Context, ptx string, sighashType uint32,
 ) (string, error) {
-	w, err := ts.getWallet(ctx)
+	w, err := ts.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	walletInputs, err := ts.findLockedInputs(ctx, ptx)
+	mnemonic, err := w.GetMnemonic()
 	if err != nil {
 		return "", err
 	}
-	derivationPaths := make(map[string]string)
-	for _, in := range walletInputs {
-		script := hex.EncodeToString(in.Script)
-		derivationPaths[script] = in.DerivationPath
+
+	ssInputs, msInputs, err := ts.findLockedInputs(ctx, w, ptx)
+	if err != nil {
+		return "", err
 	}
 
-	return w.SignPset(wallet.SignPsetArgs{
-		PsetBase64:        ptx,
-		DerivationPathMap: derivationPaths,
-		SigHashType:       txscript.SigHashType(sighashType),
-	})
+	tx := ptx
+	if len(ssInputs) > 0 {
+		derivationPaths := make(map[string]string)
+		for _, in := range ssInputs {
+			script := hex.EncodeToString(in.Script)
+			derivationPaths[script] = in.DerivationPath
+		}
+
+		ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
+			Mnemonic: mnemonic,
+			RootPath: w.RootPath,
+		})
+
+		tx, err = ww.SignPset(singlesig.SignPsetArgs{
+			PsetBase64:        ptx,
+			DerivationPathMap: derivationPaths,
+			SigHashType:       txscript.SigHashType(sighashType),
+		})
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if len(msInputs) > 0 {
+		for _, a := range msInputs {
+			ww, _ := multisig.NewWalletFromMnemonic(multisig.NewWalletFromMnemonicArgs{
+				RootPath: a.account.Info.DerivationPath,
+				Mnemonic: mnemonic,
+				Xpubs:    a.account.Info.Xpubs,
+			})
+
+			derivationPaths := make(map[string]string)
+			for _, in := range a.inputs {
+				script := hex.EncodeToString(in.Script)
+				derivationPaths[script] = in.DerivationPath
+			}
+
+			tx, err = ww.SignPset(multisig.SignPsetArgs{
+				PsetBase64:        tx,
+				DerivationPathMap: derivationPaths,
+				SigHashType:       txscript.SigHashType(sighashType),
+			})
+			fmt.Println("KHBER", err)
+			if err != nil {
+				return "", err
+			}
+
+			tx, err = ts.cosigner.SignTx(ctx, tx)
+			fmt.Println("FNJAIJT", err)
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
+	return tx, nil
 }
 
 func (ts *TransactionService) Transfer(
 	ctx context.Context, accountName string, outputs Outputs,
 	millisatsPerByte uint64,
 ) (string, error) {
-	w, err := ts.getWallet(ctx)
+	w, err := ts.repoManager.WalletRepository().GetWallet(ctx)
+	if err != nil {
+		return "", err
+	}
+	mnemonic, err := w.GetMnemonic()
 	if err != nil {
 		return "", err
 	}
@@ -381,6 +489,9 @@ func (ts *TransactionService) Transfer(
 			ValueCommitment: u.ValueCommitment,
 			AssetCommitment: u.AssetCommitment,
 			Nonce:           u.Nonce,
+			RangeProof:      u.RangeProof,
+			SurjectionProof: u.SurjectionProof,
+			RedeemScript:    u.RedeemScript,
 		}
 		inputs = append(inputs, input)
 		inputsByIndex[uint32(i)] = input
@@ -461,6 +572,9 @@ func (ts *TransactionService) Transfer(
 		} else {
 			targetAsset := lbtc
 			targetAmount := wallet.DummyFeeAmount
+			if account.IsMultiSig() {
+				targetAmount = wallet.DummyFeeAmount
+			}
 			if feeAmount > targetAmount {
 				targetAmount = roundUpAmount(feeAmount)
 			}
@@ -486,6 +600,9 @@ func (ts *TransactionService) Transfer(
 					ValueCommitment: u.ValueCommitment,
 					AssetCommitment: u.AssetCommitment,
 					Nonce:           u.Nonce,
+					RangeProof:      u.RangeProof,
+					SurjectionProof: u.SurjectionProof,
+					RedeemScript:    u.RedeemScript,
 				}
 				inputs = append(inputs, input)
 				inputsByIndex[uint32(len(inputs))] = input
@@ -534,7 +651,7 @@ func (ts *TransactionService) Transfer(
 		Amount: feeAmount,
 	})
 
-	ptx, err := w.CreatePset(wallet.CreatePsetArgs{
+	ptx, err := wallet.CreatePset(wallet.CreatePsetArgs{
 		Inputs:  inputs,
 		Outputs: outs,
 	})
@@ -542,7 +659,7 @@ func (ts *TransactionService) Transfer(
 		return "", err
 	}
 
-	blindedPtx, err := w.BlindPsetWithOwnedInputs(
+	blindedPtx, err := wallet.BlindPsetWithOwnedInputs(
 		wallet.BlindPsetWithOwnedInputsArgs{
 			PsetBase64:         ptx,
 			OwnedInputsByIndex: inputsByIndex,
@@ -552,13 +669,36 @@ func (ts *TransactionService) Transfer(
 	if err != nil {
 		return "", err
 	}
-
-	signedPtx, err := w.SignPset(wallet.SignPsetArgs{
-		PsetBase64:        blindedPtx,
-		DerivationPathMap: account.DerivationPathByScript,
-	})
-	if err != nil {
-		return "", err
+	var signedPtx string
+	if account.IsMultiSig() {
+		ww, _ := multisig.NewWalletFromMnemonic(multisig.NewWalletFromMnemonicArgs{
+			RootPath: account.Info.DerivationPath,
+			Mnemonic: mnemonic,
+			Xpubs:    account.Info.Xpubs,
+		})
+		signedPtx, err = ww.SignPset(multisig.SignPsetArgs{
+			PsetBase64:        blindedPtx,
+			DerivationPathMap: account.DerivationPathByScript,
+		})
+		if err != nil {
+			return "", err
+		}
+		signedPtx, err = ts.cosigner.SignTx(ctx, signedPtx)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
+			RootPath: w.RootPath,
+			Mnemonic: mnemonic,
+		})
+		signedPtx, err = ww.SignPset(singlesig.SignPsetArgs{
+			PsetBase64:        blindedPtx,
+			DerivationPathMap: account.DerivationPathByScript,
+		})
+		if err != nil {
+			return "", err
+		}
 	}
 
 	txHex, _, err := wallet.FinalizeAndExtractTransaction(wallet.FinalizeAndExtractTransactionArgs{
@@ -727,22 +867,14 @@ func (ts *TransactionService) spawnUtxoUnlocker(utxoKeys []domain.UtxoKey) {
 	}
 }
 
-func (ts *TransactionService) getWallet(
+func (ts *TransactionService) getWalletMnemonic(
 	ctx context.Context,
-) (*wallet.Wallet, error) {
+) ([]string, error) {
 	w, err := ts.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
 	}
-	mnemonic, err := w.GetMnemonic()
-	if err != nil {
-		return nil, err
-	}
-
-	return wallet.NewWalletFromMnemonic(wallet.NewWalletFromMnemonicArgs{
-		RootPath: ts.rootPath,
-		Mnemonic: mnemonic,
-	})
+	return w.GetMnemonic()
 }
 
 func (ts *TransactionService) getAccount(
@@ -756,7 +888,7 @@ func (ts *TransactionService) getAccount(
 }
 
 func (ts *TransactionService) getWalletInputs(
-	ctx context.Context, ins Inputs, wantsLocked bool,
+	ctx context.Context, w *domain.Wallet, ins Inputs, wantsLocked bool,
 ) ([]wallet.Input, error) {
 	keys := make([]domain.UtxoKey, 0, len(ins))
 	for _, in := range ins {
@@ -767,7 +899,6 @@ func (ts *TransactionService) getWalletInputs(
 		return nil, err
 	}
 
-	w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)
 	inputs := make([]wallet.Input, 0, len(utxos))
 	for _, u := range utxos {
 		if wantsLocked && !u.IsLocked() {
@@ -792,15 +923,21 @@ func (ts *TransactionService) getWalletInputs(
 			RangeProof:      u.RangeProof,
 			SurjectionProof: u.SurjectionProof,
 			DerivationPath:  derivationPath,
+			RedeemScript:    u.RedeemScript,
 		})
 	}
 
 	return inputs, nil
 }
 
+type accountInput struct {
+	account *domain.Account
+	inputs  map[uint32]wallet.Input
+}
+
 func (ts *TransactionService) findLockedInputs(
-	ctx context.Context, tx string,
-) (map[uint32]wallet.Input, error) {
+	ctx context.Context, w *domain.Wallet, tx string,
+) (map[uint32]wallet.Input, map[string]accountInput, error) {
 	rawTx, _ := transaction.NewTxFromHex(tx)
 	var keys = make([]domain.UtxoKey, 0)
 	if rawTx != nil {
@@ -811,18 +948,17 @@ func (ts *TransactionService) findLockedInputs(
 
 	utxos, err := ts.repoManager.UtxoRepository().GetUtxosByKey(ctx, keys)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(utxos) == 0 {
-		return nil, fmt.Errorf("no wallet utxos found in given transaction")
+		return nil, nil, fmt.Errorf("no wallet utxos found in given transaction")
 	}
 
-	w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)
-
-	inputs := make(map[uint32]wallet.Input)
+	ssInputs := make(map[uint32]wallet.Input)
+	msInputs := make(map[string]accountInput)
 	for _, u := range utxos {
 		if !u.IsLocked() {
-			return nil, fmt.Errorf(
+			return nil, nil, fmt.Errorf(
 				"cannot use unlocked utxos. The utxos used within 'external' " +
 					"transactions must be coming from a coin selection so that they " +
 					"can be locked to prevent double spending them",
@@ -832,7 +968,7 @@ func (ts *TransactionService) findLockedInputs(
 		account, _ := w.GetAccount(u.AccountName)
 		script := hex.EncodeToString(u.Script)
 		inIndex := findUtxoIndexInTx(tx, u)
-		inputs[inIndex] = wallet.Input{
+		in := wallet.Input{
 			TxID:            u.TxID,
 			TxIndex:         u.VOut,
 			Value:           u.Value,
@@ -845,8 +981,17 @@ func (ts *TransactionService) findLockedInputs(
 			Nonce:           u.Nonce,
 			DerivationPath:  account.DerivationPathByScript[script],
 		}
+		if account.IsMultiSig() {
+			accountName := account.Info.Key.Name
+			if _, ok := msInputs[accountName]; !ok {
+				msInputs[accountName] = accountInput{account, make(map[uint32]wallet.Input)}
+			}
+			msInputs[accountName].inputs[inIndex] = in
+		} else {
+			ssInputs[inIndex] = in
+		}
 	}
-	return inputs, nil
+	return ssInputs, msInputs, nil
 }
 
 func (ts *TransactionService) getExternalInputs(

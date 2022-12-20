@@ -4,22 +4,25 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	dbbadger "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/badger"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/vulpemventures/ocean/internal/core/application"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
 )
 
 func TestAccountService(t *testing.T) {
 	domain.MnemonicStore = newInMemoryMnemonicStore()
 	mockedBcScanner := newMockedBcScanner()
 	mockedBcScanner.On("GetLatestBlock").Return(birthdayBlockHash, birthdayBlockHeight, nil)
+	mockedCosigner := newMockedCosigner()
+	mockedCosigner.On("GetXpub", mock.Anything).Return(cosignerXpub, nil)
 	repoManager, err := newRepoManagerForAccountService()
 	require.NoError(t, err)
 	require.NotNil(t, repoManager)
 
-	svc := application.NewAccountService(repoManager, mockedBcScanner)
+	svc := application.NewAccountService(repoManager, mockedBcScanner, mockedCosigner)
 
 	addresses, err := svc.DeriveAddressesForAccount(ctx, accountName, 0)
 	require.Error(t, err)
@@ -30,7 +33,7 @@ func TestAccountService(t *testing.T) {
 	require.NotNil(t, accountInfo)
 	require.Equal(t, accountName, accountInfo.Key.Name)
 	require.NotEmpty(t, accountInfo.DerivationPath)
-	require.NotEmpty(t, accountInfo.Xpub)
+	require.NotEmpty(t, accountInfo.Xpubs)
 
 	addresses, err = svc.ListAddressesForAccount(ctx, accountName)
 	require.NoError(t, err)
@@ -80,7 +83,7 @@ func newRepoManagerForAccountService() (ports.RepoManager, error) {
 	}
 
 	wallet, err := domain.NewWallet(
-		mnemonic, password, rootPath, regtest.Name, birthdayBlockHeight, nil,
+		mnemonic, password, rootPath, msRootPath, regtest.Name, birthdayBlockHeight, nil,
 	)
 	if err != nil {
 		return nil, err

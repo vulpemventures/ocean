@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	dbbadger "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/badger"
+	wallet "github.com/equitas-foundation/bamp-ocean/pkg/wallet"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/go-elements/address"
-	"github.com/vulpemventures/ocean/internal/core/application"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 var (
@@ -46,7 +46,7 @@ func testExternalTransaction(t *testing.T) {
 		require.NotNil(t, repoManager)
 
 		svc := application.NewTransactionService(
-			repoManager, mockedBcScanner, regtest, rootPath, utxoExpiryDuration,
+			repoManager, mockedBcScanner, nil, regtest, rootPath, utxoExpiryDuration,
 		)
 
 		selectedUtxos, change, expirationDate, err := svc.SelectUtxos(
@@ -127,7 +127,7 @@ func testInternalTransaction(t *testing.T) {
 		require.NotNil(t, repoManager)
 
 		svc := application.NewTransactionService(
-			repoManager, mockedBcScanner, regtest, rootPath, utxoExpiryDuration,
+			repoManager, mockedBcScanner, nil, regtest, rootPath, utxoExpiryDuration,
 		)
 
 		txid, err := svc.Transfer(ctx, accountName, outputs, 0)
@@ -143,7 +143,7 @@ func newRepoManagerForTxService() (ports.RepoManager, error) {
 	}
 
 	wallet, err := domain.NewWallet(
-		mnemonic, password, rootPath, regtest.Name, birthdayBlockHeight, nil,
+		mnemonic, password, rootPath, msRootPath, regtest.Name, birthdayBlockHeight, nil,
 	)
 	if err != nil {
 		return nil, err

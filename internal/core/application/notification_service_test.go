@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	dbbadger "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/badger"
 	"github.com/stretchr/testify/require"
-	"github.com/vulpemventures/ocean/internal/core/application"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
 )
 
 var (
@@ -120,7 +120,7 @@ func newRepoManagerForNotificationService() (ports.RepoManager, error) {
 	}
 
 	wallet, err := domain.NewWallet(
-		mnemonic, password, rootPath, regtest.Name, birthdayBlockHeight, nil,
+		mnemonic, password, rootPath, msRootPath, regtest.Name, birthdayBlockHeight, nil,
 	)
 	if err != nil {
 		return nil, err
