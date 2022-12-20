@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	dbbadger "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/badger"
+	"github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/inmemory"
 	"github.com/stretchr/testify/require"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
-	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/inmemory"
 )
 
 var (

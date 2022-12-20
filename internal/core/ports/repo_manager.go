@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"github.com/vulpemventures/ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 )
 
 type WalletEventHandler func(event domain.WalletEvent)

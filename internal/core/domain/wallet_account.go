@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
@@ -22,8 +23,12 @@ func (ak *AccountKey) String() string {
 // AccountInfo holds basic info about an account.
 type AccountInfo struct {
 	Key            AccountKey
-	Xpub           string
+	Xpubs          []string
 	DerivationPath string
+}
+
+func (a AccountInfo) Descriptor() string {
+	return fmt.Sprintf("elwsh(sortedmulti(%d, %s))", len(a.Xpubs), strings.Join(a.Xpubs, ","))
 }
 
 // Account defines the entity data struture for a derived account of the
@@ -34,6 +39,10 @@ type Account struct {
 	NextExternalIndex      uint
 	NextInternalIndex      uint
 	DerivationPathByScript map[string]string
+}
+
+func (a *Account) IsMultiSig() bool {
+	return len(a.Info.Xpubs) > 1
 }
 
 func (a *Account) incrementExternalIndex() (next uint) {

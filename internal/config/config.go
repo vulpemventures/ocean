@@ -77,6 +77,9 @@ const (
 	DbNameKey = "DB_NAME"
 	// DbMigrationPath is the path to migration files
 	DbMigrationPath = "DB_MIGRATION_PATH"
+	// CosignerAddr is the the key for address of the cosigner with which the
+	// wallet interacts to manage multisig accounts.
+	CosignerAddrKey = "COSIGNER_ADDR"
 
 	// DbLocation is the folder inside the datadir containing db files.
 	DbLocation = "db"
@@ -130,7 +133,7 @@ var (
 
 func init() {
 	vip = viper.New()
-	vip.SetEnvPrefix("OCEAN")
+	vip.SetEnvPrefix("BAMP_OCEAN")
 	vip.AutomaticEnv()
 
 	vip.SetDefault(DatadirKey, defaultDatadir)
@@ -212,6 +215,11 @@ func validate() error {
 		if len(nodePeers) == 0 {
 			return fmt.Errorf("node peers list must not be empty")
 		}
+	}
+
+	cosignerAddr := GetString(CosignerAddrKey)
+	if len(cosignerAddr) == 0 {
+		return fmt.Errorf("cosigner address must not be null")
 	}
 
 	port := GetInt(PortKey)

@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/transaction"
-	"github.com/vulpemventures/ocean/internal/core/domain"
 )
 
 type wsClient struct {
@@ -24,7 +24,13 @@ type wsClient struct {
 	nextId    uint64
 	chHandler *chHandler
 	chainTip  blockInfo
-	lock      *sync.RWMutex
+
+	isSending    bool
+	reportQueue  []accountReport
+	chSendStatus chan bool
+
+	tipLock  *sync.RWMutex
+	sendLock *sync.RWMutex
 
 	log  func(format string, a ...interface{})
 	warn func(err error, format string, a ...interface{})
@@ -45,14 +51,21 @@ func newWSClient(addr string) (electrumClient, error) {
 		log.WithError(err).Warnf(format, a...)
 	}
 
-	return &wsClient{
-		conn:      conn,
-		nextId:    0,
-		chHandler: newChHandler(),
-		lock:      &sync.RWMutex{},
-		log:       logFn,
-		warn:      warnFn,
-	}, nil
+	svc := &wsClient{
+		conn:         conn,
+		nextId:       0,
+		chHandler:    newChHandler(),
+		reportQueue:  make([]accountReport, 0),
+		chSendStatus: make(chan bool),
+		tipLock:      &sync.RWMutex{},
+		sendLock:     &sync.RWMutex{},
+		log:          logFn,
+		warn:         warnFn,
+	}
+
+	go svc.listenSendStatus()
+
+	return svc, nil
 }
 
 func (c *wsClient) listen() {
@@ -93,9 +106,13 @@ func (c *wsClient) listen() {
 				case "blockchain.scripthash.subscribe":
 					scriptHash := resp.Params.([]interface{})[0].(string)
 					account := c.chHandler.getAccountByScriptHash(scriptHash)
-					chReports := c.chHandler.getChReportsForAccount(account)
-
-					go func() { chReports <- accountReport{account, scriptHash} }()
+					report := accountReport{account, scriptHash}
+					if c.isSending {
+						c.reportQueue = append(c.reportQueue, report)
+					} else {
+						chReports := c.chHandler.getChReportsForAccount(account)
+						go func() { chReports <- report }()
+					}
 					continue
 				case "blockchain.headers.subscribe":
 					buf, _ := json.Marshal(resp.Params.([]interface{})[0])
@@ -116,6 +133,7 @@ func (c *wsClient) listen() {
 func (c *wsClient) close() {
 	c.conn.Close()
 	c.chHandler.clear()
+	close(c.chSendStatus)
 }
 
 func (c *wsClient) subscribeForBlocks() {
@@ -136,6 +154,7 @@ func (c *wsClient) subscribeForAccount(
 	accountName string, addresses []domain.AddressInfo,
 ) (chan accountReport, map[string][]txInfo) {
 	history := make(map[string][]txInfo)
+	c.setSendingStatus(true)
 	for _, info := range addresses {
 		scriptHash := calcScriptHash(info.Script)
 		if err := c.subscribeForScript(accountName, scriptHash); err != nil {
@@ -157,6 +176,7 @@ func (c *wsClient) subscribeForAccount(
 		}
 		history[scriptHash] = addrHistory
 	}
+	c.setSendingStatus(false)
 
 	if c.chHandler.getChReportsForAccount(accountName) == nil {
 		c.chHandler.addChReportForAccount(accountName)
@@ -311,8 +331,30 @@ func (c *wsClient) newRequest(method string, params ...interface{}) request {
 }
 
 func (c *wsClient) updateChainTip(tip blockInfo) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	c.tipLock.Lock()
+	defer c.tipLock.Unlock()
 
 	c.chainTip = tip
+}
+
+func (c *wsClient) setSendingStatus(val bool) {
+	c.sendLock.Lock()
+	defer c.sendLock.Unlock()
+
+	c.isSending = val
+	c.chSendStatus <- val
+}
+
+func (c *wsClient) listenSendStatus() {
+	for isSending := range c.chSendStatus {
+		if !isSending {
+			for _, report := range c.reportQueue {
+				chReports := c.chHandler.getChReportsForAccount(report.account)
+				go func(chReport chan accountReport, report accountReport) {
+					chReports <- report
+				}(chReports, report)
+			}
+			c.reportQueue = make([]accountReport, 0)
+		}
+	}
 }

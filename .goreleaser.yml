@@ -106,7 +106,7 @@ dockers:
 
   #amd64
   - image_templates:
-      - "ghcr.io/vulpemventures/oceand:{{ .Tag }}-amd64"
+      - "ghcr.io/equitas-foundation/oceand:{{ .Tag }}-amd64"
         # push always either release or prerelease with a docker tag with the semver only
     skip_push: "false"
     use: buildx
@@ -133,7 +133,7 @@ dockers:
       - internal/infrastructure/storage/db/postgres/migration
         # arm64
   - image_templates:
-      - "ghcr.io/vulpemventures/oceand:{{ .Tag }}-arm64v8"
+      - "ghcr.io/equitas-foundation/oceand:{{ .Tag }}-arm64v8"
         # push always either release or prerelease with a docker tag with the semver only
     skip_push: "false"
     use: buildx
@@ -160,14 +160,14 @@ dockers:
       - internal/infrastructure/storage/db/postgres/migration
 
 docker_manifests:
-  - name_template: ghcr.io/vulpemventures/oceand:{{ .Tag }}
+  - name_template: ghcr.io/equitas-foundation/oceand:{{ .Tag }}
     image_templates:
-      - ghcr.io/vulpemventures/oceand:{{ .Tag }}-amd64
-      - ghcr.io/vulpemventures/oceand:{{ .Tag }}-arm64v8
+      - ghcr.io/equitas-foundation/oceand:{{ .Tag }}-amd64
+      - ghcr.io/equitas-foundation/oceand:{{ .Tag }}-arm64v8
     skip_push: "false"
 
-  - name_template: ghcr.io/vulpemventures/oceand:latest
+  - name_template: ghcr.io/equitas-foundation/oceand:latest
     image_templates:
-      - ghcr.io/vulpemventures/oceand:{{ .Tag }}-amd64
-      - ghcr.io/vulpemventures/oceand:{{ .Tag }}-arm64v8
+      - ghcr.io/equitas-foundation/oceand:{{ .Tag }}-amd64
+      - ghcr.io/equitas-foundation/oceand:{{ .Tag }}-arm64v8
     skip_push: auto

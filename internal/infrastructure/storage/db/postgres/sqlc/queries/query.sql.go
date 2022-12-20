@@ -56,7 +56,7 @@ func (q *Queries) DeleteUtxosForAccountName(ctx context.Context, accountName str
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id FROM account WHERE name = $1
+SELECT name, index, xpubs, derivation_path, next_external_index, next_internal_index, fk_wallet_id FROM account WHERE name = $1
 `
 
 func (q *Queries) GetAccount(ctx context.Context, name string) (Account, error) {
@@ -65,7 +65,7 @@ func (q *Queries) GetAccount(ctx context.Context, name string) (Account, error) 
 	err := row.Scan(
 		&i.Name,
 		&i.Index,
-		&i.Xpub,
+		&i.Xpubs,
 		&i.DerivationPath,
 		&i.NextExternalIndex,
 		&i.NextInternalIndex,
@@ -75,7 +75,7 @@ func (q *Queries) GetAccount(ctx context.Context, name string) (Account, error) 
 }
 
 const getAllUtxos = `-- name: GetAllUtxos :many
-SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, redeem_script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
 `
 
 type GetAllUtxosRow struct {
@@ -89,6 +89,7 @@ type GetAllUtxosRow struct {
 	ValueBlinder        []byte
 	AssetBlinder        []byte
 	Script              []byte
+	RedeemScript        []byte
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
@@ -123,6 +124,7 @@ func (q *Queries) GetAllUtxos(ctx context.Context) ([]GetAllUtxosRow, error) {
 			&i.ValueBlinder,
 			&i.AssetBlinder,
 			&i.Script,
+			&i.RedeemScript,
 			&i.Nonce,
 			&i.RangeProof,
 			&i.SurjectionProof,
@@ -189,7 +191,7 @@ func (q *Queries) GetTransaction(ctx context.Context, txID string) ([]GetTransac
 }
 
 const getUtxoForKey = `-- name: GetUtxoForKey :many
-SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, redeem_script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
 WHERE u.tx_id = $1 AND u.vout = $2
 `
 
@@ -209,6 +211,7 @@ type GetUtxoForKeyRow struct {
 	ValueBlinder        []byte
 	AssetBlinder        []byte
 	Script              []byte
+	RedeemScript        []byte
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
@@ -243,6 +246,7 @@ func (q *Queries) GetUtxoForKey(ctx context.Context, arg GetUtxoForKeyParams) ([
 			&i.ValueBlinder,
 			&i.AssetBlinder,
 			&i.Script,
+			&i.RedeemScript,
 			&i.Nonce,
 			&i.RangeProof,
 			&i.SurjectionProof,
@@ -267,7 +271,7 @@ func (q *Queries) GetUtxoForKey(ctx context.Context, arg GetUtxoForKeyParams) ([
 }
 
 const getUtxosForAccount = `-- name: GetUtxosForAccount :many
-SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, redeem_script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
 WHERE u.account_name = $1
 `
 
@@ -282,6 +286,7 @@ type GetUtxosForAccountRow struct {
 	ValueBlinder        []byte
 	AssetBlinder        []byte
 	Script              []byte
+	RedeemScript        []byte
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
@@ -316,6 +321,7 @@ func (q *Queries) GetUtxosForAccount(ctx context.Context, accountName string) ([
 			&i.ValueBlinder,
 			&i.AssetBlinder,
 			&i.Script,
+			&i.RedeemScript,
 			&i.Nonce,
 			&i.RangeProof,
 			&i.SurjectionProof,
@@ -340,7 +346,7 @@ func (q *Queries) GetUtxosForAccount(ctx context.Context, accountName string) ([
 }
 
 const getUtxosForAccountName = `-- name: GetUtxosForAccountName :many
-SELECT id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp FROM utxo WHERE account_name=$1
+SELECT id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, redeem_script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp FROM utxo WHERE account_name=$1
 `
 
 func (q *Queries) GetUtxosForAccountName(ctx context.Context, accountName string) ([]Utxo, error) {
@@ -363,6 +369,7 @@ func (q *Queries) GetUtxosForAccountName(ctx context.Context, accountName string
 			&i.ValueBlinder,
 			&i.AssetBlinder,
 			&i.Script,
+			&i.RedeemScript,
 			&i.Nonce,
 			&i.RangeProof,
 			&i.SurjectionProof,
@@ -381,7 +388,7 @@ func (q *Queries) GetUtxosForAccountName(ctx context.Context, accountName string
 }
 
 const getWalletAccountsAndScripts = `-- name: GetWalletAccountsAndScripts :many
-SELECT w.id as walletId,w.encrypted_mnemonic,w.password_hash,w.birthday_block_height,w.root_path,w.network_name,w.next_account_index, a.name,a.index,a.xpub,a.derivation_path as account_derivation_path,a.next_external_index,a.next_internal_index,a.fk_wallet_id,asi.script,asi.derivation_path as script_derivation_path,asi.fk_account_name FROM
+SELECT w.id as walletId,w.encrypted_mnemonic,w.password_hash,w.birthday_block_height,w.root_path,w.ms_root_path,w.network_name,w.next_account_index,w.next_ms_account_index, a.name,a.index,a.xpubs,a.derivation_path as account_derivation_path,a.next_external_index,a.next_internal_index,a.fk_wallet_id,asi.script,asi.derivation_path as script_derivation_path,asi.fk_account_name FROM
 wallet w LEFT JOIN account a ON w.id = a.fk_wallet_id
 LEFT JOIN account_script_info asi on a.name = asi.fk_account_name
 WHERE w.id = $1
@@ -393,11 +400,13 @@ type GetWalletAccountsAndScriptsRow struct {
 	PasswordHash          []byte
 	BirthdayBlockHeight   int32
 	RootPath              string
+	MsRootPath            string
 	NetworkName           string
 	NextAccountIndex      int32
+	NextMsAccountIndex    int32
 	Name                  sql.NullString
 	Index                 sql.NullInt32
-	Xpub                  sql.NullString
+	Xpubs                 []string
 	AccountDerivationPath sql.NullString
 	NextExternalIndex     sql.NullInt32
 	NextInternalIndex     sql.NullInt32
@@ -422,11 +431,13 @@ func (q *Queries) GetWalletAccountsAndScripts(ctx context.Context, id string) ([
 			&i.PasswordHash,
 			&i.BirthdayBlockHeight,
 			&i.RootPath,
+			&i.MsRootPath,
 			&i.NetworkName,
 			&i.NextAccountIndex,
+			&i.NextMsAccountIndex,
 			&i.Name,
 			&i.Index,
-			&i.Xpub,
+			&i.Xpubs,
 			&i.AccountDerivationPath,
 			&i.NextExternalIndex,
 			&i.NextInternalIndex,
@@ -446,14 +457,14 @@ func (q *Queries) GetWalletAccountsAndScripts(ctx context.Context, id string) ([
 }
 
 const insertAccount = `-- name: InsertAccount :one
-INSERT INTO account(name,index,xpub,derivation_path,next_external_index,next_internal_index,fk_wallet_id)
-VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id
+INSERT INTO account(name,index,xpubs,derivation_path,next_external_index,next_internal_index,fk_wallet_id)
+VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING name, index, xpubs, derivation_path, next_external_index, next_internal_index, fk_wallet_id
 `
 
 type InsertAccountParams struct {
 	Name              string
 	Index             int32
-	Xpub              string
+	Xpubs             []string
 	DerivationPath    string
 	NextExternalIndex int32
 	NextInternalIndex int32
@@ -464,7 +475,7 @@ func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) (A
 	row := q.db.QueryRow(ctx, insertAccount,
 		arg.Name,
 		arg.Index,
-		arg.Xpub,
+		arg.Xpubs,
 		arg.DerivationPath,
 		arg.NextExternalIndex,
 		arg.NextInternalIndex,
@@ -474,7 +485,7 @@ func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) (A
 	err := row.Scan(
 		&i.Name,
 		&i.Index,
-		&i.Xpub,
+		&i.Xpubs,
 		&i.DerivationPath,
 		&i.NextExternalIndex,
 		&i.NextInternalIndex,
@@ -537,8 +548,8 @@ func (q *Queries) InsertTransactionInputAccount(ctx context.Context, arg InsertT
 }
 
 const insertUtxo = `-- name: InsertUtxo :one
-INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,nonce,range_proof,surjection_proof,account_name,lock_timestamp, lock_expiry_timestamp)
-VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, $15) RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp
+INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,redeem_script,nonce,range_proof,surjection_proof,account_name,lock_timestamp,lock_expiry_timestamp)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, redeem_script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp
 `
 
 type InsertUtxoParams struct {
@@ -551,6 +562,7 @@ type InsertUtxoParams struct {
 	ValueBlinder        []byte
 	AssetBlinder        []byte
 	Script              []byte
+	RedeemScript        []byte
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
@@ -571,6 +583,7 @@ func (q *Queries) InsertUtxo(ctx context.Context, arg InsertUtxoParams) (Utxo, e
 		arg.ValueBlinder,
 		arg.AssetBlinder,
 		arg.Script,
+		arg.RedeemScript,
 		arg.Nonce,
 		arg.RangeProof,
 		arg.SurjectionProof,
@@ -590,6 +603,7 @@ func (q *Queries) InsertUtxo(ctx context.Context, arg InsertUtxoParams) (Utxo, e
 		&i.ValueBlinder,
 		&i.AssetBlinder,
 		&i.Script,
+		&i.RedeemScript,
 		&i.Nonce,
 		&i.RangeProof,
 		&i.SurjectionProof,
@@ -634,8 +648,8 @@ func (q *Queries) InsertUtxoStatus(ctx context.Context, arg InsertUtxoStatusPara
 }
 
 const insertWallet = `-- name: InsertWallet :one
-INSERT INTO wallet(id, encrypted_mnemonic,password_hash,birthday_block_height,root_path,network_name,next_account_index)
-VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id, encrypted_mnemonic, password_hash, birthday_block_height, root_path, network_name, next_account_index
+INSERT INTO wallet(id, encrypted_mnemonic,password_hash,birthday_block_height,root_path,ms_root_path,network_name,next_account_index,next_ms_account_index)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id, encrypted_mnemonic, password_hash, birthday_block_height, root_path, ms_root_path, network_name, next_account_index, next_ms_account_index
 `
 
 type InsertWalletParams struct {
@@ -644,8 +658,10 @@ type InsertWalletParams struct {
 	PasswordHash        []byte
 	BirthdayBlockHeight int32
 	RootPath            string
+	MsRootPath          string
 	NetworkName         string
 	NextAccountIndex    int32
+	NextMsAccountIndex  int32
 }
 
 // WALLET & ACCOUNT
@@ -656,8 +672,10 @@ func (q *Queries) InsertWallet(ctx context.Context, arg InsertWalletParams) (Wal
 		arg.PasswordHash,
 		arg.BirthdayBlockHeight,
 		arg.RootPath,
+		arg.MsRootPath,
 		arg.NetworkName,
 		arg.NextAccountIndex,
+		arg.NextMsAccountIndex,
 	)
 	var i Wallet
 	err := row.Scan(
@@ -666,14 +684,16 @@ func (q *Queries) InsertWallet(ctx context.Context, arg InsertWalletParams) (Wal
 		&i.PasswordHash,
 		&i.BirthdayBlockHeight,
 		&i.RootPath,
+		&i.MsRootPath,
 		&i.NetworkName,
 		&i.NextAccountIndex,
+		&i.NextMsAccountIndex,
 	)
 	return i, err
 }
 
 const updateAccountIndexes = `-- name: UpdateAccountIndexes :one
-UPDATE account SET next_external_index = $1, next_internal_index = $2 WHERE name = $3 RETURNING name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id
+UPDATE account SET next_external_index = $1, next_internal_index = $2 WHERE name = $3 RETURNING name, index, xpubs, derivation_path, next_external_index, next_internal_index, fk_wallet_id
 `
 
 type UpdateAccountIndexesParams struct {
@@ -688,7 +708,7 @@ func (q *Queries) UpdateAccountIndexes(ctx context.Context, arg UpdateAccountInd
 	err := row.Scan(
 		&i.Name,
 		&i.Index,
-		&i.Xpub,
+		&i.Xpubs,
 		&i.DerivationPath,
 		&i.NextExternalIndex,
 		&i.NextInternalIndex,
@@ -726,7 +746,7 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 }
 
 const updateUtxo = `-- name: UpdateUtxo :one
-UPDATE utxo SET value=$1,asset=$2,value_commitment=$3,asset_commitment=$4,value_blinder=$5,asset_blinder=$6,script=$7,nonce=$8,range_proof=$9,surjection_proof=$10,account_name=$11,lock_timestamp=$12, lock_expiry_timestamp=$13 WHERE tx_id=$14 and vout=$15 RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp
+UPDATE utxo SET value=$1,asset=$2,value_commitment=$3,asset_commitment=$4,value_blinder=$5,asset_blinder=$6,script=$7,redeem_script=$8,nonce=$9,range_proof=$10,surjection_proof=$11,account_name=$12,lock_timestamp=$13, lock_expiry_timestamp=$14 WHERE tx_id=$15 and vout=$16 RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, redeem_script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp
 `
 
 type UpdateUtxoParams struct {
@@ -737,6 +757,7 @@ type UpdateUtxoParams struct {
 	ValueBlinder        []byte
 	AssetBlinder        []byte
 	Script              []byte
+	RedeemScript        []byte
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
@@ -756,6 +777,7 @@ func (q *Queries) UpdateUtxo(ctx context.Context, arg UpdateUtxoParams) (Utxo, e
 		arg.ValueBlinder,
 		arg.AssetBlinder,
 		arg.Script,
+		arg.RedeemScript,
 		arg.Nonce,
 		arg.RangeProof,
 		arg.SurjectionProof,
@@ -777,6 +799,7 @@ func (q *Queries) UpdateUtxo(ctx context.Context, arg UpdateUtxoParams) (Utxo, e
 		&i.ValueBlinder,
 		&i.AssetBlinder,
 		&i.Script,
+		&i.RedeemScript,
 		&i.Nonce,
 		&i.RangeProof,
 		&i.SurjectionProof,
@@ -788,7 +811,7 @@ func (q *Queries) UpdateUtxo(ctx context.Context, arg UpdateUtxoParams) (Utxo, e
 }
 
 const updateWallet = `-- name: UpdateWallet :one
-UPDATE wallet SET encrypted_mnemonic = $2, password_hash = $3, birthday_block_height = $4, root_path = $5, network_name = $6, next_account_index = $7 WHERE id = $1 RETURNING id, encrypted_mnemonic, password_hash, birthday_block_height, root_path, network_name, next_account_index
+UPDATE wallet SET encrypted_mnemonic = $2, password_hash = $3, birthday_block_height = $4, root_path = $5, ms_root_path = $6, network_name = $7, next_account_index = $8, next_ms_account_index = $9 WHERE id = $1 RETURNING id, encrypted_mnemonic, password_hash, birthday_block_height, root_path, ms_root_path, network_name, next_account_index, next_ms_account_index
 `
 
 type UpdateWalletParams struct {
@@ -797,8 +820,10 @@ type UpdateWalletParams struct {
 	PasswordHash        []byte
 	BirthdayBlockHeight int32
 	RootPath            string
+	MsRootPath          string
 	NetworkName         string
 	NextAccountIndex    int32
+	NextMsAccountIndex  int32
 }
 
 func (q *Queries) UpdateWallet(ctx context.Context, arg UpdateWalletParams) (Wallet, error) {
@@ -808,8 +833,10 @@ func (q *Queries) UpdateWallet(ctx context.Context, arg UpdateWalletParams) (Wal
 		arg.PasswordHash,
 		arg.BirthdayBlockHeight,
 		arg.RootPath,
+		arg.MsRootPath,
 		arg.NetworkName,
 		arg.NextAccountIndex,
+		arg.NextMsAccountIndex,
 	)
 	var i Wallet
 	err := row.Scan(
@@ -818,8 +845,10 @@ func (q *Queries) UpdateWallet(ctx context.Context, arg UpdateWalletParams) (Wal
 		&i.PasswordHash,
 		&i.BirthdayBlockHeight,
 		&i.RootPath,
+		&i.MsRootPath,
 		&i.NetworkName,
 		&i.NextAccountIndex,
+		&i.NextMsAccountIndex,
 	)
 	return i, err
 }

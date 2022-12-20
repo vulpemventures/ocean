@@ -63,7 +63,7 @@ type WalletRepository interface {
 	// its basic info.
 	// Generates a WalletAccountCreated event if successfull.
 	CreateAccount(
-		ctx context.Context, accountName string, birthdayBlock uint32,
+		ctx context.Context, accountName, xpub string, birthdayBlock uint32,
 	) (*AccountInfo, error)
 	// DeriveNextExternalAddressesForAccount returns one or more new receiving
 	// addresses for the given account.

@@ -3,11 +3,12 @@ package postgresdb
 import (
 	"context"
 	"errors"
+	"sync"
+
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
-	"sync"
 )
 
 var (

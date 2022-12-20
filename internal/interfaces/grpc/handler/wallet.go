@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
-	"github.com/vulpemventures/ocean/internal/core/application"
+	pb "github.com/equitas-foundation/bamp-ocean/api-spec/protobuf/gen/go/ocean/v1"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

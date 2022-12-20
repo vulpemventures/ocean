@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/vulpemventures/ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 )
 
 type txInmemoryStore struct {

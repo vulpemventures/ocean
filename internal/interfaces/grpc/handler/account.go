@@ -2,9 +2,10 @@ package grpc_handler
 
 import (
 	"context"
+	"fmt"
 
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
-	"github.com/vulpemventures/ocean/internal/core/application"
+	pb "github.com/equitas-foundation/bamp-ocean/api-spec/protobuf/gen/go/ocean/v1"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -32,7 +33,27 @@ func (a *account) CreateAccountBIP44(
 	return &pb.CreateAccountBIP44Response{
 		AccountName:    accountInfo.Key.Name,
 		AccountIndex:   accountInfo.Key.Index,
-		Xpub:           accountInfo.Xpub,
+		Xpub:           accountInfo.Xpubs[0],
+		DerivationPath: accountInfo.DerivationPath,
+	}, nil
+}
+
+func (a *account) CreateAccountMultiSig(
+	ctx context.Context, req *pb.CreateAccountMultiSigRequest,
+) (*pb.CreateAccountMultiSigResponse, error) {
+	name, err := parseAccountName(req.GetName())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	accountInfo, err := a.appSvc.CreateAccountMultiSig(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.CreateAccountMultiSigResponse{
+		AccountName:    accountInfo.Key.Name,
+		AccountIndex:   accountInfo.Key.Index,
+		Xpubs:          accountInfo.Xpubs,
 		DerivationPath: accountInfo.DerivationPath,
 	}, nil
 }
@@ -40,7 +61,7 @@ func (a *account) CreateAccountBIP44(
 func (a *account) CreateAccountCustom(
 	ctx context.Context, req *pb.CreateAccountCustomRequest,
 ) (*pb.CreateAccountCustomResponse, error) {
-	return &pb.CreateAccountCustomResponse{}, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (a *account) SetAccountTemplate(

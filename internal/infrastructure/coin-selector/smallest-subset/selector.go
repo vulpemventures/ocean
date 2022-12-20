@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
 )
 
 var (

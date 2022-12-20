@@ -3,8 +3,8 @@ package domain_test
 import (
 	"testing"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 	"github.com/stretchr/testify/require"
-	"github.com/vulpemventures/ocean/internal/core/domain"
 )
 
 func TestConfirmTransaction(t *testing.T) {

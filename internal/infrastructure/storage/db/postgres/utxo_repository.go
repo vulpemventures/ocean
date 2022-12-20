@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
 )
 
 const (
@@ -62,6 +62,7 @@ func (u *utxoRepositoryPg) AddUtxos(
 			ValueBlinder:        v.ValueBlinder,
 			AssetBlinder:        v.AssetBlinder,
 			Script:              v.Script,
+			RedeemScript:        v.RedeemScript,
 			Nonce:               v.Nonce,
 			RangeProof:          v.RangeProof,
 			SurjectionProof:     v.SurjectionProof,
@@ -154,6 +155,7 @@ func (u *utxoRepositoryPg) GetUtxosByKey(
 			ValueBlinder:        utxo[0].ValueBlinder,
 			AssetBlinder:        utxo[0].AssetBlinder,
 			Script:              utxo[0].Script,
+			RedeemScript:        utxo[0].RedeemScript,
 			Nonce:               utxo[0].Nonce,
 			RangeProof:          utxo[0].RangeProof,
 			SurjectionProof:     utxo[0].SurjectionProof,
@@ -229,6 +231,7 @@ func (u *utxoRepositoryPg) convertToUtxos(
 				ValueBlinder:        v.ValueBlinder,
 				AssetBlinder:        v.AssetBlinder,
 				Script:              v.Script,
+				RedeemScript:        v.RedeemScript,
 				Nonce:               v.Nonce,
 				RangeProof:          v.RangeProof,
 				SurjectionProof:     v.SurjectionProof,
@@ -592,6 +595,7 @@ func (u *utxoRepositoryPg) updateUtxo(
 		ValueBlinder:        utxo.ValueBlinder,
 		AssetBlinder:        utxo.AssetBlinder,
 		Script:              utxo.Script,
+		RedeemScript:        utxo.RedeemScript,
 		Nonce:               utxo.Nonce,
 		RangeProof:          utxo.RangeProof,
 		SurjectionProof:     utxo.SurjectionProof,
@@ -804,6 +808,7 @@ func toGetAllUtxosRow(v queries.GetUtxosForAccountRow) queries.GetAllUtxosRow {
 		ValueBlinder:        v.ValueBlinder,
 		AssetBlinder:        v.AssetBlinder,
 		Script:              v.Script,
+		RedeemScript:        v.RedeemScript,
 		Nonce:               v.Nonce,
 		RangeProof:          v.RangeProof,
 		SurjectionProof:     v.SurjectionProof,

@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
 )
 
 // Notification service has the very simple task of making the event channels

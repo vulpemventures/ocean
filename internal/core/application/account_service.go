@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
 	log "github.com/sirupsen/logrus"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
 )
 
 // AccountService is responsible for operations related to wallet accounts:
@@ -31,13 +31,16 @@ import (
 type AccountService struct {
 	repoManager ports.RepoManager
 	bcScanner   ports.BlockchainScanner
+	cosigner    ports.Cosigner
 
 	log  func(format string, a ...interface{})
 	warn func(err error, format string, a ...interface{})
 }
 
 func NewAccountService(
-	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
+	repoManager ports.RepoManager,
+	bcScanner ports.BlockchainScanner,
+	cosigner ports.Cosigner,
 ) *AccountService {
 	logFn := func(format string, a ...interface{}) {
 		format = fmt.Sprintf("account service: %s", format)
@@ -48,7 +51,7 @@ func NewAccountService(
 		log.WithError(err).Warnf(format, a...)
 	}
 
-	svc := &AccountService{repoManager, bcScanner, logFn, warnFn}
+	svc := &AccountService{repoManager, bcScanner, cosigner, logFn, warnFn}
 	svc.registerHandlerForWalletEvents()
 	return svc
 }
@@ -61,9 +64,34 @@ func (as *AccountService) CreateAccountBIP44(
 		return nil, err
 	}
 	accountInfo, err := as.repoManager.WalletRepository().CreateAccount(
-		ctx, accountName, birthdayBlockHeight,
+		ctx, accountName, "", birthdayBlockHeight,
 	)
 	if err != nil {
+		return nil, err
+	}
+	return (*AccountInfo)(accountInfo), nil
+}
+
+func (as *AccountService) CreateAccountMultiSig(
+	ctx context.Context, accountName string,
+) (*AccountInfo, error) {
+	_, birthdayBlockHeight, err := as.bcScanner.GetLatestBlock()
+	if err != nil {
+		return nil, err
+	}
+	cosignerXpub, err := as.cosigner.GetXpub(ctx)
+	if err != nil {
+		return nil, err
+	}
+	accountInfo, err := as.repoManager.WalletRepository().CreateAccount(
+		ctx, accountName, cosignerXpub, birthdayBlockHeight,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := as.cosigner.RegisterMultiSig(ctx, accountInfo.Descriptor()); err != nil {
+		as.repoManager.WalletRepository().DeleteAccount(ctx, accountName)
 		return nil, err
 	}
 	return (*AccountInfo)(accountInfo), nil

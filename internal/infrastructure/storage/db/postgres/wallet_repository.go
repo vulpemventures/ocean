@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
 )
 
 const (
@@ -55,8 +55,10 @@ func (w *walletRepositoryPg) CreateWallet(
 		PasswordHash:        wallet.PasswordHash,
 		BirthdayBlockHeight: int32(wallet.BirthdayBlockHeight),
 		RootPath:            wallet.RootPath,
+		MsRootPath:          wallet.MSRootPath,
 		NetworkName:         wallet.NetworkName,
 		NextAccountIndex:    int32(wallet.NextAccountIndex),
+		NextMsAccountIndex:  int32(wallet.NextMSAccountIndex),
 	},
 	); err != nil {
 		if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok && pqErr.Code == uniqueViolation {
@@ -157,8 +159,10 @@ func (w *walletRepositoryPg) UpdateWallet(
 			PasswordHash:        updatedWallet.PasswordHash,
 			BirthdayBlockHeight: int32(updatedWallet.BirthdayBlockHeight),
 			RootPath:            updatedWallet.RootPath,
+			MsRootPath:          updatedWallet.MSRootPath,
 			NetworkName:         updatedWallet.NetworkName,
 			NextAccountIndex:    int32(updatedWallet.NextAccountIndex),
+			NextMsAccountIndex:  int32(updatedWallet.NextMSAccountIndex),
 		},
 	); err != nil {
 		return err
@@ -182,7 +186,7 @@ func (w *walletRepositoryPg) UpdateWallet(
 			if _, err := querierWithTx.InsertAccount(ctx, queries.InsertAccountParams{
 				Name:              account.Info.Key.Name,
 				Index:             int32(account.Info.Key.Index),
-				Xpub:              account.Info.Xpub,
+				Xpubs:             account.Info.Xpubs,
 				DerivationPath:    account.Info.DerivationPath,
 				NextExternalIndex: int32(account.NextExternalIndex),
 				NextInternalIndex: int32(account.NextInternalIndex),
@@ -233,14 +237,18 @@ func (w *walletRepositoryPg) UpdateWallet(
 }
 
 func (w *walletRepositoryPg) CreateAccount(
-	ctx context.Context,
-	accountName string,
-	birthdayBlock uint32,
+	ctx context.Context, accountName, xpub string, birthdayBlock uint32,
 ) (*domain.AccountInfo, error) {
 	var accountInfo *domain.AccountInfo
 	if err := w.UpdateWallet(
 		ctx, func(wallet *domain.Wallet) (*domain.Wallet, error) {
-			account, err := wallet.CreateAccount(accountName, birthdayBlock)
+			var account *domain.Account
+			var err error
+			if len(xpub) > 0 {
+				account, err = wallet.CreateMSAccount(accountName, xpub, birthdayBlock)
+			} else {
+				account, err = wallet.CreateAccount(accountName, birthdayBlock)
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -419,7 +427,7 @@ func (w *walletRepositoryPg) getWallet(
 							Name:  v.Name.String,
 							Index: uint32(v.Index.Int32),
 						},
-						Xpub:           v.Xpub.String,
+						Xpubs:          v.Xpubs,
 						DerivationPath: v.AccountDerivationPath.String,
 					},
 					BirthdayBlock:          uint32(v.BirthdayBlockHeight),
@@ -457,8 +465,10 @@ func (w *walletRepositoryPg) getWallet(
 		PasswordHash:        walletAccounts[0].PasswordHash,
 		BirthdayBlockHeight: uint32(walletAccounts[0].BirthdayBlockHeight),
 		RootPath:            walletAccounts[0].RootPath,
+		MSRootPath:          walletAccounts[0].MsRootPath,
 		NetworkName:         walletAccounts[0].NetworkName,
 		NextAccountIndex:    uint32(walletAccounts[0].NextAccountIndex),
+		NextMSAccountIndex:  uint32(walletAccounts[0].NextMsAccountIndex),
 		AccountsByKey:       accountsByKey,
 		AccountKeysByIndex:  accountKeysByIndex,
 		AccountKeysByName:   accountKeysByName,

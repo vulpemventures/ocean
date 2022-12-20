@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
 	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
@@ -13,8 +15,6 @@ import (
 	"github.com/vulpemventures/neutrino-elements/pkg/blockservice"
 	"github.com/vulpemventures/neutrino-elements/pkg/protocol"
 	"github.com/vulpemventures/neutrino-elements/pkg/repository"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
 )
 
 type service struct {

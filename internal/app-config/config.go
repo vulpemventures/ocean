@@ -2,20 +2,22 @@ package appconfig
 
 import (
 	"fmt"
-	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
 	"time"
 
+	bamp_cosigner "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/cosigner/bamp"
+	postgresdb "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/postgres"
+
+	"github.com/equitas-foundation/bamp-ocean/internal/config"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/application"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	electrum_scanner "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/blockchain-scanner/electrum"
+	elements_scanner "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/blockchain-scanner/elements"
+	neutrino_scanner "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/blockchain-scanner/neutrino"
+	dbbadger "github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/badger"
+	"github.com/equitas-foundation/bamp-ocean/internal/infrastructure/storage/db/inmemory"
+	path "github.com/equitas-foundation/bamp-ocean/pkg/wallet/derivation-path"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/network"
-	"github.com/vulpemventures/ocean/internal/config"
-	"github.com/vulpemventures/ocean/internal/core/application"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	electrum_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/electrum"
-	elements_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/elements"
-	neutrino_scanner "github.com/vulpemventures/ocean/internal/infrastructure/blockchain-scanner/neutrino"
-	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
-	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/inmemory"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 // AppConfig is the struct holding all configuration options for
@@ -38,6 +40,7 @@ type AppConfig struct {
 	RootPath           string
 	Network            *network.Network
 	UtxoExpiryDuration time.Duration
+	CosignerAddr       string
 
 	RepoManagerType         string
 	BlockchainScannerType   string
@@ -46,6 +49,7 @@ type AppConfig struct {
 
 	rm         ports.RepoManager
 	bcs        ports.BlockchainScanner
+	cs         ports.Cosigner
 	walletSvc  *application.WalletService
 	accountSvc *application.AccountService
 	txSvc      *application.TransactionService
@@ -83,10 +87,14 @@ func (c *AppConfig) Validate() error {
 	if _, err := c.bcScanner(); err != nil {
 		return err
 	}
+	if _, err := c.cosigner(); err != nil {
+		return err
+	}
+
 	if c.RootPath == "" {
 		return fmt.Errorf("missing root path")
 	}
-	if _, err := wallet.ParseRootDerivationPath(c.RootPath); err != nil {
+	if _, err := path.ParseRootDerivationPath(c.RootPath); err != nil {
 		return err
 	}
 
@@ -99,6 +107,10 @@ func (c *AppConfig) RepoManager() ports.RepoManager {
 
 func (c *AppConfig) BlockchainScanner() ports.BlockchainScanner {
 	return c.bcs
+}
+
+func (c *AppConfig) Cosigner() ports.Cosigner {
+	return c.cs
 }
 
 func (c *AppConfig) WalletService() *application.WalletService {
@@ -220,6 +232,19 @@ func (c *AppConfig) bcScanner() (ports.BlockchainScanner, error) {
 	}
 }
 
+func (c *AppConfig) cosigner() (ports.Cosigner, error) {
+	if c.cs != nil {
+		return c.cs, nil
+	}
+
+	cs, err := bamp_cosigner.NewService(c.CosignerAddr)
+	if err != nil {
+		return nil, err
+	}
+	c.cs = cs
+	return c.cs, nil
+}
+
 func (c *AppConfig) walletService() *application.WalletService {
 	if c.walletSvc != nil {
 		return c.walletSvc
@@ -240,7 +265,8 @@ func (c *AppConfig) accountService() *application.AccountService {
 
 	rm, _ := c.repoManager()
 	bcs, _ := c.bcScanner()
-	c.accountSvc = application.NewAccountService(rm, bcs)
+	cs, _ := c.cosigner()
+	c.accountSvc = application.NewAccountService(rm, bcs, cs)
 	return c.accountSvc
 }
 
@@ -251,8 +277,9 @@ func (c *AppConfig) transactionService() *application.TransactionService {
 
 	rm, _ := c.repoManager()
 	bcs, _ := c.bcScanner()
+	cs, _ := c.cosigner()
 	c.txSvc = application.NewTransactionService(
-		rm, bcs, c.Network, c.RootPath, c.UtxoExpiryDuration,
+		rm, bcs, cs, c.Network, c.RootPath, c.UtxoExpiryDuration,
 	)
 	return c.txSvc
 }

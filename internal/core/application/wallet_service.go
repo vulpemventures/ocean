@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
+	"github.com/equitas-foundation/bamp-ocean/pkg/wallet/mnemonic"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
-	wallet "github.com/vulpemventures/ocean/pkg/single-key-wallet"
 )
 
 // WalletService is responsible for operations related to the managment of the
@@ -29,6 +29,7 @@ type WalletService struct {
 	repoManager ports.RepoManager
 	bcScanner   ports.BlockchainScanner
 	rootPath    string
+	msRootPath  string
 	network     *network.Network
 	buildInfo   BuildInfo
 
@@ -42,10 +43,16 @@ func NewWalletService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
 	rootPath string, net *network.Network, buildInfo BuildInfo,
 ) *WalletService {
+	coinType := 1
+	if net.Name == "liquid" {
+		coinType = 1776
+	}
+	msRootPath := fmt.Sprintf("m/48'/%d'", coinType)
 	ws := &WalletService{
 		repoManager: repoManager,
 		bcScanner:   bcScanner,
 		rootPath:    rootPath,
+		msRootPath:  msRootPath,
 		network:     net,
 		buildInfo:   buildInfo,
 		lock:        &sync.RWMutex{},
@@ -59,7 +66,7 @@ func NewWalletService(
 }
 
 func (ws *WalletService) GenSeed(ctx context.Context) ([]string, error) {
-	return wallet.NewMnemonic(wallet.NewMnemonicArgs{})
+	return mnemonic.NewMnemonic(mnemonic.NewMnemonicArgs{})
 }
 
 func (ws *WalletService) CreateWallet(
@@ -82,7 +89,7 @@ func (ws *WalletService) CreateWallet(
 	}
 
 	newWallet, err := domain.NewWallet(
-		mnemonic, passphrase, ws.rootPath, ws.network.Name,
+		mnemonic, passphrase, ws.rootPath, ws.msRootPath, ws.network.Name,
 		birthdayBlockHeight, nil,
 	)
 	if err != nil {
@@ -154,7 +161,7 @@ func (ws *WalletService) RestoreWallet(
 	// TODO: implement restoration
 
 	newWallet, err := domain.NewWallet(
-		mnemonic, passpharse, ws.rootPath, ws.network.Name,
+		mnemonic, passpharse, ws.rootPath, ws.msRootPath, ws.network.Name,
 		birthdayBlockHeight, nil,
 	)
 	if err != nil {

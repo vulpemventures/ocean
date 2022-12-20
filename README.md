@@ -4,7 +4,7 @@ This repo contains the protobuf files of the Ocean wallet interface.
 Any Ocean wallet implementation must stick with the services and RPCs defined by the protos.  
 This also includes a single-key Ocean wallet that can be served by running the binary or as a dockerized solution.
 
-We use Buf as package manager for the protos, you should import them from the [registry](https://buf.build/vulpemventures/ocean) and compile the stubs for your preferred prorgramming language with buf CLI.
+We use Buf as package manager for the protos, you should import them from the [registry](https://buf.build/equitas-foundation/ocean) and compile the stubs for your preferred prorgramming language with buf CLI.
 
 ## Build
 
@@ -21,7 +21,7 @@ $ make build-cli
 Build docker image:
 
 ```bash
-$ docker build -t ghcr.io/vulpemventures/oceand:latest .
+$ docker build -t ghcr.io/equitas-foundation/oceand:latest .
 ```
 
 ## Local run
@@ -47,12 +47,12 @@ $ make test
 
 ## Release
 
-Precompiled binaries are published with each [release](https://github.com/vulpemventures/ocean/releases).
+Precompiled binaries are published with each [release](https://github.com/equitas-foundation/bamp-ocean/releases).
 
 ## Versioning
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the
-[tags on this repository](https://github.com/vulpemventures/ocean/tags). 
+[tags on this repository](https://github.com/equitas-foundation/bamp-ocean/tags). 
 
 ## License
 

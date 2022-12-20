@@ -8,10 +8,10 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/dgraph-io/badger/v3/options"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
 	log "github.com/sirupsen/logrus"
 	"github.com/timshannon/badgerhold/v4"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
 )
 
 // repoManager holds all the badgerhold stores and domain repositories

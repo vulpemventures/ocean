@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	pb "github.com/equitas-foundation/bamp-ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/spf13/cobra"
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var (
-	accountName     string
-	numOfAddresses  uint64
-	changeAddresses bool
+	accountName       string
+	numOfAddresses    uint64
+	changeAddresses   bool
+	isMultisigAccount bool
 
 	accountCreateCmd = &cobra.Command{
 		Use:   "create",
@@ -66,6 +67,10 @@ var (
 )
 
 func init() {
+	accountCreateCmd.Flags().BoolVarP(
+		&isMultisigAccount, "multisig", "m", false, "whether to create a 2of2 multi-sig account (p2wsh)",
+	)
+
 	accountDeriveAddressesCmd.Flags().Uint64VarP(
 		&numOfAddresses, "num-addresses", "n", 0, "number of addresses to derive",
 	)
@@ -90,11 +95,20 @@ func accountCreate(cmd *cobra.Command, _ []string) error {
 	}
 	defer cleanup()
 
-	reply, err := client.CreateAccountBIP44(
-		context.Background(), &pb.CreateAccountBIP44Request{
-			Name: accountName,
-		},
-	)
+	var reply protoreflect.ProtoMessage
+	if isMultisigAccount {
+		reply, err = client.CreateAccountMultiSig(
+			context.Background(), &pb.CreateAccountMultiSigRequest{
+				Name: accountName,
+			},
+		)
+	} else {
+		reply, err = client.CreateAccountBIP44(
+			context.Background(), &pb.CreateAccountBIP44Request{
+				Name: accountName,
+			},
+		)
+	}
 	if err != nil {
 		printErr(err)
 		return nil

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math/big"
 
+	pb "github.com/equitas-foundation/bamp-ocean/api-spec/protobuf/gen/go/ocean/v1"
+	appconfig "github.com/equitas-foundation/bamp-ocean/internal/app-config"
+	grpc_handler "github.com/equitas-foundation/bamp-ocean/internal/interfaces/grpc/handler"
+	grpc_interceptor "github.com/equitas-foundation/bamp-ocean/internal/interfaces/grpc/interceptor"
 	log "github.com/sirupsen/logrus"
-	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
-	appconfig "github.com/vulpemventures/ocean/internal/app-config"
-	grpc_handler "github.com/vulpemventures/ocean/internal/interfaces/grpc/handler"
-	grpc_interceptor "github.com/vulpemventures/ocean/internal/interfaces/grpc/interceptor"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
