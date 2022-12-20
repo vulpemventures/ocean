@@ -58,6 +58,12 @@ func (a *account) CreateAccountMultiSig(
 	}, nil
 }
 
+func (a *account) CreateAccountMultiSig(
+	ctx context.Context, req *pb.CreateAccountMultiSigRequest,
+) (*pb.CreateAccountMultiSigResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (a *account) CreateAccountCustom(
 	ctx context.Context, req *pb.CreateAccountCustomRequest,
 ) (*pb.CreateAccountCustomResponse, error) {

@@ -12,6 +12,8 @@ import (
 	"github.com/vulpemventures/go-elements/payment"
 	"github.com/vulpemventures/go-elements/psetv2"
 	"github.com/vulpemventures/go-elements/transaction"
+	"github.com/vulpemventures/ocean/pkg/wallet"
+	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
 )
 
 type SignTransactionArgs struct {
