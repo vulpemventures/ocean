@@ -10,7 +10,6 @@ import (
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/go-elements/payment"
 	"github.com/vulpemventures/go-elements/slip77"
-	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
 )
 
 type ExtendedKeyArgs struct {
