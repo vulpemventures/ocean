@@ -40,6 +40,7 @@ type UtxoInfo struct {
 	AccountName     string
 	SpentStatus     UtxoStatus
 	ConfirmedStatus UtxoStatus
+	RedeemScript    []byte
 }
 
 func (i UtxoInfo) Key() UtxoKey {
@@ -79,6 +80,7 @@ type Utxo struct {
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
+	RedeemScript        []byte
 	AccountName         string
 	LockTimestamp       int64
 	LockExpiryTimestamp int64
@@ -129,7 +131,7 @@ func (u *Utxo) Key() UtxoKey {
 func (u *Utxo) Info() UtxoInfo {
 	return UtxoInfo{
 		u.Key(), u.Value, u.Asset, u.Script, u.ValueBlinder, u.AssetBlinder,
-		u.AccountName, u.SpentStatus, u.ConfirmedStatus,
+		u.AccountName, u.SpentStatus, u.ConfirmedStatus, u.RedeemScript,
 	}
 }
 

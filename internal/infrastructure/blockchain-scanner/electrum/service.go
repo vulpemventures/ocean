@@ -7,11 +7,11 @@ import (
 	"sync"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/ports"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/confidential"
 	"github.com/vulpemventures/go-elements/elementsutil"
-	"github.com/vulpemventures/ocean/internal/core/domain"
-	"github.com/vulpemventures/ocean/internal/core/ports"
 )
 
 type service struct {
@@ -308,6 +308,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 					Script:          out.Script,
 					AccountName:     event.account,
 					ConfirmedStatus: confirmedStatus,
+					RedeemScript:    addrInfo.RedeemScript,
 				})
 			}
 		}

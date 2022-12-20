@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/equitas-foundation/bamp-ocean/internal/core/domain"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/confidential"
 	"github.com/vulpemventures/go-elements/elementsutil"
@@ -14,13 +15,12 @@ import (
 	"github.com/vulpemventures/neutrino-elements/pkg/blockservice"
 	"github.com/vulpemventures/neutrino-elements/pkg/repository"
 	"github.com/vulpemventures/neutrino-elements/pkg/scanner"
-	"github.com/vulpemventures/ocean/internal/core/domain"
 )
 
 type scannerService struct {
 	accountName         string
 	svc                 scanner.Service
-	blindingKeys        map[string][]byte
+	addressesInfo       map[string]domain.AddressInfo
 	startingBlockHeight uint32
 	chTxs               chan *domain.Transaction
 	chUtxos             chan []*domain.Utxo
@@ -48,7 +48,7 @@ func newScannerSvc(
 	scannerSvc := &scannerService{
 		accountName:         accountName,
 		svc:                 scanner.New(filtersDb, headersDb, blockSvc, genesisHash),
-		blindingKeys:        make(map[string][]byte),
+		addressesInfo:       make(map[string]domain.AddressInfo),
 		startingBlockHeight: startingBlockHeight,
 		chTxs:               make(chan *domain.Transaction, 10),
 		chUtxos:             make(chan []*domain.Utxo, 10),
@@ -73,11 +73,11 @@ func (s *scannerService) watchAddresses(addressesInfo []domain.AddressInfo) {
 
 	for _, info := range addressesInfo {
 		// Prevent duplicates
-		if _, ok := s.blindingKeys[info.Script]; ok {
+		if _, ok := s.addressesInfo[info.Script]; ok {
 			continue
 		}
 
-		s.blindingKeys[info.Script] = info.BlindingKey
+		s.addressesInfo[info.Script] = info
 		item, _ := scanner.NewUnspentWatchItemFromAddress(info.Address)
 		s.svc.Watch(
 			scanner.WithWatchItem(item),
@@ -169,12 +169,12 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 			}
 
 			script := hex.EncodeToString(out.Script)
-			blindingKey, ok := s.getBlindingKey(script)
+			addrInfo, ok := s.getAddrInfo(script)
 			if !ok {
 				continue
 			}
 
-			revealed, err := confidential.UnblindOutputWithKey(out, blindingKey)
+			revealed, err := confidential.UnblindOutputWithKey(out, addrInfo.BlindingKey)
 			if err != nil {
 				s.warn(err, "failed to unblind utxo with given blinding key")
 				continue
@@ -205,6 +205,7 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 					BlockHeight: blockHeight,
 					BlockHash:   blockHash,
 				},
+				RedeemScript: addrInfo.RedeemScript,
 			})
 		}
 
@@ -217,11 +218,11 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 	}
 }
 
-func (s *scannerService) getBlindingKey(script string) ([]byte, bool) {
+func (s *scannerService) getAddrInfo(script string) (domain.AddressInfo, bool) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	key, ok := s.blindingKeys[script]
+	key, ok := s.addressesInfo[script]
 	return key, ok
 }
 
