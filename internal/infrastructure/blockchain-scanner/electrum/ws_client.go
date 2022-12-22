@@ -28,6 +28,7 @@ type wsClient struct {
 	isSending    bool
 	reportQueue  []accountReport
 	chSendStatus chan bool
+	chQuit       chan struct{}
 
 	tipLock  *sync.RWMutex
 	sendLock *sync.RWMutex
@@ -57,6 +58,7 @@ func newWSClient(addr string) (electrumClient, error) {
 		chHandler:    newChHandler(),
 		reportQueue:  make([]accountReport, 0),
 		chSendStatus: make(chan bool),
+		chQuit:       make(chan struct{}),
 		tipLock:      &sync.RWMutex{},
 		sendLock:     &sync.RWMutex{},
 		log:          logFn,
@@ -64,6 +66,7 @@ func newWSClient(addr string) (electrumClient, error) {
 	}
 
 	go svc.listenSendStatus()
+	go svc.keepAliveConnection()
 
 	return svc, nil
 }
@@ -130,10 +133,27 @@ func (c *wsClient) listen() {
 	}
 }
 
+func (c *wsClient) keepAliveConnection() {
+	t := time.NewTicker(1 * time.Minute)
+
+	for {
+		select {
+		case <-t.C:
+			if _, err := c.request("server.ping"); err != nil {
+				log.WithError(err).Error("scanner: failed to keep connection alive")
+			}
+		case <-c.chQuit:
+			return
+		}
+	}
+}
+
 func (c *wsClient) close() {
 	c.conn.Close()
 	c.chHandler.clear()
 	close(c.chSendStatus)
+	c.chQuit <- struct{}{}
+	close(c.chQuit)
 }
 
 func (c *wsClient) subscribeForBlocks() {
