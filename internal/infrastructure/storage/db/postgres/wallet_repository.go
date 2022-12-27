@@ -46,24 +46,10 @@ func NewWalletRepositoryPgImpl(pgxPool *pgxpool.Pool) domain.WalletRepository {
 }
 
 func (w *walletRepositoryPg) CreateWallet(
-	ctx context.Context,
-	wallet *domain.Wallet,
+	ctx context.Context, wallet *domain.Wallet,
 ) error {
-	if _, err := w.querier.InsertWallet(ctx, queries.InsertWalletParams{
-		ID:                  walletKey,
-		EncryptedMnemonic:   wallet.EncryptedMnemonic,
-		PasswordHash:        wallet.PasswordHash,
-		BirthdayBlockHeight: int32(wallet.BirthdayBlockHeight),
-		RootPath:            wallet.RootPath,
-		NetworkName:         wallet.NetworkName,
-		NextAccountIndex:    int32(wallet.NextAccountIndex),
-	},
-	); err != nil {
-		if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok && pqErr.Code == uniqueViolation {
-			return ErrWalletAlreadyCreated
-		} else {
-			return err
-		}
+	if err := w.createWallet(ctx, wallet); err != nil {
+		return err
 	}
 
 	go w.publishEvent(domain.WalletEvent{
@@ -463,4 +449,83 @@ func (w *walletRepositoryPg) getWallet(
 		AccountKeysByIndex:  accountKeysByIndex,
 		AccountKeysByName:   accountKeysByName,
 	}, nil
+}
+
+func (w *walletRepositoryPg) createWallet(
+	ctx context.Context, wallet *domain.Wallet,
+) error {
+	params := queries.InsertWalletParams{
+		ID:                  walletKey,
+		EncryptedMnemonic:   wallet.EncryptedMnemonic,
+		PasswordHash:        wallet.PasswordHash,
+		BirthdayBlockHeight: int32(wallet.BirthdayBlockHeight),
+		RootPath:            wallet.RootPath,
+		NetworkName:         wallet.NetworkName,
+		NextAccountIndex:    int32(wallet.NextAccountIndex),
+	}
+
+	if len(wallet.AccountsByKey) <= 0 {
+		if _, err := w.querier.InsertWallet(ctx, params); err != nil {
+			if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok && pqErr.Code == uniqueViolation {
+				return ErrWalletAlreadyCreated
+			} else {
+				return err
+			}
+		}
+		return nil
+	}
+
+	conn, err := w.pgxPool.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	querierWithTx := w.querier.WithTx(tx)
+
+	if _, err := querierWithTx.InsertWallet(ctx, params); err != nil {
+		if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok && pqErr.Code == uniqueViolation {
+			return ErrWalletAlreadyCreated
+		} else {
+			return err
+		}
+	}
+
+	for _, account := range wallet.AccountsByKey {
+		if _, err := querierWithTx.InsertAccount(ctx, queries.InsertAccountParams{
+			Name:              account.Info.Key.Name,
+			Index:             int32(account.Info.Key.Index),
+			Xpub:              account.Info.Xpub,
+			DerivationPath:    account.Info.DerivationPath,
+			NextExternalIndex: int32(account.NextExternalIndex),
+			NextInternalIndex: int32(account.NextInternalIndex),
+			FkWalletID:        walletKey,
+		}); err != nil {
+			return err
+		}
+
+		req := make([]queries.InsertAccountScriptsParams, 0)
+		for k, v := range account.DerivationPathByScript {
+			req = append(req, queries.InsertAccountScriptsParams{
+				Script:         k,
+				DerivationPath: v,
+				FkAccountName:  account.Info.Key.Name,
+			})
+		}
+		if len(req) > 0 {
+			if _, err := querierWithTx.InsertAccountScripts(
+				ctx, req,
+			); err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit(ctx)
 }
