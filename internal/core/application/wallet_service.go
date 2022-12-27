@@ -2,14 +2,18 @@ package application
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
+	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
 	"github.com/vulpemventures/ocean/pkg/wallet/mnemonic"
+	singlesig "github.com/vulpemventures/ocean/pkg/wallet/single-sig"
 )
 
 // WalletService is responsible for operations related to the managment of the
@@ -151,11 +155,85 @@ func (ws *WalletService) RestoreWallet(
 		}
 	}()
 
-	// TODO: implement restoration
+	accountIndex := uint32(0)
+	emptyAccountCounter := 0
+	emptyAccountsThreshold := 2
+	accounts := make([]domain.Account, 0)
+	w, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
+		RootPath: ws.rootPath,
+		Mnemonic: mnemonic,
+	})
+	for {
+		if emptyAccountCounter == emptyAccountsThreshold {
+			break
+		}
+
+		xpub, _ := w.AccountExtendedPublicKey(singlesig.ExtendedKeyArgs{
+			Account: accountIndex,
+		})
+		masterBlidningKeyStr, _ := w.MasterBlindingKey()
+		masterBlidningKey, _ := hex.DecodeString(masterBlidningKeyStr)
+		externalAddresses, internalAddresses, err := ws.bcScanner.RestoreAccount(
+			accountIndex, xpub, masterBlidningKey, birthdayBlockHeight,
+		)
+		if err != nil {
+			return err
+		}
+
+		if len(externalAddresses) <= 0 && len(internalAddresses) <= 0 {
+			emptyAccountCounter++
+			continue
+		}
+
+		// sort addresses by derivation path (desc order) to facilitate retrieving
+		// the last derived index.
+		sort.SliceStable(externalAddresses, func(i, j int) bool {
+			return externalAddresses[i].DerivationPath > externalAddresses[j].DerivationPath
+		})
+		sort.SliceStable(internalAddresses, func(i, j int) bool {
+			return internalAddresses[i].DerivationPath > internalAddresses[j].DerivationPath
+		})
+
+		derivationPaths := make(map[string]string)
+		for _, i := range externalAddresses {
+			derivationPaths[i.Script] = i.DerivationPath
+		}
+		for _, i := range internalAddresses {
+			derivationPaths[i.Script] = i.DerivationPath
+		}
+
+		var nextExternalIndex, nextInternalIndex uint
+		if len(externalAddresses) > 0 {
+			p, _ := path.ParseDerivationPath(externalAddresses[0].DerivationPath)
+			nextExternalIndex = uint(p[len(p)-1] + 1)
+		}
+		if len(internalAddresses) > 0 {
+			p, _ := path.ParseDerivationPath(internalAddresses[0].DerivationPath)
+			nextInternalIndex = uint(p[len(p)-1] + 1)
+		}
+
+		// TODO: maybe take name from function args? Something like a mapping <index, name>
+		accounts = append(accounts, domain.Account{
+			Info: domain.AccountInfo{
+				Key: domain.AccountKey{
+					Index: accountIndex,
+					Name:  fmt.Sprintf("account%d", accountIndex),
+				},
+				Xpub:           xpub,
+				DerivationPath: fmt.Sprintf("%s/%d'", ws.rootPath, accountIndex),
+			},
+			BirthdayBlock:          birthdayBlockHeight,
+			NextExternalIndex:      uint(nextExternalIndex),
+			NextInternalIndex:      uint(nextInternalIndex),
+			DerivationPathByScript: derivationPaths,
+		})
+		accountIndex++
+		emptyAccountCounter = 0
+	}
 
 	newWallet, err := domain.NewWallet(
 		mnemonic, passpharse, ws.rootPath, ws.network.Name,
-		birthdayBlockHeight, nil,
+		birthdayBlockHeight, accounts,
 	)
 	if err != nil {
 		return

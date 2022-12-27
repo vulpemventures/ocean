@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/btcsuite/btcd/btcutil"
@@ -104,11 +105,22 @@ func NewWallet(
 	accountsByKey := make(map[string]*Account)
 	accountKeysByIndex := make(map[uint32]string)
 	accountKeysByName := make(map[string]string)
+
+	// sort accounts by derivation path (desc order) to facilitate retrieving
+	// the next account index.
+	sort.SliceStable(accounts, func(i, j int) bool {
+		return accounts[i].Info.DerivationPath > accounts[j].Info.DerivationPath
+	})
 	for _, a := range accounts {
 		key := a.Info.Key
 		accountsByKey[key.String()] = &a
 		accountKeysByIndex[key.Index] = key.String()
 		accountKeysByName[key.Name] = key.String()
+	}
+	var nextAccountIndex uint32
+	if len(accounts) > 0 {
+		p, _ := path.ParseDerivationPath(accounts[0].Info.DerivationPath)
+		nextAccountIndex = p[len(p)-1] - hdkeychain.HardenedKeyStart
 	}
 
 	return &Wallet{
@@ -120,6 +132,7 @@ func NewWallet(
 		AccountKeysByIndex:  accountKeysByIndex,
 		AccountKeysByName:   accountKeysByName,
 		NetworkName:         network,
+		NextAccountIndex:    nextAccountIndex,
 	}, nil
 }
 

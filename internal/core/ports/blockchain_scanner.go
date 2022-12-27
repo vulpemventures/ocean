@@ -20,9 +20,18 @@ type BlockchainScanner interface {
 		accountName string, startingBlockHeight uint32,
 		addresses []domain.AddressInfo,
 	)
+	// WatchForUtxos instructs the scanner to notify when the given utxos are
+	// either spent or confirmed.
 	WatchForUtxos(
 		accountName string, utxos []domain.UtxoInfo,
 	)
+	// RestoreAccount makes the scanner discover and retuen all the used
+	// addresses for a certain account represented by its account index, xpub
+	// and master blinding key.
+	RestoreAccount(
+		accountIndex uint32, xpub string, masterBlindingKey []byte,
+		startingBlockHeight uint32,
+	) ([]domain.AddressInfo, []domain.AddressInfo, error)
 	// StopWatchForAccount instructs the scanner to stop notifying about
 	// txs/utxos related to any address belonging to the given HD account.
 	StopWatchForAccount(accountName string)

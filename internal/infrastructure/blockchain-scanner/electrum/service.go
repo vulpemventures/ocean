@@ -6,10 +6,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/confidential"
 	"github.com/vulpemventures/go-elements/elementsutil"
+	"github.com/vulpemventures/go-elements/network"
+	"github.com/vulpemventures/go-elements/payment"
+	"github.com/vulpemventures/go-elements/slip77"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
 )
@@ -20,6 +24,7 @@ type service struct {
 
 	lock *sync.RWMutex
 
+	net                          *network.Network
 	accountAddressesByScriptHash map[string]map[string]domain.AddressInfo
 	utxoChannelByAccount         map[string]chan []*domain.Utxo
 	txChannelByAccount           map[string]chan *domain.Transaction
@@ -30,7 +35,8 @@ type service struct {
 }
 
 type ServiceArgs struct {
-	Addr string
+	Addr    string
+	Network *network.Network
 }
 
 func (a ServiceArgs) validate() error {
@@ -39,6 +45,9 @@ func (a ServiceArgs) validate() error {
 	}
 	if !a.withTCP() && !a.withWS() {
 		return fmt.Errorf("invalid address: unknown protocol")
+	}
+	if a.Network == nil {
+		return fmt.Errorf("missing network")
 	}
 	return nil
 }
@@ -87,7 +96,7 @@ func NewService(args ServiceArgs) (ports.BlockchainScanner, error) {
 	}
 
 	svc := &service{
-		client, db, lock, accountAddressesByScriptHash,
+		client, db, lock, args.Network, accountAddressesByScriptHash,
 		utxoChannelByAccount, txChannelByAccount, reportChannelByAccount,
 		logFn, warnFn,
 	}
@@ -129,6 +138,29 @@ func (s *service) WatchForAccount(
 func (s *service) WatchForUtxos(
 	accountName string, utxos []domain.UtxoInfo,
 ) {
+}
+
+func (s *service) RestoreAccount(
+	accountIndex uint32, xpub string, masterBlindingKey []byte, _ uint32,
+) ([]domain.AddressInfo, []domain.AddressInfo, error) {
+	masterKey, err := hdkeychain.NewKeyFromString(xpub)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid xpub: %s", err)
+	}
+
+	masterBlindKey, err := slip77.FromMasterKey(masterBlindingKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid master blinding key: %s", err)
+	}
+
+	externalAddresses := s.restoreAddressesForAccount(
+		accountIndex, 0, masterKey, masterBlindKey,
+	)
+	internalAddresses := s.restoreAddressesForAccount(
+		accountIndex, 0, masterKey, masterBlindKey,
+	)
+
+	return externalAddresses, internalAddresses, nil
 }
 
 func (s *service) StopWatchForAccount(accountName string) {
@@ -378,4 +410,49 @@ func (s *service) setAddressesByScriptHash(account string, addresses []domain.Ad
 	for _, addr := range addresses {
 		s.accountAddressesByScriptHash[account][calcScriptHash(addr.Script)] = addr
 	}
+}
+
+func (s *service) restoreAddressesForAccount(
+	accountIndex, chain uint32,
+	masterKey *hdkeychain.ExtendedKey, masterBlindKey *slip77.Slip77,
+) []domain.AddressInfo {
+	batchCounter := 0
+	addrBatchSize := 20
+	unusedAddressesCounter := 0
+	hdNode, _ := masterKey.Derive(chain)
+	restoredAddresses := make([]domain.AddressInfo, 0)
+
+	for i := 0; i < addrBatchSize+addrBatchSize*batchCounter; i++ {
+		key, _ := hdNode.Derive(uint32(i))
+		pubkey, _ := key.ECPubKey()
+		unconf := payment.FromPublicKey(pubkey, s.net, nil)
+		_, blindingKey, _ := masterBlindKey.DeriveKey(unconf.WitnessScript)
+		p2wpkh := payment.FromPublicKey(pubkey, s.net, blindingKey)
+		addr, _ := p2wpkh.ConfidentialWitnessPubKeyHash()
+
+		scriptHash := calcScriptHash(addr)
+		history, _ := s.client.getScriptHashHistory(scriptHash)
+		if len(history) <= 0 {
+			unusedAddressesCounter++
+			if unusedAddressesCounter == addrBatchSize {
+				break
+			}
+		} else {
+			restoredAddresses = append(restoredAddresses, domain.AddressInfo{
+				AccountKey: domain.AccountKey{
+					Index: accountIndex,
+				},
+				Address:        addr,
+				BlindingKey:    blindingKey.SerializeCompressed(),
+				DerivationPath: fmt.Sprintf("%d'/%d/%d", accountIndex, chain, i),
+				Script:         hex.EncodeToString(p2wpkh.WitnessScript),
+			})
+			unusedAddressesCounter = 0
+		}
+		if i == (addrBatchSize+addrBatchSize*batchCounter)-1 {
+			batchCounter++
+		}
+	}
+
+	return restoredAddresses
 }
