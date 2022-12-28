@@ -182,6 +182,7 @@ func (ws *WalletService) RestoreWallet(
 
 		if len(externalAddresses) <= 0 && len(internalAddresses) <= 0 {
 			emptyAccountCounter++
+			accountIndex++
 			continue
 		}
 
