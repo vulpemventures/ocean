@@ -237,6 +237,9 @@ func parseBlockHeight(height uint32) (uint32, error) {
 	if int(height) < 0 {
 		return 0, fmt.Errorf("invalid block height")
 	}
+	if height == 0 {
+		height = 1
+	}
 	return height, nil
 }
 

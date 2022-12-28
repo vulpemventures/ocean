@@ -111,9 +111,10 @@ func NewWallet(
 	sort.SliceStable(accounts, func(i, j int) bool {
 		return accounts[i].Info.DerivationPath > accounts[j].Info.DerivationPath
 	})
-	for _, a := range accounts {
-		key := a.Info.Key
-		accountsByKey[key.String()] = &a
+	for i := range accounts {
+		account := accounts[i]
+		key := account.Info.Key
+		accountsByKey[key.String()] = &account
 		accountKeysByIndex[key.Index] = key.String()
 		accountKeysByName[key.Name] = key.String()
 	}
