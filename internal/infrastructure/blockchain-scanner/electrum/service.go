@@ -205,7 +205,9 @@ func (s *service) setAccountChannels(
 
 func (s *service) listenToAccountChannel(chReports chan accountReport) {
 	for report := range chReports {
-		history, err := s.client.getScriptHashHistory(report.scriptHash)
+		history, err := s.client.getScriptHashesHistory(
+			[]string{report.scriptHash},
+		)
 		if err != nil {
 			s.warn(
 				err, "failed to get history for script hash %s", report.scriptHash,
@@ -213,7 +215,9 @@ func (s *service) listenToAccountChannel(chReports chan accountReport) {
 			continue
 		}
 
-		s.db.updateAccountTxHistory(report.account, report.scriptHash, history)
+		s.db.updateAccountTxHistory(
+			report.account, report.scriptHash, history[report.scriptHash],
+		)
 	}
 }
 
