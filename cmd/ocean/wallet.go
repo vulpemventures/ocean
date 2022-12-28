@@ -14,10 +14,11 @@ var (
 	datadir   = btcutil.AppDataDir("ocean-cli", false)
 	statePath = filepath.Join(datadir, "state.json")
 
-	mnemonic    string
-	password    string
-	oldPassword string
-	newPassword string
+	mnemonic      string
+	password      string
+	oldPassword   string
+	newPassword   string
+	birthdayBlock uint32
 
 	walletGenSeedCmd = &cobra.Command{
 		Use:   "genseed",
@@ -33,6 +34,13 @@ var (
 			"with the given mnemonic (or let me create one for you), " +
 			"encrypted with your choosen password",
 		RunE: walletCreate,
+	}
+	walletRestoreCmd = &cobra.Command{
+		Use:   "restore",
+		Short: "restore an existing wallet from a seed",
+		Long: "this command lets you restore an ocean wallet from the given " +
+			"mnemonic, encrypted with your choosen password",
+		RunE: walletRestore,
 	}
 	walletUnlockCmd = &cobra.Command{
 		Use:   "unlock",
@@ -81,6 +89,16 @@ func init() {
 	walletCreateCmd.Flags().StringVar(&password, "password", "", "encryption password")
 	walletCreateCmd.MarkFlagRequired("password")
 
+	walletRestoreCmd.Flags().StringVar(
+		&mnemonic, "mnemonic", "", "space separated word list as wallet seed",
+	)
+	walletRestoreCmd.Flags().StringVar(&password, "password", "", "encryption password")
+	walletRestoreCmd.Flags().Uint32Var(
+		&birthdayBlock, "birthday-block", 0, "height of the blockchain when wallet was created",
+	)
+	walletRestoreCmd.MarkFlagRequired("mnemonic")
+	walletRestoreCmd.MarkFlagRequired("password")
+
 	walletUnlockCmd.Flags().StringVar(&password, "password", "", "encryption password")
 	walletUnlockCmd.MarkFlagRequired("password")
 
@@ -93,8 +111,8 @@ func init() {
 	walletChangePwdCmd.MarkFlagRequired("new-password")
 
 	walletCmd.AddCommand(
-		walletGenSeedCmd, walletCreateCmd, walletUnlockCmd, walletLockCmd,
-		walletChangePwdCmd, walletInfoCmd, walletStatusCmd,
+		walletGenSeedCmd, walletCreateCmd, walletRestoreCmd, walletUnlockCmd,
+		walletLockCmd, walletChangePwdCmd, walletInfoCmd, walletStatusCmd,
 	)
 }
 
@@ -162,6 +180,29 @@ func walletCreate(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("")
 	fmt.Println("wallet initialized")
+	return nil
+}
+
+func walletRestore(cmd *cobra.Command, args []string) error {
+	client, cleanup, err := getWalletClient()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	if _, err := client.RestoreWallet(
+		context.Background(), &pb.RestoreWalletRequest{
+			Mnemonic:            mnemonic,
+			Password:            password,
+			BirthdayBlockHeight: birthdayBlock,
+		},
+	); err != nil {
+		printErr(err)
+		return nil
+	}
+
+	fmt.Println("")
+	fmt.Println("wallet restored")
 	return nil
 }
 
