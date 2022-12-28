@@ -157,7 +157,7 @@ func (s *service) RestoreAccount(
 		accountIndex, 0, masterKey, masterBlindKey,
 	)
 	internalAddresses := s.restoreAddressesForAccount(
-		accountIndex, 0, masterKey, masterBlindKey,
+		accountIndex, 1, masterKey, masterBlindKey,
 	)
 
 	return externalAddresses, internalAddresses, nil
@@ -420,42 +420,60 @@ func (s *service) restoreAddressesForAccount(
 	accountIndex, chain uint32,
 	masterKey *hdkeychain.ExtendedKey, masterBlindKey *slip77.Slip77,
 ) []domain.AddressInfo {
+	batchSize := 20
 	batchCounter := 0
-	addrBatchSize := 20
 	unusedAddressesCounter := 0
 	hdNode, _ := masterKey.Derive(chain)
 	restoredAddresses := make([]domain.AddressInfo, 0)
 
-	for i := 0; i < addrBatchSize+addrBatchSize*batchCounter; i++ {
-		key, _ := hdNode.Derive(uint32(i))
-		pubkey, _ := key.ECPubKey()
-		unconf := payment.FromPublicKey(pubkey, s.net, nil)
-		_, blindingKey, _ := masterBlindKey.DeriveKey(unconf.WitnessScript)
-		p2wpkh := payment.FromPublicKey(pubkey, s.net, blindingKey)
-		addr, _ := p2wpkh.ConfidentialWitnessPubKeyHash()
+	for {
+		if unusedAddressesCounter >= batchSize {
+			break
+		}
 
-		scriptHash := calcScriptHash(addr)
-		history, _ := s.client.getScriptHashHistory(scriptHash)
-		if len(history) <= 0 {
-			unusedAddressesCounter++
-			if unusedAddressesCounter == addrBatchSize {
-				break
-			}
-		} else {
-			restoredAddresses = append(restoredAddresses, domain.AddressInfo{
+		scriptHashes := make([]string, 0, batchSize)
+		addressesByScriptHash := make(map[string]domain.AddressInfo)
+
+		for i := 0; i < batchSize; i++ {
+			index := uint32(i + batchSize*batchCounter)
+			key, _ := hdNode.Derive(index)
+			pubkey, _ := key.ECPubKey()
+			unconf := payment.FromPublicKey(pubkey, s.net, nil)
+			_, blindingKey, _ := masterBlindKey.DeriveKey(unconf.WitnessScript)
+			p2wpkh := payment.FromPublicKey(pubkey, s.net, blindingKey)
+			addr, _ := p2wpkh.ConfidentialWitnessPubKeyHash()
+			script := hex.EncodeToString(p2wpkh.WitnessScript)
+			scriptHash := calcScriptHash(script)
+
+			scriptHashes = append(scriptHashes, scriptHash)
+			addressesByScriptHash[scriptHash] = domain.AddressInfo{
 				AccountKey: domain.AccountKey{
 					Index: accountIndex,
 				},
 				Address:        addr,
 				BlindingKey:    blindingKey.SerializeCompressed(),
-				DerivationPath: fmt.Sprintf("%d'/%d/%d", accountIndex, chain, i),
-				Script:         hex.EncodeToString(p2wpkh.WitnessScript),
-			})
-			unusedAddressesCounter = 0
+				DerivationPath: fmt.Sprintf("%d'/%d/%d", accountIndex, chain, index),
+				Script:         script,
+			}
 		}
-		if i == (addrBatchSize+addrBatchSize*batchCounter)-1 {
-			batchCounter++
+
+		history, _ := s.client.getScriptHashesHistory(scriptHashes)
+		if len(history) <= 0 {
+			break
 		}
+
+		for _, scriptHash := range scriptHashes {
+			if txHistory := history[scriptHash]; len(txHistory) > 0 {
+				unusedAddressesCounter = 0
+				restoredAddresses = append(
+					restoredAddresses, addressesByScriptHash[scriptHash],
+				)
+				continue
+			}
+			unusedAddressesCounter++
+		}
+
+		batchCounter++
 	}
 
 	return restoredAddresses
