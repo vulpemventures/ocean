@@ -18,7 +18,7 @@ type electrumClient interface {
 
 	getLatestBlock() ([]byte, uint32, error)
 	getBlockInfo(height uint32) (*chainhash.Hash, int64, error)
-	getScriptHashHistory(scriptHash string) ([]txInfo, error)
+	getScriptHashesHistory(scriptHashes []string) (map[string][]txInfo, error)
 	getTx(txid string) (*transaction.Transaction, error)
 	getUtxos(outpoints []domain.Utxo) ([]domain.Utxo, error)
 	broadcastTx(txHex string) (string, error)

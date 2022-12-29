@@ -23,14 +23,12 @@ import (
 const delim = byte('\n')
 
 type tcpClient struct {
-	conn         net.Conn
-	nextId       uint64
-	chHandler    *chHandler
-	chainTip     blockInfo
-	isSending    bool
-	reportQueue  []accountReport
-	chSendStatus chan bool
-	chQuit       chan struct{}
+	conn           net.Conn
+	nextId         uint64
+	chHandler      *chHandler
+	chainTip       blockInfo
+	reportHandlers map[string]*reportHandler
+	chQuit         chan struct{}
 
 	tipLock  *sync.RWMutex
 	sendLock *sync.RWMutex
@@ -68,19 +66,17 @@ func newTCPClient(addr string) (electrumClient, error) {
 	}
 
 	svc := &tcpClient{
-		conn:         conn,
-		nextId:       0,
-		chHandler:    newChHandler(),
-		reportQueue:  make([]accountReport, 0),
-		chSendStatus: make(chan bool),
-		chQuit:       make(chan struct{}),
-		tipLock:      &sync.RWMutex{},
-		sendLock:     &sync.RWMutex{},
-		log:          logFn,
-		warn:         warnFn,
+		conn:           conn,
+		nextId:         0,
+		chHandler:      newChHandler(),
+		reportHandlers: make(map[string]*reportHandler, 0),
+		chQuit:         make(chan struct{}),
+		tipLock:        &sync.RWMutex{},
+		sendLock:       &sync.RWMutex{},
+		log:            logFn,
+		warn:           warnFn,
 	}
 
-	go svc.listenSendStatus()
 	go svc.keepAliveConnection()
 
 	return svc, nil
@@ -109,12 +105,7 @@ func (c *tcpClient) listen() {
 				scriptHash := resp.Params.([]interface{})[0].(string)
 				account := c.chHandler.getAccountByScriptHash(scriptHash)
 				report := accountReport{account, scriptHash}
-				if c.isSending {
-					c.reportQueue = append(c.reportQueue, report)
-				} else {
-					chReports := c.chHandler.getChReportsForAccount(account)
-					go func() { chReports <- report }()
-				}
+				c.reportHandlers[account].sendReport(report)
 				continue
 			case "blockchain.headers.subscribe":
 				buf, _ := json.Marshal(resp.Params.([]interface{})[0])
@@ -149,7 +140,6 @@ func (c *tcpClient) keepAliveConnection() {
 func (c *tcpClient) close() {
 	c.conn.Close()
 	c.chHandler.clear()
-	close(c.chSendStatus)
 	c.chQuit <- struct{}{}
 	close(c.chQuit)
 }
@@ -171,36 +161,46 @@ func (c *tcpClient) subscribeForBlocks() {
 func (c *tcpClient) subscribeForAccount(
 	accountName string, addresses []domain.AddressInfo,
 ) (chan accountReport, map[string][]txInfo) {
-	history := make(map[string][]txInfo)
-	c.setSendingStatus(true)
-	for _, info := range addresses {
-		scriptHash := calcScriptHash(info.Script)
-		if err := c.subscribeForScript(accountName, scriptHash); err != nil {
-			c.warn(
-				err, "failed to subscribe for script %s of account %s",
-				info.Script, accountName,
-			)
-			continue
-		}
-
-		c.log(
-			"start watching address %s for account %s",
-			info.DerivationPath, accountName,
-		)
-
-		addrHistory, err := c.getScriptHashHistory(scriptHash)
-		if err != nil {
-			continue
-		}
-		history[scriptHash] = addrHistory
-	}
-	c.setSendingStatus(false)
-
 	if c.chHandler.getChReportsForAccount(accountName) == nil {
 		c.chHandler.addChReportForAccount(accountName)
 	}
 
-	return c.chHandler.getChReportsForAccount(accountName), history
+	chReports := c.chHandler.getChReportsForAccount(accountName)
+	if _, ok := c.reportHandlers[accountName]; !ok {
+		c.reportHandlers[accountName] = &reportHandler{
+			locker:      &sync.Mutex{},
+			chReports:   chReports,
+			reportQueue: make([]accountReport, 0),
+		}
+	}
+
+	scriptHashes := make([]string, 0, len(addresses))
+	c.reportHandlers[accountName].lock()
+	defer c.reportHandlers[accountName].unlock()
+
+	for _, info := range addresses {
+		scriptHashes = append(scriptHashes, calcScriptHash(info.Script))
+		c.log(
+			"start watching address %s for account %s",
+			info.DerivationPath, accountName,
+		)
+	}
+
+	if err := c.subscribeForScripts(accountName, scriptHashes); err != nil {
+		c.warn(
+			err, "failed to subscribe for scripts of account %s", accountName,
+		)
+	}
+
+	history, err := c.getScriptHashesHistory(scriptHashes)
+	if err != nil {
+		c.warn(
+			err, "failed to get get tx history for watched addresses of account %s",
+			accountName,
+		)
+	}
+
+	return chReports, history
 }
 
 func (c *tcpClient) unsubscribeForAccount(accountName string) {
@@ -212,15 +212,29 @@ func (c *tcpClient) unsubscribeForAccount(accountName string) {
 	c.chHandler.clearAccount(accountName)
 }
 
-func (c *tcpClient) subscribeForScript(accountName, scriptHash string) error {
-	resp, err := c.request("blockchain.scripthash.subscribe", scriptHash)
+func (c *tcpClient) subscribeForScripts(
+	accountName string, scriptHashes []string,
+) error {
+	reqs := make([]request, 0, len(scriptHashes))
+	for _, scriptHash := range scriptHashes {
+		reqs = append(reqs, c.newJSONRequest(
+			"blockchain.scripthash.subscribe", scriptHash),
+		)
+	}
+
+	responses, err := c.batchRequests(reqs)
 	if err != nil {
 		return err
 	}
-	if err := resp.error(); err != nil {
-		return err
+	for _, resp := range responses {
+		if err := resp.error(); err != nil {
+			return err
+		}
 	}
-	c.chHandler.addAccountScriptHash(accountName, scriptHash)
+
+	for _, scriptHash := range scriptHashes {
+		c.chHandler.addAccountScriptHash(accountName, scriptHash)
+	}
 	return nil
 }
 
@@ -237,19 +251,34 @@ func (c *tcpClient) subscribeForScript(accountName, scriptHash string) error {
 // 	}
 // }
 
-func (c *tcpClient) getScriptHashHistory(scriptHash string) ([]txInfo, error) {
-	resp, err := c.request("blockchain.scripthash.get_history", scriptHash)
+func (c *tcpClient) getScriptHashesHistory(scriptHashes []string) (map[string][]txInfo, error) {
+	reqs := make([]request, 0, len(scriptHashes))
+	scriptHashById := make(map[uint64]string)
+	for _, scriptHash := range scriptHashes {
+		req := c.newJSONRequest("blockchain.scripthash.get_history", scriptHash)
+		reqs = append(reqs, req)
+		scriptHashById[req.Id] = scriptHash
+	}
+	responses, err := c.batchRequests(reqs)
 	if err != nil {
 		return nil, err
 	}
-	if err := resp.error(); err != nil {
-		return nil, err
+
+	allHistory := make(map[string][]txInfo)
+	for _, resp := range responses {
+		if err := resp.error(); err != nil {
+			continue
+		}
+
+		scriptHash := scriptHashById[resp.Id]
+		history := make([]txInfo, 0)
+		buf, _ := json.Marshal(resp.Result)
+		json.Unmarshal(buf, &history)
+
+		allHistory[scriptHash] = append(allHistory[scriptHash], history...)
 	}
 
-	buf, _ := json.Marshal(resp.Result)
-	history := make([]txInfo, 0)
-	json.Unmarshal(buf, &history)
-	return history, nil
+	return allHistory, nil
 }
 
 func (c *tcpClient) getLatestBlock() ([]byte, uint32, error) {
@@ -333,7 +362,7 @@ func (c *tcpClient) request(method string, params ...interface{}) (*response, er
 		return nil, err
 	}
 
-	c.chHandler.addRequest(req)
+	c.chHandler.addRequests([]request{req})
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer func() {
 		cancel()
@@ -348,6 +377,46 @@ func (c *tcpClient) request(method string, params ...interface{}) (*response, er
 	}
 }
 
+func (c *tcpClient) batchRequests(reqs []request) ([]response, error) {
+	reqBytes := make([]byte, 0)
+	for _, req := range reqs {
+		buf, _ := json.Marshal(req)
+		reqBytes = append(reqBytes, append(buf, delim)...)
+	}
+
+	if _, err := c.conn.Write(reqBytes); err != nil {
+		return nil, err
+	}
+
+	c.chHandler.addRequests(reqs)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer func() {
+		cancel()
+		for _, req := range reqs {
+			c.chHandler.clearRequest(uint32(req.Id))
+		}
+	}()
+
+	responses := make([]response, 0, len(reqs))
+	ws := &sync.WaitGroup{}
+	ws.Add(len(reqs))
+
+	for i := range reqs {
+		req := reqs[i]
+		go func(req request) {
+			select {
+			case resp := <-c.chHandler.getChReportsForReqId(uint32(req.Id)):
+				responses = append(responses, resp)
+			case <-ctx.Done():
+				c.warn(nil, "request timed out")
+			}
+			ws.Done()
+		}(req)
+	}
+	ws.Wait()
+	return responses, nil
+}
+
 func (c *tcpClient) newJSONRequest(method string, params ...interface{}) request {
 	params = append([]interface{}{}, params...)
 	return request{atomic.AddUint64(&c.nextId, 1), method, params}
@@ -358,26 +427,4 @@ func (c *tcpClient) updateChainTip(tip blockInfo) {
 	defer c.tipLock.Unlock()
 
 	c.chainTip = tip
-}
-
-func (c *tcpClient) setSendingStatus(val bool) {
-	c.sendLock.Lock()
-	defer c.sendLock.Unlock()
-
-	c.isSending = val
-	c.chSendStatus <- val
-}
-
-func (c *tcpClient) listenSendStatus() {
-	for isSending := range c.chSendStatus {
-		if !isSending {
-			for _, report := range c.reportQueue {
-				chReports := c.chHandler.getChReportsForAccount(report.account)
-				go func(chReport chan accountReport, report accountReport) {
-					chReports <- report
-				}(chReports, report)
-			}
-			c.reportQueue = make([]accountReport, 0)
-		}
-	}
 }

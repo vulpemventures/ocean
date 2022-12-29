@@ -137,16 +137,18 @@ func (h *chHandler) addAccountScriptHash(account, scriptHash string) {
 	h.scriptsByAccount[account] = append(h.scriptsByAccount[account], scriptHash)
 }
 
-func (h *chHandler) addRequest(req request) {
+func (h *chHandler) addRequests(reqs []request) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
-	id := uint32(req.Id)
-	if _, ok := h.chReportsByReqId[id]; ok {
-		return
-	}
+	for _, req := range reqs {
+		id := uint32(req.Id)
+		if _, ok := h.chReportsByReqId[id]; ok {
+			continue
+		}
 
-	h.chReportsByReqId[id] = make(chan response)
+		h.chReportsByReqId[id] = make(chan response)
+	}
 }
 
 func (h *chHandler) getAccountByScriptHash(script string) string {
@@ -201,4 +203,40 @@ func (h *chHandler) clear() {
 	for _, ch := range h.chReportsByReqId {
 		close(ch)
 	}
+}
+
+type reportHandler struct {
+	locker      *sync.Mutex
+	isLocked    bool
+	chReports   chan accountReport
+	reportQueue []accountReport
+}
+
+func (h *reportHandler) lock() {
+	h.locker.Lock()
+	defer h.locker.Unlock()
+
+	h.isLocked = true
+}
+
+func (h *reportHandler) unlock() {
+	h.locker.Lock()
+	defer h.locker.Unlock()
+
+	for i := range h.reportQueue {
+		report := h.reportQueue[i]
+		go func(report accountReport) { h.chReports <- report }(report)
+	}
+
+	h.reportQueue = make([]accountReport, 0)
+	h.isLocked = false
+}
+
+func (h *reportHandler) sendReport(report accountReport) {
+	if h.isLocked {
+		h.reportQueue = append(h.reportQueue, report)
+		return
+	}
+
+	go func() { h.chReports <- report }()
 }
