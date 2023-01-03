@@ -45,7 +45,7 @@ class WalletServiceStub(object):
                 request_serializer=ocean_dot_v1_dot_wallet__pb2.ChangePasswordRequest.SerializeToString,
                 response_deserializer=ocean_dot_v1_dot_wallet__pb2.ChangePasswordResponse.FromString,
                 )
-        self.RestoreWallet = channel.unary_unary(
+        self.RestoreWallet = channel.unary_stream(
                 '/ocean.v1.WalletService/RestoreWallet',
                 request_serializer=ocean_dot_v1_dot_wallet__pb2.RestoreWalletRequest.SerializeToString,
                 response_deserializer=ocean_dot_v1_dot_wallet__pb2.RestoreWalletResponse.FromString,
@@ -159,7 +159,7 @@ def add_WalletServiceServicer_to_server(servicer, server):
                     request_deserializer=ocean_dot_v1_dot_wallet__pb2.ChangePasswordRequest.FromString,
                     response_serializer=ocean_dot_v1_dot_wallet__pb2.ChangePasswordResponse.SerializeToString,
             ),
-            'RestoreWallet': grpc.unary_unary_rpc_method_handler(
+            'RestoreWallet': grpc.unary_stream_rpc_method_handler(
                     servicer.RestoreWallet,
                     request_deserializer=ocean_dot_v1_dot_wallet__pb2.RestoreWalletRequest.FromString,
                     response_serializer=ocean_dot_v1_dot_wallet__pb2.RestoreWalletResponse.SerializeToString,
@@ -286,7 +286,7 @@ class WalletService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/RestoreWallet',
+        return grpc.experimental.unary_stream(request, target, '/ocean.v1.WalletService/RestoreWallet',
             ocean_dot_v1_dot_wallet__pb2.RestoreWalletRequest.SerializeToString,
             ocean_dot_v1_dot_wallet__pb2.RestoreWalletResponse.FromString,
             options, channel_credentials,

@@ -31,7 +31,7 @@ service WalletService {
 
   // RestoreWallet restores an HD Wallet based on signing and blinding seeds,
   // encrypts them with the password and persists the encrypted seeds.
-  rpc RestoreWallet(RestoreWalletRequest) returns (RestoreWalletResponse);
+  rpc RestoreWallet(RestoreWalletRequest) returns (stream RestoreWalletResponse);
 
   // Status returns info about the status of the wallet.
   rpc Status(StatusRequest) returns (StatusResponse);
@@ -88,8 +88,14 @@ message RestoreWalletRequest{
   // starting block for the wallet rescan.
   // If not given, will rescan from genesis block.
   uint32 birthday_block_height = 3;
+  // The root path of the wallet in the form `m/purpose'/network'`.
+  // If not defined, a default one must be used.
+  string root_path = 4;
 }
-message RestoreWalletResponse{}
+message RestoreWalletResponse{
+  // String message returned within the process.
+  string message = 1;
+}
 
 message StatusRequest{}
 message StatusResponse{
