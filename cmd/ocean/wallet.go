@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"path/filepath"
 
 	"github.com/btcsuite/btcd/btcutil"
@@ -19,6 +20,7 @@ var (
 	oldPassword   string
 	newPassword   string
 	birthdayBlock uint32
+	rootPath      string
 
 	walletGenSeedCmd = &cobra.Command{
 		Use:   "genseed",
@@ -96,6 +98,7 @@ func init() {
 	walletRestoreCmd.Flags().Uint32Var(
 		&birthdayBlock, "birthday-block", 0, "height of the blockchain when wallet was created",
 	)
+	walletRestoreCmd.Flags().StringVar(&rootPath, "root-path", "", "wallet root path")
 	walletRestoreCmd.MarkFlagRequired("mnemonic")
 	walletRestoreCmd.MarkFlagRequired("password")
 
@@ -190,19 +193,31 @@ func walletRestore(cmd *cobra.Command, args []string) error {
 	}
 	defer cleanup()
 
-	if _, err := client.RestoreWallet(
+	stream, err := client.RestoreWallet(
 		context.Background(), &pb.RestoreWalletRequest{
 			Mnemonic:            mnemonic,
 			Password:            password,
 			BirthdayBlockHeight: birthdayBlock,
+			RootPath:            rootPath,
 		},
-	); err != nil {
+	)
+	if err != nil {
 		printErr(err)
 		return nil
 	}
 
-	fmt.Println("")
-	fmt.Println("wallet restored")
+	for {
+		reply, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+
+		fmt.Println("- message:", reply.GetMessage())
+	}
+
 	return nil
 }
 
