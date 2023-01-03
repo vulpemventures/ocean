@@ -7,6 +7,7 @@ import (
 	"sort"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/ocean/internal/core/domain"
@@ -40,12 +41,18 @@ type WalletService struct {
 	unlocked    bool
 	synced      bool
 	lock        *sync.RWMutex
+
+	log func(format string, a ...interface{})
 }
 
 func NewWalletService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
 	rootPath string, net *network.Network, buildInfo BuildInfo,
 ) *WalletService {
+	logFn := func(format string, a ...interface{}) {
+		format = fmt.Sprintf("wallet service: %s", format)
+		log.Debugf(format, a...)
+	}
 	ws := &WalletService{
 		repoManager: repoManager,
 		bcScanner:   bcScanner,
@@ -53,6 +60,7 @@ func NewWalletService(
 		network:     net,
 		buildInfo:   buildInfo,
 		lock:        &sync.RWMutex{},
+		log:         logFn,
 	}
 	w, _ := ws.repoManager.WalletRepository().GetWallet(context.Background())
 	if w != nil {
@@ -145,29 +153,48 @@ func (ws *WalletService) ChangePassword(
 }
 
 func (ws *WalletService) RestoreWallet(
-	ctx context.Context, mnemonic []string, passpharse string,
-	birthdayBlockHeight uint32,
-) (err error) {
-	defer func() {
-		if err == nil {
-			ws.setInitialized()
-			ws.setSynced()
-		}
-	}()
+	ctx context.Context, chMessages chan WalletRestoreMessage,
+	mnemonic []string, rootPath, passpharse string, birthdayBlockHeight uint32,
+) {
+	defer close(chMessages)
 
+	if ws.isInitialized() {
+		chMessages <- WalletRestoreMessage{
+			Err: fmt.Errorf("wallet is already initialized"),
+		}
+		return
+	}
+
+	walletRootPath := rootPath
+	if walletRootPath == "" {
+		walletRootPath = ws.rootPath
+	}
 	accountIndex := uint32(0)
 	emptyAccountCounter := 0
-	emptyAccountsThreshold := 2
+	emptyAccountsThreshold := 3
 	accounts := make([]domain.Account, 0)
 	w, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
-		RootPath: ws.rootPath,
+		RootPath: walletRootPath,
 		Mnemonic: mnemonic,
 	})
+
+	chMessages <- WalletRestoreMessage{
+		Message: "start restoring wallet accounts...",
+	}
+	addressesByAccount := make(map[uint32][]domain.AddressInfo)
+	accountByScript := make(map[string]string)
 	for {
 		if emptyAccountCounter == emptyAccountsThreshold {
 			break
 		}
 
+		accountName := fmt.Sprintf("account%d", accountIndex)
+
+		msg := fmt.Sprintf("restoring account %d...", accountIndex)
+		chMessages <- WalletRestoreMessage{
+			Message: msg,
+		}
+		ws.log(msg)
 		xpub, _ := w.AccountExtendedPublicKey(singlesig.ExtendedKeyArgs{
 			Account: accountIndex,
 		})
@@ -177,29 +204,65 @@ func (ws *WalletService) RestoreWallet(
 			accountIndex, xpub, masterBlidningKey, birthdayBlockHeight,
 		)
 		if err != nil {
-			return err
+			chMessages <- WalletRestoreMessage{Err: err}
+			return
 		}
 
 		if len(externalAddresses) <= 0 && len(internalAddresses) <= 0 {
+			chMessages <- WalletRestoreMessage{
+				Message: fmt.Sprintf("account %d empty", accountIndex),
+			}
+			ws.log("account %d empty", accountIndex)
 			emptyAccountCounter++
 			accountIndex++
 			continue
 		}
 
+		msg = fmt.Sprintf(
+			"found %d external address(es) for account %d",
+			len(externalAddresses), accountIndex,
+		)
+		chMessages <- WalletRestoreMessage{
+			Message: msg,
+		}
+		ws.log(msg)
+
+		msg = fmt.Sprintf(
+			"found %d internal address(es) for account %d",
+			len(internalAddresses), accountIndex,
+		)
+		chMessages <- WalletRestoreMessage{
+			Message: msg,
+		}
+		ws.log(msg)
+
+		addressesByAccount[accountIndex] = append(
+			addressesByAccount[accountIndex], externalAddresses...,
+		)
+		addressesByAccount[accountIndex] = append(
+			addressesByAccount[accountIndex], internalAddresses...,
+		)
+
 		// sort addresses by derivation path (desc order) to facilitate retrieving
 		// the last derived index.
 		sort.SliceStable(externalAddresses, func(i, j int) bool {
-			return externalAddresses[i].DerivationPath > externalAddresses[j].DerivationPath
+			path1, _ := path.ParseDerivationPath(externalAddresses[i].DerivationPath)
+			path2, _ := path.ParseDerivationPath(externalAddresses[j].DerivationPath)
+			return path1[len(path1)-1] > path2[len(path2)-1]
 		})
 		sort.SliceStable(internalAddresses, func(i, j int) bool {
-			return internalAddresses[i].DerivationPath > internalAddresses[j].DerivationPath
+			path1, _ := path.ParseDerivationPath(internalAddresses[i].DerivationPath)
+			path2, _ := path.ParseDerivationPath(internalAddresses[j].DerivationPath)
+			return path1[len(path1)-1] > path2[len(path2)-1]
 		})
 
 		derivationPaths := make(map[string]string)
 		for _, i := range externalAddresses {
+			accountByScript[i.Script] = accountName
 			derivationPaths[i.Script] = i.DerivationPath
 		}
 		for _, i := range internalAddresses {
+			accountByScript[i.Script] = accountName
 			derivationPaths[i.Script] = i.DerivationPath
 		}
 
@@ -218,10 +281,10 @@ func (ws *WalletService) RestoreWallet(
 			Info: domain.AccountInfo{
 				Key: domain.AccountKey{
 					Index: accountIndex,
-					Name:  fmt.Sprintf("account%d", accountIndex),
+					Name:  accountName,
 				},
 				Xpub:           xpub,
-				DerivationPath: fmt.Sprintf("%s/%d'", ws.rootPath, accountIndex),
+				DerivationPath: fmt.Sprintf("%s/%d'", walletRootPath, accountIndex),
 			},
 			BirthdayBlock:          birthdayBlockHeight,
 			NextExternalIndex:      uint(nextExternalIndex),
@@ -232,15 +295,84 @@ func (ws *WalletService) RestoreWallet(
 		emptyAccountCounter = 0
 	}
 
+	chMessages <- WalletRestoreMessage{
+		Message: "wallet accounts restored",
+	}
+
+	chMessages <- WalletRestoreMessage{
+		Message: "initializing wallet...",
+	}
+
 	newWallet, err := domain.NewWallet(
-		mnemonic, passpharse, ws.rootPath, ws.network.Name,
+		mnemonic, passpharse, walletRootPath, ws.network.Name,
 		birthdayBlockHeight, accounts,
 	)
 	if err != nil {
+		chMessages <- WalletRestoreMessage{Err: err}
 		return
 	}
 
-	return ws.repoManager.WalletRepository().CreateWallet(ctx, newWallet)
+	if rootPath != "" {
+		ws.rootPath = rootPath
+	}
+
+	if err := ws.repoManager.WalletRepository().CreateWallet(
+		ctx, newWallet,
+	); err != nil {
+		chMessages <- WalletRestoreMessage{Err: err}
+		return
+	}
+
+	ws.setInitialized()
+
+	chMessages <- WalletRestoreMessage{
+		Message: "wallet initialized",
+	}
+
+	chMessages <- WalletRestoreMessage{
+		Message: "restoring wallet utxo pool...",
+	}
+
+	addresses := make([]domain.AddressInfo, 0)
+	for _, accountAddresses := range addressesByAccount {
+		addresses = append(addresses, accountAddresses...)
+	}
+	utxos, err := ws.bcScanner.GetUtxosForAddresses(addresses)
+	if err != nil {
+		chMessages <- WalletRestoreMessage{Err: err}
+		return
+	}
+
+	accountsBalance := make(map[string]map[string]uint64)
+	for i := range utxos {
+		utxo := utxos[i]
+		if utxo.IsSpent() {
+			continue
+		}
+		utxos[i].AccountName = accountByScript[hex.EncodeToString(utxo.Script)]
+		if _, ok := accountsBalance[utxos[i].AccountName]; !ok {
+			accountsBalance[utxos[i].AccountName] = make(map[string]uint64)
+		}
+		accountsBalance[utxos[i].AccountName][utxo.Asset] += utxo.Value
+	}
+
+	count, err := ws.repoManager.UtxoRepository().AddUtxos(context.Background(), utxos)
+	if err != nil {
+		chMessages <- WalletRestoreMessage{Err: err}
+		return
+	}
+	if count > 0 {
+		ws.log("added %d utxo(s)", count)
+	}
+	chMessages <- WalletRestoreMessage{
+		Message: "restored wallet utxo pool",
+	}
+
+	ws.setSynced()
+
+	chMessages <- WalletRestoreMessage{
+		Message: "wallet restored",
+	}
 }
 
 func (ws *WalletService) GetStatus(_ context.Context) WalletStatus {

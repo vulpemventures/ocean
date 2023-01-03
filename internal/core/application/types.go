@@ -43,6 +43,11 @@ type WalletInfo struct {
 	BuildInfo           BuildInfo
 }
 
+type WalletRestoreMessage struct {
+	Message string
+	Err     error
+}
+
 type BuildInfo struct {
 	Version string
 	Commit  string

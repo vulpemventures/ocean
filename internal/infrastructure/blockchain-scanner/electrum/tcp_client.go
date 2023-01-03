@@ -13,7 +13,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/transaction"
@@ -285,38 +284,66 @@ func (c *tcpClient) getLatestBlock() ([]byte, uint32, error) {
 	return c.chainTip.hash()[:], uint32(c.chainTip.Height), nil
 }
 
-func (c *tcpClient) getBlockInfo(height uint32) (*chainhash.Hash, int64, error) {
-	resp, err := c.request("blockchain.block.header", height)
-	if err != nil {
-		return nil, -1, err
-	}
-	if err := resp.error(); err != nil {
-		return nil, -1, err
+func (c *tcpClient) getBlocksInfo(heights []uint32) ([]blockInfo, error) {
+	reqs := make([]request, 0, len(heights))
+	heightByReqId := make(map[uint64]uint32)
+	for _, height := range heights {
+		req := c.newJSONRequest("blockchain.block.header", height)
+		reqs = append(reqs, req)
+		heightByReqId[req.Id] = height
 	}
 
-	block := blockInfo{Header: resp.Result.(string)}
-	return block.hash(), block.timestamp(), nil
+	responses, err := c.batchRequests(reqs)
+	if err != nil {
+		return nil, err
+	}
+
+	blocks := make([]blockInfo, 0, len(heights))
+	for _, resp := range responses {
+		if err := resp.error(); err != nil {
+			return nil, err
+		}
+		header := resp.Result.(string)
+		height := heightByReqId[resp.Id]
+		blocks = append(blocks, blockInfo{Header: header, Height: uint64(height)})
+	}
+
+	return blocks, nil
 }
 
-func (c *tcpClient) getTx(txid string) (*transaction.Transaction, error) {
-	resp, err := c.request("blockchain.transaction.get", txid)
+func (c *tcpClient) getTxs(txids []string) ([]*transaction.Transaction, error) {
+	reqs := make([]request, 0, len(txids))
+	for _, txid := range txids {
+		reqs = append(reqs, c.newJSONRequest("blockchain.transaction.get", txid))
+	}
+	responses, err := c.batchRequests(reqs)
 	if err != nil {
 		return nil, err
 	}
-	if err := resp.error(); err != nil {
-		return nil, err
+
+	txs := make([]*transaction.Transaction, 0, len(txids))
+	for _, resp := range responses {
+		if err := resp.error(); err != nil {
+			return nil, err
+		}
+		tx, err := transaction.NewTxFromHex(resp.Result.(string))
+		if err != nil {
+			return nil, err
+		}
+		txs = append(txs, tx)
 	}
 
-	return transaction.NewTxFromHex(resp.Result.(string))
+	return txs, nil
 }
 
 func (c *tcpClient) getUtxos(outpoints []domain.Utxo) ([]domain.Utxo, error) {
 	utxos := make([]domain.Utxo, 0, len(outpoints))
 	for _, u := range outpoints {
-		tx, err := c.getTx(u.TxID)
+		txs, err := c.getTxs([]string{u.TxID})
 		if err != nil {
 			return nil, err
 		}
+		tx := txs[0]
 
 		prevout := tx.Outputs[u.VOut]
 		var value uint64
@@ -397,23 +424,28 @@ func (c *tcpClient) batchRequests(reqs []request) ([]response, error) {
 		}
 	}()
 
+	lock := sync.Mutex{}
 	responses := make([]response, 0, len(reqs))
-	ws := &sync.WaitGroup{}
-	ws.Add(len(reqs))
+	wg := sync.WaitGroup{}
+	wg.Add(len(reqs))
 
 	for i := range reqs {
 		req := reqs[i]
-		go func(req request) {
+		ch := c.chHandler.getChReportsForReqId(uint32(req.Id))
+		go func(chResp chan response) {
 			select {
-			case resp := <-c.chHandler.getChReportsForReqId(uint32(req.Id)):
+			case resp := <-chResp:
+				lock.Lock()
 				responses = append(responses, resp)
+				lock.Unlock()
 			case <-ctx.Done():
 				c.warn(nil, "request timed out")
 			}
-			ws.Done()
-		}(req)
+			wg.Done()
+		}(ch)
 	}
-	ws.Wait()
+	wg.Wait()
+
 	return responses, nil
 }
 

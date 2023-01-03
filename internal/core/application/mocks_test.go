@@ -139,6 +139,15 @@ func (m *mockBcScanner) GetUtxos(utxos []domain.Utxo) ([]domain.Utxo, error) {
 	return res, args.Error(1)
 }
 
+func (m *mockBcScanner) GetUtxosForAddresses(addresses []domain.AddressInfo) ([]*domain.Utxo, error) {
+	args := m.Called(addresses)
+	var res []*domain.Utxo
+	if a := args.Get(0); a != nil {
+		res = a.([]*domain.Utxo)
+	}
+	return res, args.Error(1)
+}
+
 func (m *mockBcScanner) BroadcastTransaction(txHex string) (string, error) {
 	args := m.Called(txHex)
 	var res string

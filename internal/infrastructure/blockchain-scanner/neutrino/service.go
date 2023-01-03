@@ -180,6 +180,12 @@ func (s *service) GetUtxos(utxoList []domain.Utxo) ([]domain.Utxo, error) {
 	return utxos, nil
 }
 
+func (s *service) GetUtxosForAddresses(
+	_ []domain.AddressInfo,
+) ([]*domain.Utxo, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (s *service) BroadcastTransaction(txHex string) (string, error) {
 	tx, err := transaction.NewTxFromHex(txHex)
 	if err != nil {

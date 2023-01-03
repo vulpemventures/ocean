@@ -271,11 +271,6 @@ func (as *AccountService) listenToUtxoChannel(
 	for utxos := range chUtxos {
 		time.Sleep(time.Millisecond)
 
-		as.log(
-			"received %d utxo(s) from channel for account %s",
-			len(utxos), accountName,
-		)
-
 		utxoKeys := make([]domain.UtxoKey, 0, len(utxos))
 		for _, u := range utxos {
 			utxoKeys = append(utxoKeys, u.Key())
@@ -333,8 +328,6 @@ func (as *AccountService) listenToTxChannel(
 	txRepo := as.repoManager.TransactionRepository()
 	for tx := range chTxs {
 		time.Sleep(time.Millisecond)
-
-		as.log("received new tx %s from channel", tx.TxID)
 
 		gotTx, _ := txRepo.GetTransaction(ctx, tx.TxID)
 		if gotTx == nil {

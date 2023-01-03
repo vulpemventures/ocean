@@ -9,6 +9,7 @@ import (
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"github.com/vulpemventures/ocean/internal/core/domain"
+	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
 )
 
 func parseMnemonic(mnemonic string) (string, error) {
@@ -275,4 +276,14 @@ func parseUnblindedInputs(
 		})
 	}
 	return ins, nil
+}
+
+func parseRootPath(p string) (string, error) {
+	if p == "" {
+		return p, nil
+	}
+	if _, err := path.ParseRootDerivationPath(p); err != nil {
+		return "", fmt.Errorf("invalid root path: %s", err)
+	}
+	return p, nil
 }

@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/elementsutil"
@@ -246,38 +245,66 @@ func (c *wsClient) getLatestBlock() ([]byte, uint32, error) {
 	return c.chainTip.hash()[:], uint32(c.chainTip.Height), nil
 }
 
-func (c *wsClient) getBlockInfo(height uint32) (*chainhash.Hash, int64, error) {
-	resp, err := c.request("blockchain.block.header", height)
-	if err != nil {
-		return nil, -1, err
-	}
-	if err := resp.error(); err != nil {
-		return nil, -1, err
+func (c *wsClient) getBlocksInfo(heights []uint32) ([]blockInfo, error) {
+	reqs := make([]request, 0, len(heights))
+	heightByReqId := make(map[uint64]uint32)
+	for _, height := range heights {
+		req := c.newJSONRequest("blockchain.block.header", height)
+		reqs = append(reqs, req)
+		heightByReqId[req.Id] = height
 	}
 
-	block := blockInfo{Header: resp.Result.(string)}
-	return block.hash(), block.timestamp(), nil
+	responses, err := c.batchRequests(reqs)
+	if err != nil {
+		return nil, err
+	}
+
+	blocks := make([]blockInfo, 0, len(heights))
+	for _, resp := range responses {
+		if err := resp.error(); err != nil {
+			return nil, err
+		}
+		header := resp.Result.(string)
+		height := heightByReqId[resp.Id]
+		blocks = append(blocks, blockInfo{Header: header, Height: uint64(height)})
+	}
+
+	return blocks, nil
 }
 
-func (c *wsClient) getTx(txid string) (*transaction.Transaction, error) {
-	resp, err := c.request("blockchain.transaction.get", txid)
+func (c *wsClient) getTxs(txids []string) ([]*transaction.Transaction, error) {
+	reqs := make([]request, 0, len(txids))
+	for _, txid := range txids {
+		reqs = append(reqs, c.newJSONRequest("blockchain.transaction.get", txid))
+	}
+	responses, err := c.batchRequests(reqs)
 	if err != nil {
 		return nil, err
 	}
-	if err := resp.error(); err != nil {
-		return nil, err
+
+	txs := make([]*transaction.Transaction, 0, len(txids))
+	for _, resp := range responses {
+		if err := resp.error(); err != nil {
+			return nil, err
+		}
+		tx, err := transaction.NewTxFromHex(resp.Result.(string))
+		if err != nil {
+			return nil, err
+		}
+		txs = append(txs, tx)
 	}
 
-	return transaction.NewTxFromHex(resp.Result.(string))
+	return txs, nil
 }
 
 func (c *wsClient) getUtxos(outpoints []domain.Utxo) ([]domain.Utxo, error) {
 	utxos := make([]domain.Utxo, 0, len(outpoints))
 	for _, u := range outpoints {
-		tx, err := c.getTx(u.TxID)
+		txs, err := c.getTxs([]string{u.TxID})
 		if err != nil {
 			return nil, err
 		}
+		tx := txs[0]
 
 		prevout := tx.Outputs[u.VOut]
 		var value uint64
