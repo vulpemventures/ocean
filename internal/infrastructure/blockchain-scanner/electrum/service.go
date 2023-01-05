@@ -140,7 +140,8 @@ func (s *service) WatchForUtxos(
 }
 
 func (s *service) RestoreAccount(
-	accountIndex uint32, xpub string, masterBlindingKey []byte, _ uint32,
+	accountIndex uint32, xpub string, masterBlindingKey []byte,
+	_, addressesThreshold uint32,
 ) ([]domain.AddressInfo, []domain.AddressInfo, error) {
 	masterKey, err := hdkeychain.NewKeyFromString(xpub)
 	if err != nil {
@@ -153,10 +154,10 @@ func (s *service) RestoreAccount(
 	}
 
 	externalAddresses := s.restoreAddressesForAccount(
-		accountIndex, 0, masterKey, masterBlindKey,
+		accountIndex, 0, masterKey, masterBlindKey, addressesThreshold,
 	)
 	internalAddresses := s.restoreAddressesForAccount(
-		accountIndex, 1, masterKey, masterBlindKey,
+		accountIndex, 1, masterKey, masterBlindKey, addressesThreshold,
 	)
 
 	return externalAddresses, internalAddresses, nil
@@ -581,8 +582,9 @@ func (s *service) setAddressesByScriptHash(
 func (s *service) restoreAddressesForAccount(
 	accountIndex, chain uint32,
 	masterKey *hdkeychain.ExtendedKey, masterBlindKey *slip77.Slip77,
+	addressesThaddressesThreshold uint32,
 ) []domain.AddressInfo {
-	batchSize := 100
+	batchSize := int(addressesThaddressesThreshold)
 	batchCounter := 0
 	unusedAddressesCounter := 0
 	hdNode, _ := masterKey.Derive(chain)

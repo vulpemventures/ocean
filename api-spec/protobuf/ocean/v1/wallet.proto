@@ -91,6 +91,12 @@ message RestoreWalletRequest{
   // The root path of the wallet in the form `m/purpose'/network'`.
   // If not defined, a default one must be used.
   string root_path = 4;
+  // The number of consecutive empty accounts to find in order to stop
+  // their restoration.
+  uint32 empty_account_threshold = 5;
+  // The number of consecutive unused addresses to find in order to stop
+  // their restoration.
+  uint32 unused_address_threshold = 6;
 }
 message RestoreWalletResponse{
   // String message returned within the process.

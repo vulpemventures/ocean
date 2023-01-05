@@ -130,6 +130,7 @@ func (w *wallet) RestoreWallet(
 	go w.appSvc.RestoreWallet(
 		stream.Context(), chMessages,
 		strings.Split(mnemonic, " "), rootPath, password, birthdayBlock,
+		req.GetEmptyAccountThreshold(), req.GetUnusedAddressThreshold(),
 	)
 
 	for msg := range chMessages {

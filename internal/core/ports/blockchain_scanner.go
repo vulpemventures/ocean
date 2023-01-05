@@ -30,7 +30,7 @@ type BlockchainScanner interface {
 	// and master blinding key.
 	RestoreAccount(
 		accountIndex uint32, xpub string, masterBlindingKey []byte,
-		startingBlockHeight uint32,
+		startingBlockHeight, addressesThreshold uint32,
 	) ([]domain.AddressInfo, []domain.AddressInfo, error)
 	// StopWatchForAccount instructs the scanner to stop notifying about
 	// txs/utxos related to any address belonging to the given HD account.

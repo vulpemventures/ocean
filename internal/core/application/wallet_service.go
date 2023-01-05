@@ -17,6 +17,11 @@ import (
 	singlesig "github.com/vulpemventures/ocean/pkg/wallet/single-sig"
 )
 
+const (
+	defaultEmptyAccountThreshold    = 3
+	defaultUnusedAddressesThreshold = 100
+)
+
 // WalletService is responsible for operations related to the managment of the
 // wallet:
 //   - Generate a new random 24-words mnemonic.
@@ -154,7 +159,9 @@ func (ws *WalletService) ChangePassword(
 
 func (ws *WalletService) RestoreWallet(
 	ctx context.Context, chMessages chan WalletRestoreMessage,
-	mnemonic []string, rootPath, passpharse string, birthdayBlockHeight uint32,
+	mnemonic []string, rootPath, passpharse string,
+	birthdayBlockHeight, emptyAccountsThreshold, unusedAddressesThreshold uint32,
+
 ) {
 	defer close(chMessages)
 
@@ -169,9 +176,14 @@ func (ws *WalletService) RestoreWallet(
 	if walletRootPath == "" {
 		walletRootPath = ws.rootPath
 	}
+	if emptyAccountsThreshold == 0 {
+		emptyAccountsThreshold = defaultEmptyAccountThreshold
+	}
+	if unusedAddressesThreshold == 0 {
+		unusedAddressesThreshold = defaultUnusedAddressesThreshold
+	}
 	accountIndex := uint32(0)
-	emptyAccountCounter := 0
-	emptyAccountsThreshold := 3
+	emptyAccountCounter := uint32(0)
 	accounts := make([]domain.Account, 0)
 	w, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
 		RootPath: walletRootPath,
@@ -201,7 +213,7 @@ func (ws *WalletService) RestoreWallet(
 		masterBlidningKeyStr, _ := w.MasterBlindingKey()
 		masterBlidningKey, _ := hex.DecodeString(masterBlidningKeyStr)
 		externalAddresses, internalAddresses, err := ws.bcScanner.RestoreAccount(
-			accountIndex, xpub, masterBlidningKey, birthdayBlockHeight,
+			accountIndex, xpub, masterBlidningKey, birthdayBlockHeight, unusedAddressesThreshold,
 		)
 		if err != nil {
 			chMessages <- WalletRestoreMessage{Err: err}
