@@ -197,6 +197,7 @@ func (s *service) GetUtxos(utxos []domain.Utxo) ([]domain.Utxo, error) {
 func (s *service) GetUtxosForAddresses(
 	addresses []domain.AddressInfo,
 ) ([]*domain.Utxo, error) {
+	// Parse addresses into script hashes.
 	scriptHashes := make([]string, 0, len(addresses))
 	addressesByScriptHash := make(map[string]domain.AddressInfo)
 	for _, addr := range addresses {
@@ -204,6 +205,8 @@ func (s *service) GetUtxosForAddresses(
 		scriptHashes = append(scriptHashes, scriptHash)
 		addressesByScriptHash[scriptHash] = addr
 	}
+
+	// Retrieve tx history for all addresses.
 	history, err := s.client.getScriptHashesHistory(scriptHashes)
 	if err != nil {
 		return nil, err
@@ -225,6 +228,9 @@ func (s *service) GetUtxosForAddresses(
 		return nil, err
 	}
 
+	// For every tx of the history, add all inputs to the list (map) of spent
+	// utxos, and all outputs owned by any of the given addresses to the
+	// list (map) of all utxos.
 	spentUtxosByKey := make(map[domain.UtxoKey]struct{})
 	utxosByScriptHash := make(map[string][]*domain.Utxo)
 	for _, tx := range txs {
@@ -266,6 +272,12 @@ func (s *service) GetUtxosForAddresses(
 		}
 	}
 
+	// Loop over the list of all utxos to unblind'em if necessary.
+	// Last thing to do is to reconstruct the spent and confirmed statuses of
+	// the utxos. For this, we collect all blocks (height) for which we need to
+	// fetch info from electrum.
+	// We make use of 2 auxiliary maps to associate blocks to spent and confimed
+	// utxos.
 	spentUtxoBlocks := make(map[uint32][]domain.UtxoKey)
 	utxoBlocks := make(map[uint32][]domain.UtxoKey)
 	utxosByKey := make(map[domain.UtxoKey]*domain.Utxo)
@@ -314,8 +326,8 @@ func (s *service) GetUtxosForAddresses(
 		}
 	}
 
-	// merge utxoBlocks and spentUtxoBlocks in an another mapping to prevent
-	// duplicates.
+	// Merge the 2 auxiliary maps into a single one to prevent duplicated keys
+	// and fetch info for all blocks.
 	allUtxoBlocks := make(map[uint32]struct{})
 	for height := range utxoBlocks {
 		allUtxoBlocks[height] = struct{}{}
@@ -332,10 +344,13 @@ func (s *service) GetUtxosForAddresses(
 		return nil, err
 	}
 
+	// Reconstruct utxo statuses with the fetched blocks info and update the
+	// statuses of the spent and confirmed utxos.
 	for _, block := range blocksInfo {
 		status := domain.UtxoStatus{
 			BlockHeight: block.Height,
 			BlockHash:   block.hash().String(),
+			BlockTime:   block.timestamp(),
 		}
 		for _, key := range utxoBlocks[uint32(block.Height)] {
 			utxosByKey[key].ConfirmedStatus = status
@@ -345,6 +360,7 @@ func (s *service) GetUtxosForAddresses(
 		}
 	}
 
+	// Translate the auxiliary map into a list of utxos.
 	utxos := make([]*domain.Utxo, 0, len(utxosByKey))
 	for _, utxo := range utxosByKey {
 		utxos = append(utxos, utxo)
