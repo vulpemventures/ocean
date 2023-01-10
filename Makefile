@@ -34,12 +34,10 @@ fmt:
 
 run: clean
 	@echo "Running oceand..."
-	@export OCEAN_NETWORK=regtest; \
 	export OCEAN_LOG_LEVEL=5; \
 	export OCEAN_NO_TLS=true; \
 	export OCEAN_STATS_INTERVAL=120; \
-	export OCEAN_ELECTRUM_URL=tcp://localhost:50001; \
-	export OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
+	export OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=240; \
 	go run ./cmd/oceand
 
 test: fmt
