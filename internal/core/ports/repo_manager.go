@@ -34,6 +34,9 @@ type RepoManager interface {
 		eventType domain.TransactionEventType, handler TxEventHandler,
 	)
 
+	// Reset brings all the repos to their initial state by deleting any persisted data.
+	Reset()
+
 	// Close closes the connection with all concrete repositories
 	// implementations.
 	Close()

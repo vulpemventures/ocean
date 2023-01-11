@@ -36,6 +36,10 @@ type walletRepositoryPg struct {
 }
 
 func NewWalletRepositoryPgImpl(pgxPool *pgxpool.Pool) domain.WalletRepository {
+	return newWalletRepositoryPgImpl(pgxPool)
+}
+
+func newWalletRepositoryPgImpl(pgxPool *pgxpool.Pool) *walletRepositoryPg {
 	return &walletRepositoryPg{
 		pgxPool:          pgxPool,
 		querier:          queries.New(pgxPool),
@@ -528,4 +532,8 @@ func (w *walletRepositoryPg) createWallet(
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (w *walletRepositoryPg) reset() {
+	w.querier.ResetWallet(context.Background())
 }

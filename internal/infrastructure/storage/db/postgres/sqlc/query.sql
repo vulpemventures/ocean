@@ -80,3 +80,12 @@ DELETE FROM tx_input_account WHERE fk_tx_id=$1;
 
 -- name: GetTransaction :many
 SELECT * FROM transaction t left join tx_input_account tia on t.tx_id = tia.fk_tx_id WHERE tx_id=$1;
+
+-- name: ResetUtxos :exec
+DELETE FROM utxo;
+
+-- name: ResetWallet :exec
+DELETE FROM wallet;
+
+-- name: ResetTransactions :exec
+DELETE FROM transaction;

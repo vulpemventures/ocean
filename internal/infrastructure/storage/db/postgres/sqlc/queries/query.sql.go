@@ -672,6 +672,33 @@ func (q *Queries) InsertWallet(ctx context.Context, arg InsertWalletParams) (Wal
 	return i, err
 }
 
+const resetTransactions = `-- name: ResetTransactions :exec
+DELETE FROM transaction
+`
+
+func (q *Queries) ResetTransactions(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, resetTransactions)
+	return err
+}
+
+const resetUtxos = `-- name: ResetUtxos :exec
+DELETE FROM utxo
+`
+
+func (q *Queries) ResetUtxos(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, resetUtxos)
+	return err
+}
+
+const resetWallet = `-- name: ResetWallet :exec
+DELETE FROM wallet
+`
+
+func (q *Queries) ResetWallet(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, resetWallet)
+	return err
+}
+
 const updateAccountIndexes = `-- name: UpdateAccountIndexes :one
 UPDATE account SET next_external_index = $1, next_internal_index = $2 WHERE name = $3 RETURNING name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id
 `

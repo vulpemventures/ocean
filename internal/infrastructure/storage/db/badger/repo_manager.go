@@ -104,6 +104,12 @@ func (rm *repoManager) RegisterHandlerForTxEvent(
 	rm.txEventHandlers.set(int(eventType), handler)
 }
 
+func (d *repoManager) Reset() {
+	d.walletRepository.reset()
+	d.utxoRepository.reset()
+	d.txRepository.reset()
+}
+
 func (d *repoManager) Close() {
 	d.walletRepository.close()
 	d.utxoRepository.close()

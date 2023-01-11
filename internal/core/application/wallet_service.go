@@ -161,14 +161,31 @@ func (ws *WalletService) RestoreWallet(
 	ctx context.Context, chMessages chan WalletRestoreMessage,
 	mnemonic []string, rootPath, passpharse string,
 	birthdayBlockHeight, emptyAccountsThreshold, unusedAddressesThreshold uint32,
-
 ) {
 	defer close(chMessages)
 
-	if ws.isInitialized() {
-		chMessages <- WalletRestoreMessage{
-			Err: fmt.Errorf("wallet is already initialized"),
+	canceled := false
+	c, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func(c, ctx context.Context, b *bool) {
+		for {
+			select {
+			case <-ctx.Done():
+				*b = true
+				ws.log("process aborted")
+				ws.repoManager.Reset()
+				ws.setNotInitialized()
+				return
+			case <-c.Done():
+				return
+			}
 		}
+	}(c, ctx, &canceled)
+
+	if ws.isInitialized() {
+		sendMessage(canceled, chMessages, WalletRestoreMessage{
+			Err: fmt.Errorf("wallet is already initialized"),
+		})
 		return
 	}
 
@@ -190,9 +207,12 @@ func (ws *WalletService) RestoreWallet(
 		Mnemonic: mnemonic,
 	})
 
-	chMessages <- WalletRestoreMessage{
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 		Message: "start restoring wallet accounts...",
+	}) {
+		return
 	}
+
 	addressesByAccount := make(map[uint32][]domain.AddressInfo)
 	accountByScript := make(map[string]string)
 	for {
@@ -203,8 +223,10 @@ func (ws *WalletService) RestoreWallet(
 		accountName := fmt.Sprintf("account%d", accountIndex)
 
 		msg := fmt.Sprintf("restoring account %d...", accountIndex)
-		chMessages <- WalletRestoreMessage{
+		if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 			Message: msg,
+		}) {
+			return
 		}
 		ws.log(msg)
 		xpub, _ := w.AccountExtendedPublicKey(singlesig.ExtendedKeyArgs{
@@ -216,13 +238,15 @@ func (ws *WalletService) RestoreWallet(
 			accountIndex, xpub, masterBlidningKey, birthdayBlockHeight, unusedAddressesThreshold,
 		)
 		if err != nil {
-			chMessages <- WalletRestoreMessage{Err: err}
+			sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
 			return
 		}
 
 		if len(externalAddresses) <= 0 && len(internalAddresses) <= 0 {
-			chMessages <- WalletRestoreMessage{
+			if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 				Message: fmt.Sprintf("account %d empty", accountIndex),
+			}) {
+				return
 			}
 			ws.log("account %d empty", accountIndex)
 			emptyAccountCounter++
@@ -234,8 +258,10 @@ func (ws *WalletService) RestoreWallet(
 			"found %d external address(es) for account %d",
 			len(externalAddresses), accountIndex,
 		)
-		chMessages <- WalletRestoreMessage{
+		if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 			Message: msg,
+		}) {
+			return
 		}
 		ws.log(msg)
 
@@ -243,8 +269,10 @@ func (ws *WalletService) RestoreWallet(
 			"found %d internal address(es) for account %d",
 			len(internalAddresses), accountIndex,
 		)
-		chMessages <- WalletRestoreMessage{
+		if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 			Message: msg,
+		}) {
+			return
 		}
 		ws.log(msg)
 
@@ -307,12 +335,16 @@ func (ws *WalletService) RestoreWallet(
 		emptyAccountCounter = 0
 	}
 
-	chMessages <- WalletRestoreMessage{
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 		Message: "wallet accounts restored",
+	}) {
+		return
 	}
 
-	chMessages <- WalletRestoreMessage{
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 		Message: "initializing wallet...",
+	}) {
+		return
 	}
 
 	newWallet, err := domain.NewWallet(
@@ -320,7 +352,7 @@ func (ws *WalletService) RestoreWallet(
 		birthdayBlockHeight, accounts,
 	)
 	if err != nil {
-		chMessages <- WalletRestoreMessage{Err: err}
+		sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
 		return
 	}
 
@@ -331,18 +363,22 @@ func (ws *WalletService) RestoreWallet(
 	if err := ws.repoManager.WalletRepository().CreateWallet(
 		ctx, newWallet,
 	); err != nil {
-		chMessages <- WalletRestoreMessage{Err: err}
+		sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
 		return
 	}
 
 	ws.setInitialized()
 
-	chMessages <- WalletRestoreMessage{
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 		Message: "wallet initialized",
+	}) {
+		return
 	}
 
-	chMessages <- WalletRestoreMessage{
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 		Message: "restoring wallet utxo pool...",
+	}) {
+		return
 	}
 
 	addresses := make([]domain.AddressInfo, 0)
@@ -351,7 +387,7 @@ func (ws *WalletService) RestoreWallet(
 	}
 	utxos, err := ws.bcScanner.GetUtxosForAddresses(addresses)
 	if err != nil {
-		chMessages <- WalletRestoreMessage{Err: err}
+		sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
 		return
 	}
 
@@ -370,21 +406,23 @@ func (ws *WalletService) RestoreWallet(
 
 	count, err := ws.repoManager.UtxoRepository().AddUtxos(context.Background(), utxos)
 	if err != nil {
-		chMessages <- WalletRestoreMessage{Err: err}
+		sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
 		return
 	}
 	if count > 0 {
 		ws.log("added %d utxo(s)", count)
 	}
-	chMessages <- WalletRestoreMessage{
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
 		Message: "restored wallet utxo pool",
+	}) {
+		return
 	}
 
 	ws.setSynced()
 
-	chMessages <- WalletRestoreMessage{
+	sendMessage(canceled, chMessages, WalletRestoreMessage{
 		Message: "wallet restored",
-	}
+	})
 }
 
 func (ws *WalletService) GetStatus(_ context.Context) WalletStatus {
@@ -437,6 +475,13 @@ func (ws *WalletService) setInitialized() {
 	ws.initialized = true
 }
 
+func (ws *WalletService) setNotInitialized() {
+	ws.lock.Lock()
+	defer ws.lock.Unlock()
+
+	ws.initialized = false
+}
+
 func (ws *WalletService) isInitialized() bool {
 	ws.lock.RLock()
 	defer ws.lock.RUnlock()
@@ -477,4 +522,14 @@ func (ws *WalletService) isSynced() bool {
 	defer ws.lock.RUnlock()
 
 	return ws.synced
+}
+
+func sendMessage(
+	canceled bool, ch chan WalletRestoreMessage, msg WalletRestoreMessage,
+) bool {
+	if canceled {
+		return false
+	}
+	ch <- msg
+	return true
 }

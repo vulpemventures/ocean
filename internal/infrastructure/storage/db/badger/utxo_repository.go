@@ -524,6 +524,10 @@ func (r *utxoRepository) publishEvent(event domain.UtxoEvent) {
 	}
 }
 
+func (r *utxoRepository) reset() {
+	r.store.Badger().DropAll()
+}
+
 func (r *utxoRepository) close() {
 	r.store.Close()
 	close(r.chEvents)

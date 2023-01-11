@@ -396,6 +396,14 @@ func (r *utxoRepository) publishEvent(event domain.UtxoEvent) {
 	}
 }
 
+func (r *utxoRepository) reset() {
+	r.store.lock.Lock()
+	defer r.store.lock.Unlock()
+
+	r.store.utxos = make(map[string]*domain.Utxo)
+	r.store.utxosByAccount = make(map[string][]domain.UtxoKey)
+}
+
 func (r *utxoRepository) close() {
 	close(r.chEvents)
 	close(r.externalChEvents)

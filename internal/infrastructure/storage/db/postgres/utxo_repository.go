@@ -24,6 +24,10 @@ type utxoRepositoryPg struct {
 }
 
 func NewUtxoRepositoryPgImpl(pgxPool *pgxpool.Pool) domain.UtxoRepository {
+	return newUtxoRepositoryPgImpl(pgxPool)
+}
+
+func newUtxoRepositoryPgImpl(pgxPool *pgxpool.Pool) *utxoRepositoryPg {
 	return &utxoRepositoryPg{
 		pgxPool:          pgxPool,
 		querier:          queries.New(pgxPool),
@@ -791,6 +795,10 @@ func (u *utxoRepositoryPg) unlockUtxo(
 
 	utxoInfo := utxo.Info()
 	return true, &utxoInfo, nil
+}
+
+func (u *utxoRepositoryPg) reset() {
+	u.querier.ResetUtxos(context.Background())
 }
 
 func toGetAllUtxosRow(v queries.GetUtxosForAccountRow) queries.GetAllUtxosRow {
