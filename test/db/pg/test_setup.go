@@ -9,7 +9,7 @@ import (
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
 	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
-	dbtest "github.com/vulpemventures/ocean/test/testutil"
+	"github.com/vulpemventures/ocean/test/testutil"
 	"strings"
 )
 
@@ -35,13 +35,13 @@ type PgDbTestSuite struct {
 }
 
 func (p *PgDbTestSuite) SetupSuite() {
-	mockedMnemonicCypher := &dbtest.MockMnemonicCypher{}
-	mockedMnemonicCypher.On("Encrypt", mock.Anything, mock.Anything).Return(dbtest.H2b(encryptedMnemonic), nil)
+	mockedMnemonicCypher := &testutil.MockMnemonicCypher{}
+	mockedMnemonicCypher.On("Encrypt", mock.Anything, mock.Anything).Return(testutil.H2b(encryptedMnemonic), nil)
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, []byte(password)).Return([]byte(strings.Join(mnemonic, " ")), nil)
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, []byte(newPassword)).Return([]byte(strings.Join(mnemonic, " ")), nil)
 	mockedMnemonicCypher.On("Decrypt", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("invalid password"))
 	domain.MnemonicCypher = mockedMnemonicCypher
-	domain.MnemonicStore = dbtest.NewInMemoryMnemonicStore()
+	domain.MnemonicStore = testutil.NewInMemoryMnemonicStore()
 
 	pg, err := postgresdb.NewRepoManager(postgresdb.DbConfig{
 		DbUser:     "root",
@@ -58,11 +58,11 @@ func (p *PgDbTestSuite) SetupSuite() {
 
 	pgRepoManager = pg
 
-	if err := dbtest.SetupDB(); err != nil {
+	if err := testutil.SetupDB(); err != nil {
 		p.FailNow(err.Error())
 	}
 
-	handler := dbtest.HandlerFactory(p.T(), "postgres")
+	handler := testutil.HandlerFactory(p.T(), "postgres")
 	pgRepoManager.RegisterHandlerForWalletEvent(domain.WalletCreated, handler)
 	pgRepoManager.RegisterHandlerForWalletEvent(domain.WalletUnlocked, handler)
 	pgRepoManager.RegisterHandlerForWalletEvent(domain.WalletAccountCreated, handler)
@@ -71,19 +71,17 @@ func (p *PgDbTestSuite) SetupSuite() {
 }
 
 func (p *PgDbTestSuite) TearDownSuite() {
-	if err := dbtest.TruncateDB(); err != nil {
+	if err := testutil.TruncateDB(); err != nil {
 		p.FailNow(err.Error())
 	}
 }
 
 func (p *PgDbTestSuite) BeforeTest(suiteName, testName string) {
-	if err := dbtest.TruncateDB(); err != nil {
+	domain.MnemonicStore = testutil.NewInMemoryMnemonicStore()
+
+	if err := testutil.TruncateDB(); err != nil {
 		p.FailNow(err.Error())
 	}
 }
 
-func (p *PgDbTestSuite) AfterTest(suiteName, testName string) {
-	if err := dbtest.TruncateDB(); err != nil {
-		p.FailNow(err.Error())
-	}
-}
+func (p *PgDbTestSuite) AfterTest(suiteName, testName string) {}

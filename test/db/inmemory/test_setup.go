@@ -48,6 +48,7 @@ func (i *InMemoryDbTestSuite) TearDownSuite() {
 }
 
 func (i *InMemoryDbTestSuite) BeforeTest(suiteName, testName string) {
+	domain.MnemonicStore = testutil.NewInMemoryMnemonicStore()
 	inMemoryRepoManager = inmemory.NewRepoManager()
 	handler := testutil.HandlerFactory(i.T(), "inmemory")
 	inMemoryRepoManager.RegisterHandlerForWalletEvent(domain.WalletCreated, handler)

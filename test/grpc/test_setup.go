@@ -68,8 +68,6 @@ func (g *GrpcDbTestSuite) SetupSuite() {
 }
 
 func (g *GrpcDbTestSuite) TearDownSuite() {
-	grpcSvc.Service.Stop()
-
 	if err := dbtest.TruncateDB(); err != nil {
 		g.FailNow(err.Error())
 	}

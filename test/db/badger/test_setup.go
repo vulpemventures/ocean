@@ -48,6 +48,7 @@ func (b *BadgerDbTestSuite) TearDownSuite() {
 }
 
 func (b *BadgerDbTestSuite) BeforeTest(suiteName, testName string) {
+	domain.MnemonicStore = testutil.NewInMemoryMnemonicStore()
 	brm, err := dbbadger.NewRepoManager("", nil)
 	if err != nil {
 		b.FailNow(err.Error())
