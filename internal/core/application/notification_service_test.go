@@ -53,7 +53,7 @@ func testGetUtxoChannel(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	status := domain.UtxoStatus{hex.EncodeToString(make([]byte, 32)), 1, 0, ""}
+	status := domain.UtxoStatus{Txid: hex.EncodeToString(make([]byte, 32)), BlockHeight: 1}
 	repoManager.UtxoRepository().SpendUtxos(ctx, keys, status)
 
 	time.Sleep(time.Second)

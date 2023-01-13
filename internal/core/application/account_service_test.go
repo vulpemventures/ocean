@@ -64,7 +64,7 @@ func TestAccountService(t *testing.T) {
 
 	// Simulate withdrawing all funds by spending every spendable utxo coming
 	// from ListUtxosForAccount.
-	status := domain.UtxoStatus{hex.EncodeToString(make([]byte, 32)), 1, 0, ""}
+	status := domain.UtxoStatus{Txid: hex.EncodeToString(make([]byte, 32)), BlockHeight: 1}
 	_, err = repoManager.UtxoRepository().SpendUtxos(ctx, utxos.Spendable.Keys(), status)
 	require.NoError(t, err)
 

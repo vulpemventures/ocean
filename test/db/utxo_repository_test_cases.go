@@ -127,7 +127,7 @@ func testConfirmUtxos(
 	balanceByAsset map[string]*domain.Balance,
 	namespace string,
 ) {
-	status := domain.UtxoStatus{"", 1, 0, ""}
+	status := domain.UtxoStatus{BlockHeight: 1}
 	count, err := utxoRepo.ConfirmUtxos(ctx, utxoKeys, status)
 	require.NoError(t, err)
 	require.Equal(t, len(newUtxos), count)
