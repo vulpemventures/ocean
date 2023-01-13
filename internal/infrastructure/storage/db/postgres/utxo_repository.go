@@ -797,8 +797,10 @@ func (u *utxoRepositoryPg) unlockUtxo(
 	return true, &utxoInfo, nil
 }
 
-func (u *utxoRepositoryPg) reset() {
-	u.querier.ResetUtxos(context.Background())
+func (u *utxoRepositoryPg) reset(
+	querier *queries.Queries, ctx context.Context,
+) {
+	querier.ResetUtxos(ctx)
 }
 
 func toGetAllUtxosRow(v queries.GetUtxosForAccountRow) queries.GetAllUtxosRow {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
+	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
@@ -145,9 +146,26 @@ func (rm *repoManager) listenToTxEvents() {
 }
 
 func (rm *repoManager) Reset() {
-	rm.utxoRepository.reset()
-	rm.txRepository.reset()
-	rm.walletRepository.reset()
+	ctx := context.Background()
+	conn, err := rm.pgxPool.Acquire(ctx)
+	if err != nil {
+		return
+	}
+	defer conn.Release()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	querier := new(queries.Queries)
+	querier = querier.WithTx(tx)
+	rm.walletRepository.reset(querier, ctx)
+	rm.utxoRepository.reset(querier, ctx)
+	rm.txRepository.reset(querier, ctx)
+
+	tx.Commit(ctx)
 }
 
 func (rm *repoManager) Close() {

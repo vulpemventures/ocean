@@ -223,6 +223,8 @@ func (t *txRepositoryPg) getTx(
 	}, nil
 }
 
-func (t *txRepositoryPg) reset() {
-	t.querier.ResetTransactions(context.Background())
+func (t *txRepositoryPg) reset(
+	querier *queries.Queries, ctx context.Context,
+) {
+	querier.ResetTransactions(ctx)
 }

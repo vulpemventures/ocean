@@ -534,6 +534,8 @@ func (w *walletRepositoryPg) createWallet(
 	return tx.Commit(ctx)
 }
 
-func (w *walletRepositoryPg) reset() {
-	w.querier.ResetWallet(context.Background())
+func (w *walletRepositoryPg) reset(
+	querier *queries.Queries, ctx context.Context,
+) {
+	querier.ResetWallet(ctx)
 }
