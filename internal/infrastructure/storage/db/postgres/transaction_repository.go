@@ -2,6 +2,7 @@ package postgresdb
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -66,8 +67,11 @@ func (t *txRepositoryPg) AddTransaction(
 
 	for k := range trx.Accounts {
 		if _, err := querierWithTx.InsertTransactionInputAccount(ctx, queries.InsertTransactionInputAccountParams{
-			AccountName: k,
-			FkTxID:      txPg.TxID,
+			FkAccountNamespace: sql.NullString{
+				String: k,
+				Valid:  true,
+			},
+			FkTxID: txPg.TxID,
 		}); err != nil {
 			return false, err
 		}
@@ -180,8 +184,11 @@ func (t *txRepositoryPg) updateTx(
 
 	for k := range trx.Accounts {
 		if _, err := querier.InsertTransactionInputAccount(ctx, queries.InsertTransactionInputAccountParams{
-			AccountName: k,
-			FkTxID:      trx.TxID,
+			FkAccountNamespace: sql.NullString{
+				String: k,
+				Valid:  true,
+			},
+			FkTxID: trx.TxID,
 		}); err != nil {
 			return err
 		}
@@ -204,8 +211,8 @@ func (t *txRepositoryPg) getTx(
 
 	accounts := make(map[string]struct{})
 	for _, v := range tx {
-		if v.AccountName.Valid {
-			accounts[v.AccountName.String] = struct{}{}
+		if v.FkAccountNamespace.Valid {
+			accounts[v.FkAccountNamespace.String] = struct{}{}
 		}
 	}
 

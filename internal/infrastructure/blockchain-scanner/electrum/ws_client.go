@@ -160,15 +160,15 @@ func (c *wsClient) subscribeForBlocks() {
 }
 
 func (c *wsClient) subscribeForAccount(
-	accountName string, addresses []domain.AddressInfo,
+	accountNamespace string, addresses []domain.AddressInfo,
 ) (chan accountReport, map[string][]txInfo) {
-	if c.chHandler.getChReportsForAccount(accountName) == nil {
-		c.chHandler.addChReportForAccount(accountName)
+	if c.chHandler.getChReportsForAccount(accountNamespace) == nil {
+		c.chHandler.addChReportForAccount(accountNamespace)
 	}
 
-	chReports := c.chHandler.getChReportsForAccount(accountName)
-	if _, ok := c.reportHandlers[accountName]; !ok {
-		c.reportHandlers[accountName] = &reportHandler{
+	chReports := c.chHandler.getChReportsForAccount(accountNamespace)
+	if _, ok := c.reportHandlers[accountNamespace]; !ok {
+		c.reportHandlers[accountNamespace] = &reportHandler{
 			locker:      &sync.Mutex{},
 			chReports:   chReports,
 			reportQueue: make([]accountReport, 0),
@@ -176,20 +176,20 @@ func (c *wsClient) subscribeForAccount(
 	}
 
 	scriptHashes := make([]string, 0, len(addresses))
-	c.reportHandlers[accountName].lock()
-	defer c.reportHandlers[accountName].unlock()
+	c.reportHandlers[accountNamespace].lock()
+	defer c.reportHandlers[accountNamespace].unlock()
 
 	for _, info := range addresses {
 		scriptHashes = append(scriptHashes, calcScriptHash(info.Script))
 		c.log(
 			"start watching address %s for account %s",
-			info.DerivationPath, accountName,
+			info.DerivationPath, accountNamespace,
 		)
 	}
 
-	if err := c.subscribeForScripts(accountName, scriptHashes); err != nil {
+	if err := c.subscribeForScripts(accountNamespace, scriptHashes); err != nil {
 		c.warn(
-			err, "failed to subscribe for scripts of account %s", accountName,
+			err, "failed to subscribe for scripts of account %s", accountNamespace,
 		)
 	}
 
@@ -197,19 +197,19 @@ func (c *wsClient) subscribeForAccount(
 	if err != nil {
 		c.warn(
 			err, "failed to get get tx history for watched addresses of account %s",
-			accountName,
+			accountNamespace,
 		)
 	}
 
 	return chReports, history
 }
 
-func (c *wsClient) unsubscribeForAccount(accountName string) {
+func (c *wsClient) unsubscribeForAccount(accountNamespace string) {
 	// hashes := c.chHandler.getAccountScriptHashes(accountName)
 	// for _, scriptHash := range hashes {
 	// 	c.unsubscribeForScript(accountName, scriptHash)
 	// }
-	c.chHandler.clearAccount(accountName)
+	c.chHandler.clearAccount(accountNamespace)
 }
 
 func (c *wsClient) getScriptHashesHistory(scriptHashes []string) (map[string][]txInfo, error) {
@@ -316,7 +316,7 @@ func (c *wsClient) broadcastTx(txHex string) (string, error) {
 }
 
 func (c *wsClient) subscribeForScripts(
-	accountName string, scriptHashes []string,
+	accountNamespace string, scriptHashes []string,
 ) error {
 	reqs := make([]request, 0, len(scriptHashes))
 	for _, scriptHash := range scriptHashes {
@@ -336,7 +336,7 @@ func (c *wsClient) subscribeForScripts(
 	}
 
 	for _, scriptHash := range scriptHashes {
-		c.chHandler.addAccountScriptHash(accountName, scriptHash)
+		c.chHandler.addAccountScriptHash(accountNamespace, scriptHash)
 	}
 	return nil
 }

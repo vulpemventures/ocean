@@ -39,7 +39,7 @@ func testGetUtxoChannel(t *testing.T) {
 
 	go listenToUtxoEvents(t, chEvents)
 
-	utxos := randomUtxos(accountName, testAddresses)
+	utxos := randomUtxos(accountNamespace, testAddresses)
 	repoManager.UtxoRepository().AddUtxos(ctx, utxos)
 
 	time.Sleep(time.Second)
@@ -58,7 +58,7 @@ func testGetUtxoChannel(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	repoManager.UtxoRepository().DeleteUtxosForAccount(ctx, accountName)
+	repoManager.UtxoRepository().DeleteUtxosForAccount(ctx, accountNamespace)
 }
 
 func testGetTxChannel(t *testing.T) {
@@ -75,7 +75,7 @@ func testGetTxChannel(t *testing.T) {
 	go listenToTxEvents(t, chEvents)
 
 	txid := randomHex(32)
-	tx := randomTx(txid, accountName)
+	tx := randomTx(txid, accountNamespace)
 	tx.BlockHash = ""
 	tx.BlockHeight = 0
 	repoManager.TransactionRepository().AddTransaction(ctx, tx)
@@ -133,7 +133,7 @@ func newRepoManagerForNotificationService() (ports.RepoManager, error) {
 	if err := rm.WalletRepository().UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
 			w.Unlock(password)
-			w.CreateAccount(accountName, 0)
+			w.CreateAccount("84", "myAccount", 0)
 			return w, nil
 		},
 	); err != nil {

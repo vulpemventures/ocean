@@ -42,7 +42,7 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 	list := make([]*pb.AccountInfo, 0, len(accounts))
 	for _, a := range accounts {
 		list = append(list, &pb.AccountInfo{
-			Name:           a.Key.Name,
+			Namespace:      a.Key.Namespace,
 			Index:          a.Key.Index,
 			Xpubs:          []string{a.Xpub},
 			DerivationPath: a.DerivationPath,
@@ -51,11 +51,11 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 	return list
 }
 
-func parseAccountName(name string) (string, error) {
-	if name == "" {
-		return "", fmt.Errorf("missing account name")
+func parseAccountNamespace(namespace string) (string, error) {
+	if namespace == "" {
+		return "", fmt.Errorf("missing account namespace")
 	}
-	return name, nil
+	return namespace, nil
 }
 
 func parseUtxos(utxos []domain.UtxoInfo) []*pb.Utxo {
@@ -90,7 +90,7 @@ func parseUtxos(utxos []domain.UtxoInfo) []*pb.Utxo {
 			Script:          hex.EncodeToString(u.Script),
 			AssetBlinder:    elementsutil.TxIDFromBytes(u.AssetBlinder),
 			ValueBlinder:    elementsutil.TxIDFromBytes(u.ValueBlinder),
-			AccountName:     u.AccountName,
+			Namespace:       u.FkAccountNamespace,
 			SpentStatus:     spentStatus,
 			ConfirmedStatus: confirmedStatus,
 		})

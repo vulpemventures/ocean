@@ -37,8 +37,8 @@ message TransactionNotificationsRequest{}
 message TransactionNotificationsResponse{
   // Tx event type.
   TxEventType event_type = 1;
-  // Account names.
-  repeated string account_names = 2;
+  // Accounts namespaces.
+  repeated string namespaces = 2;
   // Tx in hex format.
   string txhex = 3;
   // Txid of transaction.

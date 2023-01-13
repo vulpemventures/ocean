@@ -47,7 +47,7 @@ func init() {
 	txTransferCmd.Flags().BoolVar(&txNoBroadcast, "no-broadcast", false, "use this flag to not broadcast the transaction and get the tx hex instead of its hash")
 
 	txCmd.PersistentFlags().StringVar(
-		&accountName, "account-name", "", "name of the account's funds to use",
+		&namespace, "namespace", "", "namespace of the account's funds to use",
 	)
 	txCmd.PersistentFlags().Float32Var(
 		&satsPerByte, "sats-per-byte", 0.1, "sats/byte ratio to use for network fees",
@@ -75,7 +75,7 @@ func txTransfer(_ *cobra.Command, _ []string) error {
 	}
 
 	reply, err := client.Transfer(ctx, &pb.TransferRequest{
-		AccountName:      accountName,
+		Namespace:        namespace,
 		MillisatsPerByte: uint64(satsPerByte * 1000),
 		Receivers:        receivers.proto(),
 	})

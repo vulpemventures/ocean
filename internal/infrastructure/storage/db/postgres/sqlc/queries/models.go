@@ -4,22 +4,25 @@
 
 package queries
 
-import ()
+import (
+	"database/sql"
+)
 
 type Account struct {
-	Name              string
 	Index             int32
 	Xpub              string
 	DerivationPath    string
 	NextExternalIndex int32
 	NextInternalIndex int32
 	FkWalletID        string
+	Namespace         string
+	Label             sql.NullString
 }
 
 type AccountScriptInfo struct {
-	Script         string
-	DerivationPath string
-	FkAccountName  string
+	Script             string
+	DerivationPath     string
+	FkAccountNamespace sql.NullString
 }
 
 type Transaction struct {
@@ -30,9 +33,9 @@ type Transaction struct {
 }
 
 type TxInputAccount struct {
-	ID          int32
-	AccountName string
-	FkTxID      string
+	ID                 int32
+	FkTxID             string
+	FkAccountNamespace sql.NullString
 }
 
 type Utxo struct {
@@ -49,9 +52,9 @@ type Utxo struct {
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
-	AccountName         string
 	LockTimestamp       int64
 	LockExpiryTimestamp int64
+	FkAccountNamespace  sql.NullString
 }
 
 type UtxoStatus struct {

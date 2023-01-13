@@ -23,10 +23,10 @@ func (t dbEventType) String() string {
 }
 
 type dbEvent struct {
-	eventType  dbEventType
-	tx         txInfo
-	account    string
-	scriptHash string
+	eventType        dbEventType
+	tx               txInfo
+	accountNamespace string
+	scriptHash       string
 }
 
 // db stores the transaction history of every watched account.
@@ -60,12 +60,12 @@ func newDb() *db {
 // updateAccountTxHistory updates the history of an account address and
 // generates an event for every tx that has either been added to the store or
 // has changed status (ie. it was in mempool and later was confirmed).
-func (d *db) updateAccountTxHistory(account, scriptHash string, newHistory []txInfo) {
+func (d *db) updateAccountTxHistory(accountNamespace, scriptHash string, newHistory []txInfo) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
-	if _, ok := d.txHistoryByAccount[account]; !ok {
-		d.txHistoryByAccount[account] = make(map[string]int64)
+	if _, ok := d.txHistoryByAccount[accountNamespace]; !ok {
+		d.txHistoryByAccount[accountNamespace] = make(map[string]int64)
 	}
 
 	for _, tx := range newHistory {
@@ -74,18 +74,18 @@ func (d *db) updateAccountTxHistory(account, scriptHash string, newHistory []txI
 		// equals to the one of the block in which they are contained.
 		// If the tx is stored in the db and is confirmed, we don't have nothing
 		// to do and we can skip to the next tx of the given history.
-		if height, ok := prevHistory[account][tx.Txid]; ok && height == tx.Height {
+		if height, ok := prevHistory[accountNamespace][tx.Txid]; ok && height == tx.Height {
 			continue
 		}
 
-		_, isTxTracked := d.txHistoryByAccount[account][tx.Txid]
-		d.txHistoryByAccount[account][tx.Txid] = tx.Height
+		_, isTxTracked := d.txHistoryByAccount[accountNamespace][tx.Txid]
+		d.txHistoryByAccount[accountNamespace][tx.Txid] = tx.Height
 
 		eventType := txConfirmed
 		if !isTxTracked {
 			eventType = txAdded
 		}
-		event := dbEvent{eventType, tx, account, scriptHash}
+		event := dbEvent{eventType, tx, accountNamespace, scriptHash}
 		go d.publishEvent(event)
 	}
 }

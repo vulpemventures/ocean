@@ -2,6 +2,7 @@ package postgresdb
 
 import (
 	"context"
+	"database/sql"
 	"sync"
 
 	"github.com/jackc/pgconn"
@@ -53,19 +54,22 @@ func (u *utxoRepositoryPg) AddUtxos(
 		querierWithTx := u.querier.WithTx(tx)
 
 		req := queries.InsertUtxoParams{
-			TxID:                v.TxID,
-			Vout:                int32(v.VOut),
-			Value:               int64(v.Value),
-			Asset:               v.Asset,
-			ValueCommitment:     v.ValueCommitment,
-			AssetCommitment:     v.AssetCommitment,
-			ValueBlinder:        v.ValueBlinder,
-			AssetBlinder:        v.AssetBlinder,
-			Script:              v.Script,
-			Nonce:               v.Nonce,
-			RangeProof:          v.RangeProof,
-			SurjectionProof:     v.SurjectionProof,
-			AccountName:         v.AccountName,
+			TxID:            v.TxID,
+			Vout:            int32(v.VOut),
+			Value:           int64(v.Value),
+			Asset:           v.Asset,
+			ValueCommitment: v.ValueCommitment,
+			AssetCommitment: v.AssetCommitment,
+			ValueBlinder:    v.ValueBlinder,
+			AssetBlinder:    v.AssetBlinder,
+			Script:          v.Script,
+			Nonce:           v.Nonce,
+			RangeProof:      v.RangeProof,
+			SurjectionProof: v.SurjectionProof,
+			FkAccountNamespace: sql.NullString{
+				String: v.FkAccountNamespace,
+				Valid:  true,
+			},
 			LockTimestamp:       v.LockTimestamp,
 			LockExpiryTimestamp: v.LockExpiryTimestamp,
 		}
@@ -157,7 +161,7 @@ func (u *utxoRepositoryPg) GetUtxosByKey(
 			Nonce:               utxo[0].Nonce,
 			RangeProof:          utxo[0].RangeProof,
 			SurjectionProof:     utxo[0].SurjectionProof,
-			AccountName:         utxo[0].AccountName,
+			FkAccountNamespace:  utxo[0].FkAccountNamespace.String,
 			LockTimestamp:       utxo[0].LockTimestamp,
 			LockExpiryTimestamp: utxo[0].LockExpiryTimestamp,
 		}
@@ -232,7 +236,7 @@ func (u *utxoRepositoryPg) convertToUtxos(
 				Nonce:               v.Nonce,
 				RangeProof:          v.RangeProof,
 				SurjectionProof:     v.SurjectionProof,
-				AccountName:         v.AccountName,
+				FkAccountNamespace:  v.FkAccountNamespace.String,
 				LockTimestamp:       v.LockTimestamp,
 				LockExpiryTimestamp: v.LockExpiryTimestamp,
 			}
@@ -300,10 +304,13 @@ func (u *utxoRepositoryPg) GetSpendableUtxos(
 }
 
 func (u *utxoRepositoryPg) GetAllUtxosForAccount(
-	ctx context.Context, account string,
+	ctx context.Context, accountNamespace string,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
-	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
+	utxos, err := u.querier.GetUtxosForAccount(ctx, sql.NullString{
+		String: accountNamespace,
+		Valid:  true,
+	})
 	if err != nil {
 		return nil, nil
 	}
@@ -330,10 +337,13 @@ func (u *utxoRepositoryPg) GetAllUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
-	ctx context.Context, account string,
+	ctx context.Context, accountNamespace string,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
-	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
+	utxos, err := u.querier.GetUtxosForAccount(ctx, sql.NullString{
+		String: accountNamespace,
+		Valid:  true,
+	})
 	if err != nil {
 		return nil, nil
 	}
@@ -362,10 +372,13 @@ func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
-	ctx context.Context, account string,
+	ctx context.Context, accountNamespace string,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
-	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
+	utxos, err := u.querier.GetUtxosForAccount(ctx, sql.NullString{
+		String: accountNamespace,
+		Valid:  true,
+	})
 	if err != nil {
 		return nil, nil
 	}
@@ -394,10 +407,13 @@ func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetBalanceForAccount(
-	ctx context.Context, account string,
+	ctx context.Context, accountNamespace string,
 ) (map[string]*domain.Balance, error) {
 	resp := make(map[string]*domain.Balance)
-	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
+	utxos, err := u.querier.GetUtxosForAccount(ctx, sql.NullString{
+		String: accountNamespace,
+		Valid:  true,
+	})
 	if err != nil {
 		return nil, nil
 	}
@@ -466,7 +482,7 @@ func (u *utxoRepositoryPg) UnlockUtxos(
 }
 
 func (u *utxoRepositoryPg) DeleteUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) error {
 	conn, err := u.pgxPool.Acquire(ctx)
 	if err != nil {
@@ -487,7 +503,10 @@ func (u *utxoRepositoryPg) DeleteUtxosForAccount(
 
 	querierWithTx := u.querier.WithTx(tx)
 
-	utxos, err := querierWithTx.GetUtxosForAccount(ctx, accountName)
+	utxos, err := querierWithTx.GetUtxosForAccount(ctx, sql.NullString{
+		String: namespace,
+		Valid:  true,
+	})
 	if err != nil {
 		return err
 	}
@@ -499,7 +518,10 @@ func (u *utxoRepositoryPg) DeleteUtxosForAccount(
 		}
 	}
 
-	if err := querierWithTx.DeleteUtxosForAccountName(ctx, accountName); err != nil {
+	if err := querierWithTx.DeleteUtxosForAccountNamespace(ctx, sql.NullString{
+		String: namespace,
+		Valid:  true,
+	}); err != nil {
 		return err
 	}
 
@@ -585,17 +607,20 @@ func (u *utxoRepositoryPg) updateUtxo(
 	ctx context.Context, utxo *domain.Utxo,
 ) error {
 	ut, err := u.querier.UpdateUtxo(ctx, queries.UpdateUtxoParams{
-		Value:               int64(utxo.Value),
-		Asset:               utxo.Asset,
-		ValueCommitment:     utxo.ValueCommitment,
-		AssetCommitment:     utxo.AssetCommitment,
-		ValueBlinder:        utxo.ValueBlinder,
-		AssetBlinder:        utxo.AssetBlinder,
-		Script:              utxo.Script,
-		Nonce:               utxo.Nonce,
-		RangeProof:          utxo.RangeProof,
-		SurjectionProof:     utxo.SurjectionProof,
-		AccountName:         utxo.AccountName,
+		Value:           int64(utxo.Value),
+		Asset:           utxo.Asset,
+		ValueCommitment: utxo.ValueCommitment,
+		AssetCommitment: utxo.AssetCommitment,
+		ValueBlinder:    utxo.ValueBlinder,
+		AssetBlinder:    utxo.AssetBlinder,
+		Script:          utxo.Script,
+		Nonce:           utxo.Nonce,
+		RangeProof:      utxo.RangeProof,
+		SurjectionProof: utxo.SurjectionProof,
+		FkAccountNamespace: sql.NullString{
+			String: utxo.FkAccountNamespace,
+			Valid:  true,
+		},
 		LockTimestamp:       utxo.LockTimestamp,
 		LockExpiryTimestamp: utxo.LockExpiryTimestamp,
 		TxID:                utxo.TxID,
@@ -807,7 +832,7 @@ func toGetAllUtxosRow(v queries.GetUtxosForAccountRow) queries.GetAllUtxosRow {
 		Nonce:               v.Nonce,
 		RangeProof:          v.RangeProof,
 		SurjectionProof:     v.SurjectionProof,
-		AccountName:         v.AccountName,
+		FkAccountNamespace:  v.FkAccountNamespace,
 		LockTimestamp:       v.LockTimestamp,
 		LockExpiryTimestamp: v.LockExpiryTimestamp,
 		ID_2:                v.ID_2,

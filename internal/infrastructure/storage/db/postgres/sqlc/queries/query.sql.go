@@ -11,20 +11,20 @@ import (
 )
 
 const deleteAccount = `-- name: DeleteAccount :exec
-DELETE FROM account WHERE name = $1
+DELETE FROM account WHERE namespace = $1
 `
 
-func (q *Queries) DeleteAccount(ctx context.Context, name string) error {
-	_, err := q.db.Exec(ctx, deleteAccount, name)
+func (q *Queries) DeleteAccount(ctx context.Context, namespace string) error {
+	_, err := q.db.Exec(ctx, deleteAccount, namespace)
 	return err
 }
 
 const deleteAccountScripts = `-- name: DeleteAccountScripts :exec
-DELETE FROM account_script_info WHERE fk_account_name = $1
+DELETE FROM account_script_info WHERE fk_account_namespace = $1
 `
 
-func (q *Queries) DeleteAccountScripts(ctx context.Context, fkAccountName string) error {
-	_, err := q.db.Exec(ctx, deleteAccountScripts, fkAccountName)
+func (q *Queries) DeleteAccountScripts(ctx context.Context, fkAccountNamespace sql.NullString) error {
+	_, err := q.db.Exec(ctx, deleteAccountScripts, fkAccountNamespace)
 	return err
 }
 
@@ -46,36 +46,37 @@ func (q *Queries) DeleteUtxoStatuses(ctx context.Context, fkUtxoID int32) error 
 	return err
 }
 
-const deleteUtxosForAccountName = `-- name: DeleteUtxosForAccountName :exec
-DELETE FROM utxo WHERE account_name=$1
+const deleteUtxosForAccountNamespace = `-- name: DeleteUtxosForAccountNamespace :exec
+DELETE FROM utxo WHERE fk_account_namespace=$1
 `
 
-func (q *Queries) DeleteUtxosForAccountName(ctx context.Context, accountName string) error {
-	_, err := q.db.Exec(ctx, deleteUtxosForAccountName, accountName)
+func (q *Queries) DeleteUtxosForAccountNamespace(ctx context.Context, fkAccountNamespace sql.NullString) error {
+	_, err := q.db.Exec(ctx, deleteUtxosForAccountNamespace, fkAccountNamespace)
 	return err
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id FROM account WHERE name = $1
+SELECT index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id, namespace, label FROM account WHERE namespace = $1
 `
 
-func (q *Queries) GetAccount(ctx context.Context, name string) (Account, error) {
-	row := q.db.QueryRow(ctx, getAccount, name)
+func (q *Queries) GetAccount(ctx context.Context, namespace string) (Account, error) {
+	row := q.db.QueryRow(ctx, getAccount, namespace)
 	var i Account
 	err := row.Scan(
-		&i.Name,
 		&i.Index,
 		&i.Xpub,
 		&i.DerivationPath,
 		&i.NextExternalIndex,
 		&i.NextInternalIndex,
 		&i.FkWalletID,
+		&i.Namespace,
+		&i.Label,
 	)
 	return i, err
 }
 
 const getAllUtxos = `-- name: GetAllUtxos :many
-SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, lock_timestamp, lock_expiry_timestamp, fk_account_namespace, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
 `
 
 type GetAllUtxosRow struct {
@@ -92,9 +93,9 @@ type GetAllUtxosRow struct {
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
-	AccountName         string
 	LockTimestamp       int64
 	LockExpiryTimestamp int64
+	FkAccountNamespace  sql.NullString
 	ID_2                sql.NullInt32
 	BlockHeight         sql.NullInt32
 	BlockTime           sql.NullInt64
@@ -126,9 +127,9 @@ func (q *Queries) GetAllUtxos(ctx context.Context) ([]GetAllUtxosRow, error) {
 			&i.Nonce,
 			&i.RangeProof,
 			&i.SurjectionProof,
-			&i.AccountName,
 			&i.LockTimestamp,
 			&i.LockExpiryTimestamp,
+			&i.FkAccountNamespace,
 			&i.ID_2,
 			&i.BlockHeight,
 			&i.BlockTime,
@@ -147,17 +148,17 @@ func (q *Queries) GetAllUtxos(ctx context.Context) ([]GetAllUtxosRow, error) {
 }
 
 const getTransaction = `-- name: GetTransaction :many
-SELECT tx_id, tx_hex, block_hash, block_height, id, account_name, fk_tx_id FROM transaction t left join tx_input_account tia on t.tx_id = tia.fk_tx_id WHERE tx_id=$1
+SELECT tx_id, tx_hex, block_hash, block_height, id, fk_tx_id, fk_account_namespace FROM transaction t left join tx_input_account tia on t.tx_id = tia.fk_tx_id WHERE tx_id=$1
 `
 
 type GetTransactionRow struct {
-	TxID        string
-	TxHex       string
-	BlockHash   string
-	BlockHeight int32
-	ID          sql.NullInt32
-	AccountName sql.NullString
-	FkTxID      sql.NullString
+	TxID               string
+	TxHex              string
+	BlockHash          string
+	BlockHeight        int32
+	ID                 sql.NullInt32
+	FkTxID             sql.NullString
+	FkAccountNamespace sql.NullString
 }
 
 func (q *Queries) GetTransaction(ctx context.Context, txID string) ([]GetTransactionRow, error) {
@@ -175,8 +176,8 @@ func (q *Queries) GetTransaction(ctx context.Context, txID string) ([]GetTransac
 			&i.BlockHash,
 			&i.BlockHeight,
 			&i.ID,
-			&i.AccountName,
 			&i.FkTxID,
+			&i.FkAccountNamespace,
 		); err != nil {
 			return nil, err
 		}
@@ -189,7 +190,7 @@ func (q *Queries) GetTransaction(ctx context.Context, txID string) ([]GetTransac
 }
 
 const getUtxoForKey = `-- name: GetUtxoForKey :many
-SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, lock_timestamp, lock_expiry_timestamp, fk_account_namespace, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
 WHERE u.tx_id = $1 AND u.vout = $2
 `
 
@@ -212,9 +213,9 @@ type GetUtxoForKeyRow struct {
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
-	AccountName         string
 	LockTimestamp       int64
 	LockExpiryTimestamp int64
+	FkAccountNamespace  sql.NullString
 	ID_2                sql.NullInt32
 	BlockHeight         sql.NullInt32
 	BlockTime           sql.NullInt64
@@ -246,9 +247,9 @@ func (q *Queries) GetUtxoForKey(ctx context.Context, arg GetUtxoForKeyParams) ([
 			&i.Nonce,
 			&i.RangeProof,
 			&i.SurjectionProof,
-			&i.AccountName,
 			&i.LockTimestamp,
 			&i.LockExpiryTimestamp,
+			&i.FkAccountNamespace,
 			&i.ID_2,
 			&i.BlockHeight,
 			&i.BlockTime,
@@ -267,8 +268,8 @@ func (q *Queries) GetUtxoForKey(ctx context.Context, arg GetUtxoForKeyParams) ([
 }
 
 const getUtxosForAccount = `-- name: GetUtxosForAccount :many
-SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
-WHERE u.account_name = $1
+SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, lock_timestamp, lock_expiry_timestamp, fk_account_namespace, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+WHERE u.fk_account_namespace = $1
 `
 
 type GetUtxosForAccountRow struct {
@@ -285,9 +286,9 @@ type GetUtxosForAccountRow struct {
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
-	AccountName         string
 	LockTimestamp       int64
 	LockExpiryTimestamp int64
+	FkAccountNamespace  sql.NullString
 	ID_2                sql.NullInt32
 	BlockHeight         sql.NullInt32
 	BlockTime           sql.NullInt64
@@ -296,8 +297,8 @@ type GetUtxosForAccountRow struct {
 	FkUtxoID            sql.NullInt32
 }
 
-func (q *Queries) GetUtxosForAccount(ctx context.Context, accountName string) ([]GetUtxosForAccountRow, error) {
-	rows, err := q.db.Query(ctx, getUtxosForAccount, accountName)
+func (q *Queries) GetUtxosForAccount(ctx context.Context, fkAccountNamespace sql.NullString) ([]GetUtxosForAccountRow, error) {
+	rows, err := q.db.Query(ctx, getUtxosForAccount, fkAccountNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -319,9 +320,9 @@ func (q *Queries) GetUtxosForAccount(ctx context.Context, accountName string) ([
 			&i.Nonce,
 			&i.RangeProof,
 			&i.SurjectionProof,
-			&i.AccountName,
 			&i.LockTimestamp,
 			&i.LockExpiryTimestamp,
+			&i.FkAccountNamespace,
 			&i.ID_2,
 			&i.BlockHeight,
 			&i.BlockTime,
@@ -340,11 +341,11 @@ func (q *Queries) GetUtxosForAccount(ctx context.Context, accountName string) ([
 }
 
 const getUtxosForAccountName = `-- name: GetUtxosForAccountName :many
-SELECT id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp FROM utxo WHERE account_name=$1
+SELECT id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, lock_timestamp, lock_expiry_timestamp, fk_account_namespace FROM utxo WHERE fk_account_namespace=$1
 `
 
-func (q *Queries) GetUtxosForAccountName(ctx context.Context, accountName string) ([]Utxo, error) {
-	rows, err := q.db.Query(ctx, getUtxosForAccountName, accountName)
+func (q *Queries) GetUtxosForAccountName(ctx context.Context, fkAccountNamespace sql.NullString) ([]Utxo, error) {
+	rows, err := q.db.Query(ctx, getUtxosForAccountName, fkAccountNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -366,9 +367,9 @@ func (q *Queries) GetUtxosForAccountName(ctx context.Context, accountName string
 			&i.Nonce,
 			&i.RangeProof,
 			&i.SurjectionProof,
-			&i.AccountName,
 			&i.LockTimestamp,
 			&i.LockExpiryTimestamp,
+			&i.FkAccountNamespace,
 		); err != nil {
 			return nil, err
 		}
@@ -381,9 +382,12 @@ func (q *Queries) GetUtxosForAccountName(ctx context.Context, accountName string
 }
 
 const getWalletAccountsAndScripts = `-- name: GetWalletAccountsAndScripts :many
-SELECT w.id as walletId,w.encrypted_mnemonic,w.password_hash,w.birthday_block_height,w.root_path,w.network_name,w.next_account_index, a.name,a.index,a.xpub,a.derivation_path as account_derivation_path,a.next_external_index,a.next_internal_index,a.fk_wallet_id,asi.script,asi.derivation_path as script_derivation_path,asi.fk_account_name FROM
+SELECT w.id as walletId,w.encrypted_mnemonic,w.password_hash,w.birthday_block_height,
+w.root_path,w.network_name,w.next_account_index, a.namespace,a.index,a.xpub,a.derivation_path as account_derivation_path,
+a.next_external_index,a.next_internal_index,a.fk_wallet_id, a.label, asi.script,asi.derivation_path as script_derivation_path,
+asi.fk_account_namespace FROM
 wallet w LEFT JOIN account a ON w.id = a.fk_wallet_id
-LEFT JOIN account_script_info asi on a.name = asi.fk_account_name
+LEFT JOIN account_script_info asi on a.namespace = asi.fk_account_namespace
 WHERE w.id = $1
 `
 
@@ -395,16 +399,17 @@ type GetWalletAccountsAndScriptsRow struct {
 	RootPath              string
 	NetworkName           string
 	NextAccountIndex      int32
-	Name                  sql.NullString
+	Namespace             sql.NullString
 	Index                 sql.NullInt32
 	Xpub                  sql.NullString
 	AccountDerivationPath sql.NullString
 	NextExternalIndex     sql.NullInt32
 	NextInternalIndex     sql.NullInt32
 	FkWalletID            sql.NullString
+	Label                 sql.NullString
 	Script                sql.NullString
 	ScriptDerivationPath  sql.NullString
-	FkAccountName         sql.NullString
+	FkAccountNamespace    sql.NullString
 }
 
 func (q *Queries) GetWalletAccountsAndScripts(ctx context.Context, id string) ([]GetWalletAccountsAndScriptsRow, error) {
@@ -424,16 +429,17 @@ func (q *Queries) GetWalletAccountsAndScripts(ctx context.Context, id string) ([
 			&i.RootPath,
 			&i.NetworkName,
 			&i.NextAccountIndex,
-			&i.Name,
+			&i.Namespace,
 			&i.Index,
 			&i.Xpub,
 			&i.AccountDerivationPath,
 			&i.NextExternalIndex,
 			&i.NextInternalIndex,
 			&i.FkWalletID,
+			&i.Label,
 			&i.Script,
 			&i.ScriptDerivationPath,
-			&i.FkAccountName,
+			&i.FkAccountNamespace,
 		); err != nil {
 			return nil, err
 		}
@@ -446,47 +452,50 @@ func (q *Queries) GetWalletAccountsAndScripts(ctx context.Context, id string) ([
 }
 
 const insertAccount = `-- name: InsertAccount :one
-INSERT INTO account(name,index,xpub,derivation_path,next_external_index,next_internal_index,fk_wallet_id)
-VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id
+INSERT INTO account(namespace,index,xpub,derivation_path,next_external_index,next_internal_index,fk_wallet_id, label)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id, namespace, label
 `
 
 type InsertAccountParams struct {
-	Name              string
+	Namespace         string
 	Index             int32
 	Xpub              string
 	DerivationPath    string
 	NextExternalIndex int32
 	NextInternalIndex int32
 	FkWalletID        string
+	Label             sql.NullString
 }
 
 func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) (Account, error) {
 	row := q.db.QueryRow(ctx, insertAccount,
-		arg.Name,
+		arg.Namespace,
 		arg.Index,
 		arg.Xpub,
 		arg.DerivationPath,
 		arg.NextExternalIndex,
 		arg.NextInternalIndex,
 		arg.FkWalletID,
+		arg.Label,
 	)
 	var i Account
 	err := row.Scan(
-		&i.Name,
 		&i.Index,
 		&i.Xpub,
 		&i.DerivationPath,
 		&i.NextExternalIndex,
 		&i.NextInternalIndex,
 		&i.FkWalletID,
+		&i.Namespace,
+		&i.Label,
 	)
 	return i, err
 }
 
 type InsertAccountScriptsParams struct {
-	Script         string
-	DerivationPath string
-	FkAccountName  string
+	Script             string
+	DerivationPath     string
+	FkAccountNamespace sql.NullString
 }
 
 const insertTransaction = `-- name: InsertTransaction :one
@@ -520,25 +529,25 @@ func (q *Queries) InsertTransaction(ctx context.Context, arg InsertTransactionPa
 }
 
 const insertTransactionInputAccount = `-- name: InsertTransactionInputAccount :one
-INSERT INTO tx_input_account(account_name, fk_tx_id)
-VALUES($1,$2) RETURNING id, account_name, fk_tx_id
+INSERT INTO tx_input_account(fk_account_namespace, fk_tx_id)
+VALUES($1,$2) RETURNING id, fk_tx_id, fk_account_namespace
 `
 
 type InsertTransactionInputAccountParams struct {
-	AccountName string
-	FkTxID      string
+	FkAccountNamespace sql.NullString
+	FkTxID             string
 }
 
 func (q *Queries) InsertTransactionInputAccount(ctx context.Context, arg InsertTransactionInputAccountParams) (TxInputAccount, error) {
-	row := q.db.QueryRow(ctx, insertTransactionInputAccount, arg.AccountName, arg.FkTxID)
+	row := q.db.QueryRow(ctx, insertTransactionInputAccount, arg.FkAccountNamespace, arg.FkTxID)
 	var i TxInputAccount
-	err := row.Scan(&i.ID, &i.AccountName, &i.FkTxID)
+	err := row.Scan(&i.ID, &i.FkTxID, &i.FkAccountNamespace)
 	return i, err
 }
 
 const insertUtxo = `-- name: InsertUtxo :one
-INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,nonce,range_proof,surjection_proof,account_name,lock_timestamp, lock_expiry_timestamp)
-VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, $15) RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp
+INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,nonce,range_proof,surjection_proof,fk_account_namespace,lock_timestamp, lock_expiry_timestamp)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, $15) RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, lock_timestamp, lock_expiry_timestamp, fk_account_namespace
 `
 
 type InsertUtxoParams struct {
@@ -554,7 +563,7 @@ type InsertUtxoParams struct {
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
-	AccountName         string
+	FkAccountNamespace  sql.NullString
 	LockTimestamp       int64
 	LockExpiryTimestamp int64
 }
@@ -574,7 +583,7 @@ func (q *Queries) InsertUtxo(ctx context.Context, arg InsertUtxoParams) (Utxo, e
 		arg.Nonce,
 		arg.RangeProof,
 		arg.SurjectionProof,
-		arg.AccountName,
+		arg.FkAccountNamespace,
 		arg.LockTimestamp,
 		arg.LockExpiryTimestamp,
 	)
@@ -593,9 +602,9 @@ func (q *Queries) InsertUtxo(ctx context.Context, arg InsertUtxoParams) (Utxo, e
 		&i.Nonce,
 		&i.RangeProof,
 		&i.SurjectionProof,
-		&i.AccountName,
 		&i.LockTimestamp,
 		&i.LockExpiryTimestamp,
+		&i.FkAccountNamespace,
 	)
 	return i, err
 }
@@ -673,26 +682,33 @@ func (q *Queries) InsertWallet(ctx context.Context, arg InsertWalletParams) (Wal
 }
 
 const updateAccountIndexes = `-- name: UpdateAccountIndexes :one
-UPDATE account SET next_external_index = $1, next_internal_index = $2 WHERE name = $3 RETURNING name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id
+UPDATE account SET next_external_index = $1, next_internal_index = $2, label = $3 WHERE namespace = $4 RETURNING index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id, namespace, label
 `
 
 type UpdateAccountIndexesParams struct {
 	NextExternalIndex int32
 	NextInternalIndex int32
-	Name              string
+	Label             sql.NullString
+	Namespace         string
 }
 
 func (q *Queries) UpdateAccountIndexes(ctx context.Context, arg UpdateAccountIndexesParams) (Account, error) {
-	row := q.db.QueryRow(ctx, updateAccountIndexes, arg.NextExternalIndex, arg.NextInternalIndex, arg.Name)
+	row := q.db.QueryRow(ctx, updateAccountIndexes,
+		arg.NextExternalIndex,
+		arg.NextInternalIndex,
+		arg.Label,
+		arg.Namespace,
+	)
 	var i Account
 	err := row.Scan(
-		&i.Name,
 		&i.Index,
 		&i.Xpub,
 		&i.DerivationPath,
 		&i.NextExternalIndex,
 		&i.NextInternalIndex,
 		&i.FkWalletID,
+		&i.Namespace,
+		&i.Label,
 	)
 	return i, err
 }
@@ -726,7 +742,7 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 }
 
 const updateUtxo = `-- name: UpdateUtxo :one
-UPDATE utxo SET value=$1,asset=$2,value_commitment=$3,asset_commitment=$4,value_blinder=$5,asset_blinder=$6,script=$7,nonce=$8,range_proof=$9,surjection_proof=$10,account_name=$11,lock_timestamp=$12, lock_expiry_timestamp=$13 WHERE tx_id=$14 and vout=$15 RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp
+UPDATE utxo SET value=$1,asset=$2,value_commitment=$3,asset_commitment=$4,value_blinder=$5,asset_blinder=$6,script=$7,nonce=$8,range_proof=$9,surjection_proof=$10,fk_account_namespace=$11,lock_timestamp=$12, lock_expiry_timestamp=$13 WHERE tx_id=$14 and vout=$15 RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, lock_timestamp, lock_expiry_timestamp, fk_account_namespace
 `
 
 type UpdateUtxoParams struct {
@@ -740,7 +756,7 @@ type UpdateUtxoParams struct {
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
-	AccountName         string
+	FkAccountNamespace  sql.NullString
 	LockTimestamp       int64
 	LockExpiryTimestamp int64
 	TxID                string
@@ -759,7 +775,7 @@ func (q *Queries) UpdateUtxo(ctx context.Context, arg UpdateUtxoParams) (Utxo, e
 		arg.Nonce,
 		arg.RangeProof,
 		arg.SurjectionProof,
-		arg.AccountName,
+		arg.FkAccountNamespace,
 		arg.LockTimestamp,
 		arg.LockExpiryTimestamp,
 		arg.TxID,
@@ -780,9 +796,9 @@ func (q *Queries) UpdateUtxo(ctx context.Context, arg UpdateUtxoParams) (Utxo, e
 		&i.Nonce,
 		&i.RangeProof,
 		&i.SurjectionProof,
-		&i.AccountName,
 		&i.LockTimestamp,
 		&i.LockExpiryTimestamp,
+		&i.FkAccountNamespace,
 	)
 	return i, err
 }

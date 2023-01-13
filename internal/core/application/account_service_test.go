@@ -21,45 +21,45 @@ func TestAccountService(t *testing.T) {
 
 	svc := application.NewAccountService(repoManager, mockedBcScanner)
 
-	addresses, err := svc.DeriveAddressesForAccount(ctx, accountName, 0)
+	addresses, err := svc.DeriveAddressesForAccount(ctx, accountNamespace, 0)
 	require.Error(t, err)
 	require.Nil(t, addresses)
 
-	accountInfo, err := svc.CreateAccountBIP44(ctx, accountName)
+	accountInfo, err := svc.CreateAccountBIP44(ctx, accountNamespace)
 	require.NoError(t, err)
 	require.NotNil(t, accountInfo)
-	require.Equal(t, accountName, accountInfo.Key.Name)
+	require.Equal(t, accountNamespace, accountInfo.Key.Namespace)
 	require.NotEmpty(t, accountInfo.DerivationPath)
 	require.NotEmpty(t, accountInfo.Xpub)
 
-	addresses, err = svc.ListAddressesForAccount(ctx, accountName)
+	addresses, err = svc.ListAddressesForAccount(ctx, accountNamespace)
 	require.NoError(t, err)
 	require.Empty(t, addresses)
 
-	addresses, err = svc.DeriveAddressesForAccount(ctx, accountName, 2)
+	addresses, err = svc.DeriveAddressesForAccount(ctx, accountNamespace, 2)
 	require.NoError(t, err)
 	require.Len(t, addresses, 2)
 
-	changeAddresses, err := svc.DeriveChangeAddressesForAccount(ctx, accountName, 0)
+	changeAddresses, err := svc.DeriveChangeAddressesForAccount(ctx, accountNamespace, 0)
 	require.NoError(t, err)
 	require.Len(t, changeAddresses, 1)
 
-	addresses, err = svc.ListAddressesForAccount(ctx, accountName)
+	addresses, err = svc.ListAddressesForAccount(ctx, accountNamespace)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(addresses), 2)
 
-	utxos, err := svc.ListUtxosForAccount(ctx, accountName)
+	utxos, err := svc.ListUtxosForAccount(ctx, accountNamespace)
 	require.NoError(t, err)
 	require.NotNil(t, utxos)
 	require.NotEmpty(t, utxos.Spendable)
 	require.Empty(t, utxos.Locked)
 
-	balance, err := svc.GetBalanceForAccount(ctx, accountName)
+	balance, err := svc.GetBalanceForAccount(ctx, accountNamespace)
 	require.NoError(t, err)
 	require.NotNil(t, balance)
 
 	// Cannot delete an account with non-zero balance.
-	err = svc.DeleteAccount(ctx, accountName)
+	err = svc.DeleteAccount(ctx, accountNamespace)
 	require.Error(t, err)
 
 	// Simulate withdrawing all funds by spending every spendable utxo coming
@@ -69,7 +69,7 @@ func TestAccountService(t *testing.T) {
 	require.NoError(t, err)
 
 	// Now deleting the account should work without errors.
-	err = svc.DeleteAccount(ctx, accountName)
+	err = svc.DeleteAccount(ctx, accountNamespace)
 	require.NoError(t, err)
 }
 

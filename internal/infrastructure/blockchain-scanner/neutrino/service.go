@@ -112,34 +112,34 @@ func (s *service) Stop() {
 	s.headersRepo.(*headersRepo).close()
 }
 
-func (s *service) GetUtxoChannel(accountName string) chan []*domain.Utxo {
-	scannerSvc := s.getOrCreateScanner(accountName, 0)
+func (s *service) GetUtxoChannel(accountNamespace string) chan []*domain.Utxo {
+	scannerSvc := s.getOrCreateScanner(accountNamespace, 0)
 	return scannerSvc.chUtxos
 }
 
-func (s *service) GetTxChannel(accountName string) chan *domain.Transaction {
-	scannerSvc := s.getOrCreateScanner(accountName, 0)
+func (s *service) GetTxChannel(accountNamespace string) chan *domain.Transaction {
+	scannerSvc := s.getOrCreateScanner(accountNamespace, 0)
 	return scannerSvc.chTxs
 }
 
 func (s *service) WatchForAccount(
-	accountName string, startingBlock uint32, addressesInfo []domain.AddressInfo,
+	accountNamespace string, startingBlock uint32, addressesInfo []domain.AddressInfo,
 ) {
-	scannerSvc := s.getOrCreateScanner(accountName, startingBlock)
+	scannerSvc := s.getOrCreateScanner(accountNamespace, startingBlock)
 	scannerSvc.watchAddresses(addressesInfo)
 }
 
 func (s *service) WatchForUtxos(
-	accountName string, utxos []domain.UtxoInfo,
+	accountNamespace string, utxos []domain.UtxoInfo,
 ) {
-	scannerSvc := s.getOrCreateScanner(accountName, 0)
+	scannerSvc := s.getOrCreateScanner(accountNamespace, 0)
 	scannerSvc.watchUtxos(utxos)
 }
 
-func (s *service) StopWatchForAccount(accountName string) {
-	scannerSvc := s.getOrCreateScanner(accountName, 0)
+func (s *service) StopWatchForAccount(accountNamespace string) {
+	scannerSvc := s.getOrCreateScanner(accountNamespace, 0)
 	scannerSvc.stop()
-	s.removeScanner(accountName)
+	s.removeScanner(accountNamespace)
 }
 
 func (s *service) GetUtxos(utxoList []domain.Utxo) ([]domain.Utxo, error) {
@@ -202,29 +202,29 @@ func (s *service) GetBlockHash(height uint32) ([]byte, error) {
 }
 
 func (s *service) getOrCreateScanner(
-	accountName string, startingBlock uint32,
+	accountNamespace string, startingBlock uint32,
 ) *scannerService {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if scannerSvc, ok := s.scanners[accountName]; ok {
+	if scannerSvc, ok := s.scanners[accountNamespace]; ok {
 		return scannerSvc
 	}
 
 	genesisHash := genesisBlockHashForNetwork(s.nodeConfig.Network)
 	scannerSvc := newScannerSvc(
-		accountName, startingBlock, s.filtersRepo, s.headersRepo, s.blockSvc,
+		accountNamespace, startingBlock, s.filtersRepo, s.headersRepo, s.blockSvc,
 		genesisHash,
 	)
-	s.scanners[accountName] = scannerSvc
+	s.scanners[accountNamespace] = scannerSvc
 	return scannerSvc
 }
 
-func (s *service) removeScanner(accountName string) {
+func (s *service) removeScanner(accountNamespace string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	delete(s.scanners, accountName)
+	delete(s.scanners, accountNamespace)
 }
 
 func genesisBlockHashForNetwork(net string) *chainhash.Hash {

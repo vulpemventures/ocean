@@ -42,9 +42,23 @@ run: clean
 	export OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
 	go run ./cmd/oceand
 
-test: fmt
-	@echo "Testing..."
-	go test --race --count=1 -v ./...
+test: fmt vet testinternal testpkg testdb testgrpc
+
+testinternal:
+	@echo "Testing internal..."
+	go test --race --count=1 -v ./internal/...
+
+testpkg:
+	@echo "Testing pkg..."
+	go test --race --count=1 -v ./pkg/...
+
+testdb:
+	@echo "Testing db..."
+	go test --race --count=1 -v ./test/db/...
+
+testgrpc:
+	@echo "Testing grpc..."
+	go test --race --count=1 -v ./test/grpc/...
 
 cov:
 	@echo "Coverage..."
@@ -85,7 +99,7 @@ droptestdb:
 	docker exec oceand-pg dropdb oceand-db-test
 
 ## recreatedb: drop and create main and test db
-recreatedb: dropdb createdb droptestdb createtestdb
+recreatedb: dropdb createdb
 
 ## recreatetestdb: drop and create test db
 recreatetestdb: droptestdb createtestdb
@@ -99,9 +113,38 @@ pgcreatetestdb:
 psql:
 	docker exec -it oceand-pg psql -U root -d oceand-db
 
-## migrate: creates pg migration file(eg. make FILE=init migrate)
-migrate:
+## mig_file: creates pg migration file(eg. make FILE=init mig_file)
+mig_file:
 	migrate create -ext sql -dir ./internal/infrastructure/storage/db/postgres/migration/ $(FILE)
+
+## mig_up_test: creates test db schema
+mig_up_test:
+	@echo "creating db schema..."
+	@migrate -database "postgres://root:secret@localhost:5432/oceand-db-test?sslmode=disable" -path ./internal/infrastructure/storage/db/postgres/migration/ up
+
+## mig_up: creates db schema
+mig_up:
+	@echo "creating db schema..."
+	@migrate -database "postgres://root:secret@localhost:5432/oceand-db?sslmode=disable" -path ./internal/infrastructure/storage/db/postgres/migration/ up
+
+## mig_down_test: apply down migration on test db
+mig_down_test:
+	@echo "migration down on test db..."
+	@migrate -database "postgres://root:secret@localhost:5432/oceand-db-test?sslmode=disable" -path ./internal/infrastructure/storage/db/postgres/migration/ down
+
+## mig_down: apply down migration
+mig_down:
+	@echo "migration down..."
+	@migrate -database "postgres://root:secret@localhost:5432/oceand-db?sslmode=disable" -path ./internal/infrastructure/storage/db/postgres/migration/ down
+
+## mig_down_yes: apply down migration without prompt
+mig_down_yes:
+	@echo "migration down..."
+	@"yes" | migrate -database "postgres://root:secret@localhost:5432/oceand-db?sslmode=disable" -path ./internal/infrastructure/storage/db/postgres/migration/ down
+
+## vet_db: check if mig_up and mig_down are ok
+vet_db: recreatedb mig_up mig_down_yes
+	@echo "vet db migration scripts..."
 
 ## sqlc: gen sql
 sqlc:

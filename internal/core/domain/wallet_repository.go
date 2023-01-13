@@ -35,7 +35,7 @@ func (t WalletEventType) String() string {
 // WalletEvent holds info about an event occured within the repository.
 type WalletEvent struct {
 	EventType            WalletEventType
-	AccountName          string
+	AccountNamespace     string
 	AccountBirthdayBlock uint32
 	AccountAddresses     []AddressInfo
 }
@@ -51,8 +51,8 @@ type WalletRepository interface {
 	// UnlockWallet attempts to update the status of the Wallet to "unlocked".
 	// Generates a WalletUnlocked event if successfull.
 	UnlockWallet(ctx context.Context, password string) error
-	// LockkWallet updates the status of the Wallet to "locked".
-	// Generates a WalletLocked event if successfull.
+	// LockWallet updates the status of the Wallet to "locked".
+	//Generates a WalletLocked event if successfull.
 	LockWallet(ctx context.Context, password string) error
 	// UpdateWallet allows to make multiple changes to the Wallet in a
 	// transactional way.
@@ -63,23 +63,23 @@ type WalletRepository interface {
 	// its basic info.
 	// Generates a WalletAccountCreated event if successfull.
 	CreateAccount(
-		ctx context.Context, accountName string, birthdayBlock uint32,
+		ctx context.Context, rootPathPurpose, label string, birthdayBlock uint32,
 	) (*AccountInfo, error)
 	// DeriveNextExternalAddressesForAccount returns one or more new receiving
 	// addresses for the given account.
 	// Generates a WalletAccountAddressesDerived event if successfull.
 	DeriveNextExternalAddressesForAccount(
-		ctx context.Context, accountName string, numOfAddresses uint64,
+		ctx context.Context, namespace string, numOfAddresses uint64,
 	) ([]AddressInfo, error)
 	// DeriveNextInternalAddressesForAccount returns one or more new change
 	// addresses for the given account.
 	// Generates a WalletAccountAddressesDerived event if successfull.
 	DeriveNextInternalAddressesForAccount(
-		ctx context.Context, accountName string, numOfAddresses uint64,
+		ctx context.Context, namespace string, numOfAddresses uint64,
 	) ([]AddressInfo, error)
 	// DeleteAccount deletes the wallet account with the given name.
 	// Generates a WalletAccountDeleted event if successfull.
-	DeleteAccount(ctx context.Context, accountName string) error
+	DeleteAccount(ctx context.Context, namespace string) error
 	// GetEventChannel returns the channel of WalletEvents.
 	GetEventChannel() chan WalletEvent
 }

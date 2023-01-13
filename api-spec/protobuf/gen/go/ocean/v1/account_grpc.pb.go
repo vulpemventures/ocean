@@ -45,6 +45,8 @@ type AccountServiceClient interface {
 	// DeleteAccount deletes an existing account. The operation is allowed only
 	// if the account has zero balance.
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
+	// SetAccountLabel updates account label
+	SetAccountLabel(ctx context.Context, in *SetAccountLabelRequest, opts ...grpc.CallOption) (*SetAccountLabelResponse, error)
 }
 
 type accountServiceClient struct {
@@ -145,6 +147,15 @@ func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteAcco
 	return out, nil
 }
 
+func (c *accountServiceClient) SetAccountLabel(ctx context.Context, in *SetAccountLabelRequest, opts ...grpc.CallOption) (*SetAccountLabelResponse, error) {
+	out := new(SetAccountLabelResponse)
+	err := c.cc.Invoke(ctx, "/ocean.v1.AccountService/SetAccountLabel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServiceServer is the server API for AccountService service.
 // All implementations should embed UnimplementedAccountServiceServer
 // for forward compatibility
@@ -172,6 +183,8 @@ type AccountServiceServer interface {
 	// DeleteAccount deletes an existing account. The operation is allowed only
 	// if the account has zero balance.
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
+	// SetAccountLabel updates account label
+	SetAccountLabel(context.Context, *SetAccountLabelRequest) (*SetAccountLabelResponse, error)
 }
 
 // UnimplementedAccountServiceServer should be embedded to have forward compatible implementations.
@@ -207,6 +220,9 @@ func (UnimplementedAccountServiceServer) ListUtxos(context.Context, *ListUtxosRe
 }
 func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
+}
+func (UnimplementedAccountServiceServer) SetAccountLabel(context.Context, *SetAccountLabelRequest) (*SetAccountLabelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetAccountLabel not implemented")
 }
 
 // UnsafeAccountServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -400,6 +416,24 @@ func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_SetAccountLabel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetAccountLabelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).SetAccountLabel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocean.v1.AccountService/SetAccountLabel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).SetAccountLabel(ctx, req.(*SetAccountLabelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -446,6 +480,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteAccount",
 			Handler:    _AccountService_DeleteAccount_Handler,
+		},
+		{
+			MethodName: "SetAccountLabel",
+			Handler:    _AccountService_SetAccountLabel_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

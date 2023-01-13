@@ -4,36 +4,39 @@ INSERT INTO wallet(id, encrypted_mnemonic,password_hash,birthday_block_height,ro
 VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *;
 
 -- name: GetWalletAccountsAndScripts :many
-SELECT w.id as walletId,w.encrypted_mnemonic,w.password_hash,w.birthday_block_height,w.root_path,w.network_name,w.next_account_index, a.name,a.index,a.xpub,a.derivation_path as account_derivation_path,a.next_external_index,a.next_internal_index,a.fk_wallet_id,asi.script,asi.derivation_path as script_derivation_path,asi.fk_account_name FROM
+SELECT w.id as walletId,w.encrypted_mnemonic,w.password_hash,w.birthday_block_height,
+w.root_path,w.network_name,w.next_account_index, a.namespace,a.index,a.xpub,a.derivation_path as account_derivation_path,
+a.next_external_index,a.next_internal_index,a.fk_wallet_id, a.label, asi.script,asi.derivation_path as script_derivation_path,
+asi.fk_account_namespace FROM
 wallet w LEFT JOIN account a ON w.id = a.fk_wallet_id
-LEFT JOIN account_script_info asi on a.name = asi.fk_account_name
+LEFT JOIN account_script_info asi on a.namespace = asi.fk_account_namespace
 WHERE w.id = $1;
 
 -- name: UpdateWallet :one
 UPDATE wallet SET encrypted_mnemonic = $2, password_hash = $3, birthday_block_height = $4, root_path = $5, network_name = $6, next_account_index = $7 WHERE id = $1 RETURNING *;
 
 -- name: GetAccount :one
-SELECT * FROM account WHERE name = $1;
+SELECT * FROM account WHERE namespace = $1;
 
 -- name: InsertAccount :one
-INSERT INTO account(name,index,xpub,derivation_path,next_external_index,next_internal_index,fk_wallet_id)
-VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *;
+INSERT INTO account(namespace,index,xpub,derivation_path,next_external_index,next_internal_index,fk_wallet_id, label)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *;
 
 -- name: UpdateAccountIndexes :one
-UPDATE account SET next_external_index = $1, next_internal_index = $2 WHERE name = $3 RETURNING *;
+UPDATE account SET next_external_index = $1, next_internal_index = $2, label = $3 WHERE namespace = $4 RETURNING *;
 
 -- name: InsertAccountScripts :copyfrom
-INSERT INTO account_script_info (script,derivation_path,fk_account_name) VALUES ($1, $2, $3);
+INSERT INTO account_script_info (script,derivation_path,fk_account_namespace) VALUES ($1, $2, $3);
 
 -- name: DeleteAccountScripts :exec
-DELETE FROM account_script_info WHERE fk_account_name = $1;
+DELETE FROM account_script_info WHERE fk_account_namespace = $1;
 
 -- name: DeleteAccount :exec
-DELETE FROM account WHERE name = $1;
+DELETE FROM account WHERE namespace = $1;
 
 /* UTXO */
 -- name: InsertUtxo :one
-INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,nonce,range_proof,surjection_proof,account_name,lock_timestamp, lock_expiry_timestamp)
+INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,nonce,range_proof,surjection_proof,fk_account_namespace,lock_timestamp, lock_expiry_timestamp)
 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, $15) RETURNING *;
 
 -- name: InsertUtxoStatus :one
@@ -49,19 +52,19 @@ SELECT * FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id;
 
 -- name: GetUtxosForAccount :many
 SELECT * FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
-WHERE u.account_name = $1;
+WHERE u.fk_account_namespace = $1;
 
 -- name: UpdateUtxo :one
-UPDATE utxo SET value=$1,asset=$2,value_commitment=$3,asset_commitment=$4,value_blinder=$5,asset_blinder=$6,script=$7,nonce=$8,range_proof=$9,surjection_proof=$10,account_name=$11,lock_timestamp=$12, lock_expiry_timestamp=$13 WHERE tx_id=$14 and vout=$15 RETURNING *;
+UPDATE utxo SET value=$1,asset=$2,value_commitment=$3,asset_commitment=$4,value_blinder=$5,asset_blinder=$6,script=$7,nonce=$8,range_proof=$9,surjection_proof=$10,fk_account_namespace=$11,lock_timestamp=$12, lock_expiry_timestamp=$13 WHERE tx_id=$14 and vout=$15 RETURNING *;
 
 -- name: DeleteUtxoStatuses :exec
 DELETE FROM utxo_status WHERE fk_utxo_id = $1;
 
--- name: DeleteUtxosForAccountName :exec
-DELETE FROM utxo WHERE account_name=$1;
+-- name: DeleteUtxosForAccountNamespace :exec
+DELETE FROM utxo WHERE fk_account_namespace=$1;
 
 -- name: GetUtxosForAccountName :many
-SELECT * FROM utxo WHERE account_name=$1;
+SELECT * FROM utxo WHERE fk_account_namespace=$1;
 
 /* TRANSACTION */
 -- name: InsertTransaction :one
@@ -69,7 +72,7 @@ INSERT INTO transaction(tx_id,tx_hex,block_hash,block_height)
 VALUES($1,$2,$3,$4) RETURNING *;
 
 -- name: InsertTransactionInputAccount :one
-INSERT INTO tx_input_account(account_name, fk_tx_id)
+INSERT INTO tx_input_account(fk_account_namespace, fk_tx_id)
 VALUES($1,$2) RETURNING *;
 
 -- name: UpdateTransaction :one

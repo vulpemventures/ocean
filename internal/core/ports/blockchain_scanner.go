@@ -17,22 +17,22 @@ type BlockchainScanner interface {
 	// WatchForAccount instructs the scanner to start notifying about txs/utxos
 	// related to the given list of addresses belonging to the given HD account.
 	WatchForAccount(
-		accountName string, startingBlockHeight uint32,
+		namespace string, startingBlockHeight uint32,
 		addresses []domain.AddressInfo,
 	)
 	WatchForUtxos(
-		accountName string, utxos []domain.UtxoInfo,
+		namespace string, utxos []domain.UtxoInfo,
 	)
 	// StopWatchForAccount instructs the scanner to stop notifying about
 	// txs/utxos related to any address belonging to the given HD account.
-	StopWatchForAccount(accountName string)
+	StopWatchForAccount(namespace string)
 
 	// GetUtxoChannel returns the channel where notification about utxos realated
 	// to the given HD account are sent.
-	GetUtxoChannel(accountName string) chan []*domain.Utxo
+	GetUtxoChannel(namespace string) chan []*domain.Utxo
 	// GetTxChannel returns the channel where notification about txs realated to
 	// the given HD account are sent.
-	GetTxChannel(accountName string) chan *domain.Transaction
+	GetTxChannel(namespace string) chan *domain.Transaction
 
 	// GetLatestBlock returns the header of the latest block of the blockchain.
 	GetLatestBlock() ([]byte, uint32, error)

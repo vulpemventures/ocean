@@ -10,18 +10,19 @@ import (
 
 // AccountKey holds the unique info of an account: name and HD index.
 type AccountKey struct {
-	Name  string
-	Index uint32
+	Namespace string
+	Index     uint32
 }
 
 func (ak *AccountKey) String() string {
-	key := btcutil.Hash160([]byte(fmt.Sprintf("%s%d", ak.Name, ak.Index)))
+	key := btcutil.Hash160([]byte(fmt.Sprintf("%s%d", ak.Namespace, ak.Index)))
 	return hex.EncodeToString(key[:6])
 }
 
 // AccountInfo holds basic info about an account.
 type AccountInfo struct {
 	Key            AccountKey
+	Label          string
 	Xpub           string
 	DerivationPath string
 }

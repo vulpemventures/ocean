@@ -120,18 +120,19 @@ func (r *walletRepository) UpdateWallet(
 }
 
 func (r *walletRepository) CreateAccount(
-	ctx context.Context, accountName string, birthdayBlock uint32,
+	ctx context.Context,
+	rootPathPurpose string,
+	label string,
+	birthdayBlock uint32,
 ) (*domain.AccountInfo, error) {
 	var accountInfo *domain.AccountInfo
 	if err := r.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
-			account, err := w.CreateAccount(accountName, birthdayBlock)
+			account, err := w.CreateAccount(rootPathPurpose, label, birthdayBlock)
 			if err != nil {
 				return nil, err
 			}
-			if account == nil {
-				return nil, fmt.Errorf("account %s already existing", accountName)
-			}
+
 			accountInfo = &account.Info
 			return w, nil
 		},
@@ -141,7 +142,7 @@ func (r *walletRepository) CreateAccount(
 
 	go r.publishEvent(domain.WalletEvent{
 		EventType:            domain.WalletAccountCreated,
-		AccountName:          accountName,
+		AccountNamespace:     accountInfo.Key.Namespace,
 		AccountBirthdayBlock: birthdayBlock,
 	})
 
@@ -149,7 +150,7 @@ func (r *walletRepository) CreateAccount(
 }
 
 func (r *walletRepository) DeriveNextExternalAddressesForAccount(
-	ctx context.Context, accountName string, numOfAddress uint64,
+	ctx context.Context, namespace string, numOfAddress uint64,
 ) ([]domain.AddressInfo, error) {
 	if numOfAddress == 0 {
 		numOfAddress = 1
@@ -159,7 +160,7 @@ func (r *walletRepository) DeriveNextExternalAddressesForAccount(
 	if err := r.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
 			for i := 0; i < int(numOfAddress); i++ {
-				addrInfo, err := w.DeriveNextExternalAddressForAccount(accountName)
+				addrInfo, err := w.DeriveNextExternalAddressForAccount(namespace)
 				if err != nil {
 					return nil, err
 				}
@@ -173,7 +174,7 @@ func (r *walletRepository) DeriveNextExternalAddressesForAccount(
 
 	go r.publishEvent(domain.WalletEvent{
 		EventType:        domain.WalletAccountAddressesDerived,
-		AccountName:      accountName,
+		AccountNamespace: namespace,
 		AccountAddresses: addressesInfo,
 	})
 
@@ -181,7 +182,7 @@ func (r *walletRepository) DeriveNextExternalAddressesForAccount(
 }
 
 func (r *walletRepository) DeriveNextInternalAddressesForAccount(
-	ctx context.Context, accountName string, numOfAddress uint64,
+	ctx context.Context, namespace string, numOfAddress uint64,
 ) ([]domain.AddressInfo, error) {
 	if numOfAddress == 0 {
 		numOfAddress = 1
@@ -191,7 +192,7 @@ func (r *walletRepository) DeriveNextInternalAddressesForAccount(
 	if err := r.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
 			for i := 0; i < int(numOfAddress); i++ {
-				addrInfo, err := w.DeriveNextInternalAddressForAccount(accountName)
+				addrInfo, err := w.DeriveNextInternalAddressForAccount(namespace)
 				if err != nil {
 					return nil, err
 				}
@@ -205,7 +206,7 @@ func (r *walletRepository) DeriveNextInternalAddressesForAccount(
 
 	go r.publishEvent(domain.WalletEvent{
 		EventType:        domain.WalletAccountAddressesDerived,
-		AccountName:      accountName,
+		AccountNamespace: namespace,
 		AccountAddresses: addressesInfo,
 	})
 
@@ -213,11 +214,11 @@ func (r *walletRepository) DeriveNextInternalAddressesForAccount(
 }
 
 func (r *walletRepository) DeleteAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) error {
 	if err := r.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
-			if err := w.DeleteAccount(accountName); err != nil {
+			if err := w.DeleteAccount(namespace); err != nil {
 				return nil, err
 			}
 			return w, nil
@@ -227,8 +228,8 @@ func (r *walletRepository) DeleteAccount(
 	}
 
 	go r.publishEvent(domain.WalletEvent{
-		EventType:   domain.WalletAccountDeleted,
-		AccountName: accountName,
+		EventType:        domain.WalletAccountDeleted,
+		AccountNamespace: namespace,
 	})
 
 	return nil

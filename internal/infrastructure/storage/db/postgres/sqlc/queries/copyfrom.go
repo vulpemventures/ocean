@@ -31,7 +31,7 @@ func (r iteratorForInsertAccountScripts) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].Script,
 		r.rows[0].DerivationPath,
-		r.rows[0].FkAccountName,
+		r.rows[0].FkAccountNamespace,
 	}, nil
 }
 
@@ -40,5 +40,5 @@ func (r iteratorForInsertAccountScripts) Err() error {
 }
 
 func (q *Queries) InsertAccountScripts(ctx context.Context, arg []InsertAccountScriptsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"account_script_info"}, []string{"script", "derivation_path", "fk_account_name"}, &iteratorForInsertAccountScripts{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"account_script_info"}, []string{"script", "derivation_path", "fk_account_namespace"}, &iteratorForInsertAccountScripts{rows: arg})
 }

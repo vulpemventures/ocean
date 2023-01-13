@@ -27,11 +27,11 @@ func (t *Transaction) Confirm(blockHash string, blockHeight uint64) {
 }
 
 // AddAccount adds the given account to the map of those involved in the tx.
-func (t *Transaction) AddAccount(accountName string) {
+func (t *Transaction) AddAccount(namespace string) {
 	if t.Accounts == nil {
 		t.Accounts = make(map[string]struct{})
 	}
-	t.Accounts[accountName] = struct{}{}
+	t.Accounts[namespace] = struct{}{}
 }
 
 // GetAccounts returns the account map as a slice of account names.

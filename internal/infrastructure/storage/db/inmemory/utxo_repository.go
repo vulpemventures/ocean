@@ -198,8 +198,8 @@ func (r *utxoRepository) addUtxos(utxos []*domain.Utxo) (int, error) {
 			continue
 		}
 		r.store.utxos[u.Key().Hash()] = u
-		r.store.utxosByAccount[u.AccountName] = append(
-			r.store.utxosByAccount[u.AccountName], u.Key(),
+		r.store.utxosByAccount[u.FkAccountNamespace] = append(
+			r.store.utxosByAccount[u.FkAccountNamespace], u.Key(),
 		)
 		utxosInfo = append(utxosInfo, u.Info())
 		count++

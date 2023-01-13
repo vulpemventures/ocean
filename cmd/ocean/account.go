@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	accountName     string
+	label           string
+	namespace       string
 	numOfAddresses  uint64
 	changeAddresses bool
 
@@ -56,6 +57,12 @@ var (
 			"The wallet will loose track of every derived address and utxo history",
 		RunE: accountDelete,
 	}
+	accountSetLabelCmd = &cobra.Command{
+		Use:   "label",
+		Short: "set accounts label",
+		Long:  "this command lets you set label of an existing account",
+		RunE:  accountSetLabel,
+	}
 	accountCmd = &cobra.Command{
 		Use:   "account",
 		Short: "interact with ocean account interface",
@@ -74,8 +81,8 @@ func init() {
 		"whether derive change (internal) addresses",
 	)
 
-	accountCmd.PersistentFlags().StringVar(&accountName, "account-name", "", "account name")
-	accountCmd.MarkPersistentFlagRequired("account-name")
+	accountCmd.PersistentFlags().StringVar(&label, "label", "", "account label")
+	accountCmd.PersistentFlags().StringVar(&namespace, "namespace", "", "account namespace")
 
 	accountCmd.AddCommand(
 		accountCreateCmd, accountDeriveAddressesCmd, accountBalanceCmd,
@@ -92,7 +99,7 @@ func accountCreate(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.CreateAccountBIP44(
 		context.Background(), &pb.CreateAccountBIP44Request{
-			Name: accountName,
+			Label: label,
 		},
 	)
 	if err != nil {
@@ -121,12 +128,12 @@ func accountDeriveAddresses(cmd *cobra.Command, _ []string) error {
 	var reply protoreflect.ProtoMessage
 	if !changeAddresses {
 		reply, err = client.DeriveAddresses(ctx, &pb.DeriveAddressesRequest{
-			AccountName:    accountName,
+			Namespace:      namespace,
 			NumOfAddresses: numOfAddresses,
 		})
 	} else {
 		reply, err = client.DeriveChangeAddresses(ctx, &pb.DeriveChangeAddressesRequest{
-			AccountName:    accountName,
+			Namespace:      namespace,
 			NumOfAddresses: numOfAddresses,
 		})
 	}
@@ -154,7 +161,7 @@ func accountBalance(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.Balance(
 		context.Background(), &pb.BalanceRequest{
-			AccountName: accountName,
+			Namespace: namespace,
 		},
 	)
 	if err != nil {
@@ -181,7 +188,7 @@ func accountListAddresses(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.ListAddresses(
 		context.Background(), &pb.ListAddressesRequest{
-			AccountName: accountName,
+			Namespace: namespace,
 		},
 	)
 	if err != nil {
@@ -208,7 +215,7 @@ func accountListUtxos(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.ListUtxos(
 		context.Background(), &pb.ListUtxosRequest{
-			AccountName: accountName,
+			Namespace: namespace,
 		},
 	)
 	if err != nil {
@@ -235,7 +242,7 @@ func accountDelete(cmd *cobra.Command, _ []string) error {
 
 	if _, err := client.DeleteAccount(
 		context.Background(), &pb.DeleteAccountRequest{
-			AccountName: accountName,
+			Namespace: namespace,
 		},
 	); err != nil {
 		printErr(err)
@@ -243,5 +250,24 @@ func accountDelete(cmd *cobra.Command, _ []string) error {
 	}
 
 	fmt.Println("account deleted")
+	return nil
+}
+
+func accountSetLabel(cmd *cobra.Command, _ []string) error {
+	client, cleanup, err := getAccountClient()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	_, err = client.SetAccountLabel(context.Background(), &pb.SetAccountLabelRequest{
+		Namespace: namespace,
+		Label:     label,
+	})
+	if err != nil {
+		printErr(err)
+		return nil
+	}
+
 	return nil
 }

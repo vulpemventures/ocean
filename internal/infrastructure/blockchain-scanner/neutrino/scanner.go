@@ -18,7 +18,7 @@ import (
 )
 
 type scannerService struct {
-	accountName         string
+	accountNamespace    string
 	svc                 scanner.Service
 	blindingKeys        map[string][]byte
 	startingBlockHeight uint32
@@ -46,7 +46,7 @@ func newScannerSvc(
 		log.WithError(err).Warnf(format, a...)
 	}
 	scannerSvc := &scannerService{
-		accountName:         accountName,
+		accountNamespace:    accountName,
 		svc:                 scanner.New(filtersDb, headersDb, blockSvc, genesisHash),
 		blindingKeys:        make(map[string][]byte),
 		startingBlockHeight: startingBlockHeight,
@@ -86,7 +86,7 @@ func (s *scannerService) watchAddresses(addressesInfo []domain.AddressInfo) {
 		)
 		s.log(
 			"start watching address %s for account %s",
-			info.DerivationPath, s.accountName,
+			info.DerivationPath, s.accountNamespace,
 		)
 	}
 }
@@ -105,7 +105,7 @@ func (s *scannerService) watchUtxos(utxos []domain.UtxoInfo) {
 			scanner.WithStartBlock(s.startingBlockHeight),
 		)
 
-		s.log("start watching utxo %s for account %s", u, s.accountName)
+		s.log("start watching utxo %s for account %s", u, s.accountNamespace)
 	}
 }
 
@@ -135,7 +135,7 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 			TxID:  txid,
 			TxHex: txHex,
 			Accounts: map[string]struct{}{
-				s.accountName: {},
+				s.accountNamespace: {},
 			},
 			BlockHash:   blockHash,
 			BlockHeight: blockHeight,
@@ -190,17 +190,17 @@ func (s *scannerService) listenToReports(chReports <-chan scanner.Report) {
 					TxID: txid,
 					VOut: uint32(i),
 				},
-				Value:           revealed.Value,
-				Asset:           assetFromBytes(revealed.Asset),
-				ValueCommitment: valueCommitment,
-				AssetCommitment: assetCommitment,
-				ValueBlinder:    revealed.ValueBlindingFactor,
-				AssetBlinder:    revealed.AssetBlindingFactor,
-				Script:          out.Script,
-				Nonce:           out.Nonce,
-				RangeProof:      out.RangeProof,
-				SurjectionProof: out.SurjectionProof,
-				AccountName:     s.accountName,
+				Value:              revealed.Value,
+				Asset:              assetFromBytes(revealed.Asset),
+				ValueCommitment:    valueCommitment,
+				AssetCommitment:    assetCommitment,
+				ValueBlinder:       revealed.ValueBlindingFactor,
+				AssetBlinder:       revealed.AssetBlindingFactor,
+				Script:             out.Script,
+				Nonce:              out.Nonce,
+				RangeProof:         out.RangeProof,
+				SurjectionProof:    out.SurjectionProof,
+				FkAccountNamespace: s.accountNamespace,
 				ConfirmedStatus: domain.UtxoStatus{
 					BlockHeight: blockHeight,
 					BlockHash:   blockHash,

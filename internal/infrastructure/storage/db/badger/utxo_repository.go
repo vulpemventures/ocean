@@ -75,36 +75,36 @@ func (r *utxoRepository) GetSpendableUtxos(
 }
 
 func (r *utxoRepository) GetAllUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) ([]*domain.Utxo, error) {
-	query := badgerhold.Where("AccountName").Eq(accountName)
+	query := badgerhold.Where("FkAccountNamespace").Eq(namespace)
 
 	return r.findUtxos(ctx, query)
 }
 
 func (r *utxoRepository) GetSpendableUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).
-		And("LockTimestamp").Eq(int64(0)).And("AccountName").Eq(accountName)
+		And("LockTimestamp").Eq(int64(0)).And("FkAccountNamespace").Eq(namespace)
 
 	return r.findUtxos(ctx, query)
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
-		And("LockTimestamp").Gt(int64(0)).And("AccountName").Eq(accountName)
+		And("LockTimestamp").Gt(int64(0)).And("FkAccountNamespace").Eq(namespace)
 
 	return r.findUtxos(ctx, query)
 }
 
 func (r *utxoRepository) GetBalanceForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) (map[string]*domain.Balance, error) {
-	utxos, err := r.GetAllUtxosForAccount(ctx, accountName)
+	utxos, err := r.GetAllUtxosForAccount(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -159,9 +159,9 @@ func (r *utxoRepository) UnlockUtxos(
 }
 
 func (r *utxoRepository) DeleteUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) error {
-	query := badgerhold.Where("AccountName").Eq(accountName)
+	query := badgerhold.Where("FkAccountNamespace").Eq(namespace)
 
 	utxos, err := r.findUtxos(ctx, query)
 	if err != nil {

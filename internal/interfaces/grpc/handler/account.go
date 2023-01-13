@@ -21,20 +21,19 @@ func NewAccountHandler(appSvc *application.AccountService) pb.AccountServiceServ
 func (a *account) CreateAccountBIP44(
 	ctx context.Context, req *pb.CreateAccountBIP44Request,
 ) (*pb.CreateAccountBIP44Response, error) {
-	name, err := parseAccountName(req.GetName())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	accountInfo, err := a.appSvc.CreateAccountBIP44(ctx, name)
+	accountInfo, err := a.appSvc.CreateAccountBIP44(ctx, req.GetLabel())
 	if err != nil {
 		return nil, err
 	}
+
 	return &pb.CreateAccountBIP44Response{
-		AccountName:    accountInfo.Key.Name,
-		AccountIndex:   accountInfo.Key.Index,
-		Xpub:           accountInfo.Xpub,
-		DerivationPath: accountInfo.DerivationPath,
+		AccountInfo: &pb.AccountInfo{
+			Label:          req.GetLabel(),
+			Index:          accountInfo.Key.Index,
+			DerivationPath: accountInfo.DerivationPath,
+			Xpubs:          []string{accountInfo.Xpub},
+			Namespace:      accountInfo.Key.Namespace,
+		},
 	}, nil
 }
 
@@ -59,14 +58,14 @@ func (a *account) SetAccountTemplate(
 func (a *account) DeriveAddresses(
 	ctx context.Context, req *pb.DeriveAddressesRequest,
 ) (*pb.DeriveAddressesResponse, error) {
-	name, err := parseAccountName(req.GetAccountName())
+	namespace, err := parseAccountNamespace(req.GetNamespace())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	numOfAddresses := req.GetNumOfAddresses()
 
 	addressesInfo, err := a.appSvc.DeriveAddressesForAccount(
-		ctx, name, numOfAddresses,
+		ctx, namespace, numOfAddresses,
 	)
 	if err != nil {
 		return nil, err
@@ -80,14 +79,14 @@ func (a *account) DeriveAddresses(
 func (a *account) DeriveChangeAddresses(
 	ctx context.Context, req *pb.DeriveChangeAddressesRequest,
 ) (*pb.DeriveChangeAddressesResponse, error) {
-	name, err := parseAccountName(req.GetAccountName())
+	namespace, err := parseAccountNamespace(req.GetNamespace())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	numOfAddresses := req.GetNumOfAddresses()
 
 	addressesInfo, err := a.appSvc.DeriveChangeAddressesForAccount(
-		ctx, name, numOfAddresses,
+		ctx, namespace, numOfAddresses,
 	)
 	if err != nil {
 		return nil, err
@@ -100,12 +99,12 @@ func (a *account) DeriveChangeAddresses(
 func (a *account) ListAddresses(
 	ctx context.Context, req *pb.ListAddressesRequest,
 ) (*pb.ListAddressesResponse, error) {
-	name, err := parseAccountName(req.GetAccountName())
+	namespace, err := parseAccountNamespace(req.GetNamespace())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	addressesInfo, err := a.appSvc.ListAddressesForAccount(ctx, name)
+	addressesInfo, err := a.appSvc.ListAddressesForAccount(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -117,12 +116,12 @@ func (a *account) ListAddresses(
 func (a *account) Balance(
 	ctx context.Context, req *pb.BalanceRequest,
 ) (*pb.BalanceResponse, error) {
-	name, err := parseAccountName(req.GetAccountName())
+	namespace, err := parseAccountNamespace(req.GetNamespace())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	balanceInfo, err := a.appSvc.GetBalanceForAccount(ctx, name)
+	balanceInfo, err := a.appSvc.GetBalanceForAccount(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -141,12 +140,12 @@ func (a *account) Balance(
 func (a *account) ListUtxos(
 	ctx context.Context, req *pb.ListUtxosRequest,
 ) (*pb.ListUtxosResponse, error) {
-	name, err := parseAccountName(req.GetAccountName())
+	namespace, err := parseAccountNamespace(req.GetNamespace())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	utxosInfo, err := a.appSvc.ListUtxosForAccount(ctx, name)
+	utxosInfo, err := a.appSvc.ListUtxosForAccount(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -154,12 +153,12 @@ func (a *account) ListUtxos(
 	lockedUtxos := parseUtxos(utxosInfo.Locked.Info())
 	return &pb.ListUtxosResponse{
 		SpendableUtxos: &pb.Utxos{
-			AccountName: name,
-			Utxos:       spendableUtxos,
+			Namespace: namespace,
+			Utxos:     spendableUtxos,
 		},
 		LockedUtxos: &pb.Utxos{
-			AccountName: name,
-			Utxos:       lockedUtxos,
+			Namespace: namespace,
+			Utxos:     lockedUtxos,
 		},
 	}, nil
 }
@@ -167,13 +166,29 @@ func (a *account) ListUtxos(
 func (a *account) DeleteAccount(
 	ctx context.Context, req *pb.DeleteAccountRequest,
 ) (*pb.DeleteAccountResponse, error) {
-	name, err := parseAccountName(req.GetAccountName())
+	namespace, err := parseAccountNamespace(req.GetNamespace())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := a.appSvc.DeleteAccount(ctx, name); err != nil {
+	if err := a.appSvc.DeleteAccount(ctx, namespace); err != nil {
 		return nil, err
 	}
 	return &pb.DeleteAccountResponse{}, nil
+}
+
+func (a *account) SetAccountLabel(
+	ctx context.Context,
+	req *pb.SetAccountLabelRequest,
+) (*pb.SetAccountLabelResponse, error) {
+	namespace, err := parseAccountNamespace(req.GetNamespace())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if err := a.appSvc.SetAccountLabel(ctx, namespace, req.GetLabel()); err != nil {
+		return nil, err
+	}
+
+	return &pb.SetAccountLabelResponse{}, nil
 }

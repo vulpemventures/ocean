@@ -10,6 +10,10 @@ import (
 	"github.com/vulpemventures/ocean/internal/core/ports"
 )
 
+const (
+	bip84RootPathPurpose = "84"
+)
+
 // AccountService is responsible for operations related to wallet accounts:
 //   - Create a new account.
 //   - Derive addresses for an existing account.
@@ -54,14 +58,14 @@ func NewAccountService(
 }
 
 func (as *AccountService) CreateAccountBIP44(
-	ctx context.Context, accountName string,
+	ctx context.Context, label string,
 ) (*AccountInfo, error) {
 	_, birthdayBlockHeight, err := as.bcScanner.GetLatestBlock()
 	if err != nil {
 		return nil, err
 	}
 	accountInfo, err := as.repoManager.WalletRepository().CreateAccount(
-		ctx, accountName, birthdayBlockHeight,
+		ctx, bip84RootPathPurpose, label, birthdayBlockHeight,
 	)
 	if err != nil {
 		return nil, err
@@ -70,14 +74,14 @@ func (as *AccountService) CreateAccountBIP44(
 }
 
 func (as *AccountService) DeriveAddressesForAccount(
-	ctx context.Context, accountName string, numOfAddresses uint64,
+	ctx context.Context, namespace string, numOfAddresses uint64,
 ) (AddressesInfo, error) {
 	if numOfAddresses == 0 {
 		numOfAddresses = 1
 	}
 
 	addressesInfo, err := as.repoManager.WalletRepository().
-		DeriveNextExternalAddressesForAccount(ctx, accountName, numOfAddresses)
+		DeriveNextExternalAddressesForAccount(ctx, namespace, numOfAddresses)
 	if err != nil {
 		return nil, err
 	}
@@ -85,29 +89,29 @@ func (as *AccountService) DeriveAddressesForAccount(
 }
 
 func (as *AccountService) DeriveChangeAddressesForAccount(
-	ctx context.Context, accountName string, numOfAddresses uint64,
+	ctx context.Context, namespace string, numOfAddresses uint64,
 ) (AddressesInfo, error) {
 	if numOfAddresses == 0 {
 		numOfAddresses = 1
 	}
 
 	addressesInfo, err := as.repoManager.WalletRepository().
-		DeriveNextInternalAddressesForAccount(ctx, accountName, numOfAddresses)
+		DeriveNextInternalAddressesForAccount(ctx, namespace, numOfAddresses)
 	if err != nil {
 		return nil, err
 	}
-	return AddressesInfo(addressesInfo), nil
+	return addressesInfo, nil
 }
 
 func (as *AccountService) ListAddressesForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) (AddressesInfo, error) {
 	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	addressesInfo, err := w.AllDerivedAddressesForAccount(accountName)
+	addressesInfo, err := w.AllDerivedAddressesForAccount(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -115,45 +119,45 @@ func (as *AccountService) ListAddressesForAccount(
 }
 
 func (as *AccountService) GetBalanceForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) (BalanceInfo, error) {
 	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	account, err := w.GetAccount(accountName)
+	account, err := w.GetAccount(namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	return as.repoManager.UtxoRepository().GetBalanceForAccount(
-		ctx, account.Info.Key.Name,
+		ctx, account.Info.Key.Namespace,
 	)
 }
 
 func (as *AccountService) ListUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) (*UtxoInfo, error) {
 	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	account, err := w.GetAccount(accountName)
+	account, err := w.GetAccount(namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	spendableUtxos, err := as.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
-		ctx, account.Info.Key.Name,
+		ctx, account.Info.Key.Namespace,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	lockedUtxos, err := as.repoManager.UtxoRepository().GetLockedUtxosForAccount(
-		ctx, account.Info.Key.Name,
+		ctx, account.Info.Key.Namespace,
 	)
 	if err != nil {
 		return nil, err
@@ -163,15 +167,15 @@ func (as *AccountService) ListUtxosForAccount(
 }
 
 func (as *AccountService) DeleteAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, namespace string,
 ) (err error) {
-	balance, err := as.GetBalanceForAccount(ctx, accountName)
+	balance, err := as.GetBalanceForAccount(ctx, namespace)
 	if err != nil {
 		return
 	}
 	if len(balance) > 0 {
 		err = fmt.Errorf(
-			"account %s must have zero balance to be deleted", accountName,
+			"account %s must have zero balance to be deleted", namespace,
 		)
 		return
 	}
@@ -179,18 +183,34 @@ func (as *AccountService) DeleteAccount(
 	defer func() {
 		if err == nil {
 			if err := as.repoManager.UtxoRepository().DeleteUtxosForAccount(
-				ctx, accountName,
+				ctx, namespace,
 			); err != nil {
 				as.warn(
 					err, "account service: error while deleting utxos for account %s",
-					accountName,
+					namespace,
 				)
 			}
 		}
 	}()
 
-	err = as.repoManager.WalletRepository().DeleteAccount(ctx, accountName)
+	err = as.repoManager.WalletRepository().DeleteAccount(ctx, namespace)
 	return
+}
+
+func (as *AccountService) SetAccountLabel(
+	ctx context.Context,
+	namespace string,
+	label string,
+) error {
+	return as.repoManager.WalletRepository().UpdateWallet(
+		ctx,
+		func(w *domain.Wallet) (*domain.Wallet, error) {
+			if err := w.UpdateAccountsLabel(namespace, label); err != nil {
+				return nil, err
+			}
+			return w, nil
+		},
+	)
 }
 
 func (as *AccountService) registerHandlerForWalletEvents() {
@@ -199,16 +219,16 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 		domain.WalletUnlocked, func(event domain.WalletEvent) {
 			w, _ := as.repoManager.WalletRepository().GetWallet(context.Background())
 
-			for accountName := range w.AccountKeysByName {
-				accountKey := w.AccountKeysByName[accountName]
+			for namespace := range w.AccountKeysByNamespace {
+				accountKey := w.AccountKeysByNamespace[namespace]
 				account := w.AccountsByKey[accountKey]
-				addressesInfo, _ := w.AllDerivedAddressesForAccount(accountName)
+				addressesInfo, _ := w.AllDerivedAddressesForAccount(namespace)
 				if len(addressesInfo) > 0 {
-					as.log("start watching addresses for account %s", accountName)
-					as.bcScanner.WatchForAccount(accountName, account.BirthdayBlock, addressesInfo)
+					as.log("start watching addresses for account %s", namespace)
+					as.bcScanner.WatchForAccount(namespace, account.BirthdayBlock, addressesInfo)
 				}
-				go as.listenToUtxoChannel(accountName, as.bcScanner.GetUtxoChannel(accountName))
-				go as.listenToTxChannel(accountName, as.bcScanner.GetTxChannel(accountName))
+				go as.listenToUtxoChannel(namespace, as.bcScanner.GetUtxoChannel(namespace))
+				go as.listenToTxChannel(namespace, as.bcScanner.GetTxChannel(namespace))
 			}
 		},
 	)
@@ -216,33 +236,33 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 	as.repoManager.RegisterHandlerForWalletEvent(
 		domain.WalletAccountCreated, func(event domain.WalletEvent) {
 			as.bcScanner.WatchForAccount(
-				event.AccountName, event.AccountBirthdayBlock, event.AccountAddresses,
+				event.AccountNamespace, event.AccountBirthdayBlock, event.AccountAddresses,
 			)
-			chUtxos := as.bcScanner.GetUtxoChannel(event.AccountName)
-			chTxs := as.bcScanner.GetTxChannel(event.AccountName)
-			go as.listenToUtxoChannel(event.AccountName, chUtxos)
-			go as.listenToTxChannel(event.AccountName, chTxs)
+			chUtxos := as.bcScanner.GetUtxoChannel(event.AccountNamespace)
+			chTxs := as.bcScanner.GetTxChannel(event.AccountNamespace)
+			go as.listenToUtxoChannel(event.AccountNamespace, chUtxos)
+			go as.listenToTxChannel(event.AccountNamespace, chTxs)
 		},
 	)
 	// Start watching account address as soon as it's derived.
 	as.repoManager.RegisterHandlerForWalletEvent(
 		domain.WalletAccountAddressesDerived, func(event domain.WalletEvent) {
 			as.bcScanner.WatchForAccount(
-				event.AccountName, event.AccountBirthdayBlock, event.AccountAddresses,
+				event.AccountNamespace, event.AccountBirthdayBlock, event.AccountAddresses,
 			)
 		},
 	)
 	// Stop watching account and all its addresses as soon as it's deleted.
 	as.repoManager.RegisterHandlerForWalletEvent(
 		domain.WalletAccountDeleted, func(event domain.WalletEvent) {
-			as.bcScanner.StopWatchForAccount(event.AccountName)
+			as.bcScanner.StopWatchForAccount(event.AccountNamespace)
 		},
 	)
 	// Start watching for when utxos are spent as soon as they are added to the storage.
 	as.repoManager.RegisterHandlerForUtxoEvent(
 		domain.UtxoAdded, func(event domain.UtxoEvent) {
-			accountName := event.Utxos[0].AccountName
-			as.bcScanner.WatchForUtxos(accountName, event.Utxos)
+			namespace := event.Utxos[0].FkAccountNamespace
+			as.bcScanner.WatchForUtxos(namespace, event.Utxos)
 		},
 	)
 
@@ -257,23 +277,23 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 		}
 		for _, u := range utxos {
 			if !u.IsSpent() {
-				as.bcScanner.WatchForUtxos(u.AccountName, []domain.UtxoInfo{u.Info()})
+				as.bcScanner.WatchForUtxos(u.FkAccountNamespace, []domain.UtxoInfo{u.Info()})
 			}
 		}
 	}()
 }
 
 func (as *AccountService) listenToUtxoChannel(
-	accountName string, chUtxos chan []*domain.Utxo,
+	namespace string, chUtxos chan []*domain.Utxo,
 ) {
-	as.log("start listening to utxo channel for account %s", accountName)
+	as.log("start listening to utxo channel for account %s", namespace)
 
 	for utxos := range chUtxos {
 		time.Sleep(time.Millisecond)
 
 		as.log(
 			"received %d utxo(s) from channel for account %s",
-			len(utxos), accountName,
+			len(utxos), namespace,
 		)
 
 		utxoKeys := make([]domain.UtxoKey, 0, len(utxos))
@@ -287,11 +307,11 @@ func (as *AccountService) listenToUtxoChannel(
 			if err != nil {
 				as.warn(
 					err, "error while updating utxos status to spent for account %s",
-					accountName,
+					namespace,
 				)
 			}
 			if count > 0 {
-				as.log("spent %d utxos for account %s", count, accountName)
+				as.log("spent %d utxos for account %s", count, namespace)
 			}
 			continue
 		}
@@ -303,11 +323,11 @@ func (as *AccountService) listenToUtxoChannel(
 			if err != nil {
 				as.warn(
 					err, "error while updating utxos status to confirmed for account %s",
-					accountName,
+					namespace,
 				)
 			}
 			if count > 0 {
-				as.log("confirmed %d utxo(s) for account %s", count, accountName)
+				as.log("confirmed %d utxo(s) for account %s", count, namespace)
 				continue
 			}
 		}
@@ -316,18 +336,18 @@ func (as *AccountService) listenToUtxoChannel(
 			context.Background(), utxos,
 		)
 		if err != nil {
-			as.warn(err, "error while adding new utxos for account %s", accountName)
+			as.warn(err, "error while adding new utxos for account %s", namespace)
 		}
 		if count > 0 {
-			as.log("added %d utxo(s) for account %s", count, accountName)
+			as.log("added %d utxo(s) for account %s", count, namespace)
 		}
 	}
 }
 
 func (as *AccountService) listenToTxChannel(
-	accountName string, chTxs chan *domain.Transaction,
+	namespace string, chTxs chan *domain.Transaction,
 ) {
-	as.log("start listening to tx channel for account %s", accountName)
+	as.log("start listening to tx channel for account %s", namespace)
 
 	ctx := context.Background()
 	txRepo := as.repoManager.TransactionRepository()
@@ -341,11 +361,11 @@ func (as *AccountService) listenToTxChannel(
 			if _, err := txRepo.AddTransaction(ctx, tx); err != nil {
 				as.warn(
 					err, "error while adding new transaction %s for account %s",
-					tx.TxID, accountName,
+					tx.TxID, namespace,
 				)
 				continue
 			}
-			as.log("added new transaction %s for account %s", tx.TxID, accountName)
+			as.log("added new transaction %s for account %s", tx.TxID, namespace)
 			continue
 		}
 		if !gotTx.IsConfirmed() && tx.IsConfirmed() {
@@ -354,10 +374,10 @@ func (as *AccountService) listenToTxChannel(
 			); err != nil {
 				as.warn(
 					err, "error while confirming transaction %s for account %s",
-					tx.TxID, accountName,
+					tx.TxID, namespace,
 				)
 			}
-			as.log("confirmed transaction %s for account %s", tx.TxID, accountName)
+			as.log("confirmed transaction %s for account %s", tx.TxID, namespace)
 		}
 
 		if !gotTx.HasAccounts(tx) {

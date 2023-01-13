@@ -110,37 +110,37 @@ func (s *service) Stop() {
 }
 
 func (s *service) WatchForAccount(
-	accountName string, _ uint32,
+	namespace string, _ uint32,
 	addresses []domain.AddressInfo,
 ) {
-	accountCh, txHistory := s.client.subscribeForAccount(accountName, addresses)
-	if _, ok := s.getAccountChannel(accountName); !ok {
-		s.setAccountChannels(accountName, accountCh)
+	accountCh, txHistory := s.client.subscribeForAccount(namespace, addresses)
+	if _, ok := s.getAccountChannel(namespace); !ok {
+		s.setAccountChannels(namespace, accountCh)
 
 		go s.listenToAccountChannel(accountCh)
 	}
 
 	for scriptHash, history := range txHistory {
-		s.db.updateAccountTxHistory(accountName, scriptHash, history)
+		s.db.updateAccountTxHistory(namespace, scriptHash, history)
 	}
-	s.setAddressesByScriptHash(accountName, addresses)
+	s.setAddressesByScriptHash(namespace, addresses)
 }
 
 func (s *service) WatchForUtxos(
-	accountName string, utxos []domain.UtxoInfo,
+	accountNamespace string, utxos []domain.UtxoInfo,
 ) {
 }
 
-func (s *service) StopWatchForAccount(accountName string) {
-	s.client.unsubscribeForAccount(accountName)
+func (s *service) StopWatchForAccount(namespace string) {
+	s.client.unsubscribeForAccount(namespace)
 }
 
-func (s *service) GetUtxoChannel(accountName string) chan []*domain.Utxo {
-	return s.getUtxoChannelByAccount(accountName)
+func (s *service) GetUtxoChannel(namespace string) chan []*domain.Utxo {
+	return s.getUtxoChannelByAccount(namespace)
 }
 
-func (s *service) GetTxChannel(accountName string) chan *domain.Transaction {
-	return s.getTxChannelByAccount(accountName)
+func (s *service) GetTxChannel(namespace string) chan *domain.Transaction {
+	return s.getTxChannelByAccount(namespace)
 }
 
 func (s *service) GetLatestBlock() ([]byte, uint32, error) {
@@ -178,18 +178,18 @@ func (s *service) getAccountChannel(
 	return ch, ok
 }
 
-func (s *service) getUtxoChannelByAccount(account string) chan []*domain.Utxo {
+func (s *service) getUtxoChannelByAccount(namespace string) chan []*domain.Utxo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	return s.utxoChannelByAccount[account]
+	return s.utxoChannelByAccount[namespace]
 }
 
-func (s *service) getTxChannelByAccount(account string) chan *domain.Transaction {
+func (s *service) getTxChannelByAccount(namespace string) chan *domain.Transaction {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	return s.txChannelByAccount[account]
+	return s.txChannelByAccount[namespace]
 }
 
 func (s *service) setAccountChannels(
@@ -263,7 +263,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 		for i, out := range tx.Outputs {
 			if len(out.Script) > 0 {
 				scriptHash := calcScriptHash(hex.EncodeToString(out.Script))
-				addrInfo := s.getAddressByScriptHash(event.account, scriptHash)
+				addrInfo := s.getAddressByScriptHash(event.accountNamespace, scriptHash)
 				if addrInfo != nil {
 					confirmedUtxos = append(confirmedUtxos, &domain.Utxo{
 						UtxoKey: domain.UtxoKey{
@@ -285,7 +285,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 		for i, out := range tx.Outputs {
 			if len(out.Script) > 0 {
 				scriptHash := calcScriptHash(hex.EncodeToString(out.Script))
-				addrInfo := s.getAddressByScriptHash(event.account, scriptHash)
+				addrInfo := s.getAddressByScriptHash(event.accountNamespace, scriptHash)
 				if addrInfo != nil {
 					var nonce, valueCommit, assetCommit []byte
 					if out.IsConfidential() {
@@ -310,23 +310,23 @@ func (s *service) dbEventHandler(event dbEvent) {
 							TxID: event.tx.Txid,
 							VOut: uint32(i),
 						},
-						Asset:           elementsutil.TxIDFromBytes(unblindedData.Asset),
-						Value:           unblindedData.Value,
-						AssetCommitment: assetCommit,
-						ValueCommitment: valueCommit,
-						AssetBlinder:    unblindedData.AssetBlindingFactor,
-						ValueBlinder:    unblindedData.ValueBlindingFactor,
-						Nonce:           nonce,
-						Script:          out.Script,
-						AccountName:     event.account,
-						ConfirmedStatus: confirmedStatus,
+						Asset:              elementsutil.TxIDFromBytes(unblindedData.Asset),
+						Value:              unblindedData.Value,
+						AssetCommitment:    assetCommit,
+						ValueCommitment:    valueCommit,
+						AssetBlinder:       unblindedData.AssetBlindingFactor,
+						ValueBlinder:       unblindedData.ValueBlindingFactor,
+						Nonce:              nonce,
+						Script:             out.Script,
+						FkAccountNamespace: event.accountNamespace,
+						ConfirmedStatus:    confirmedStatus,
 					})
 				}
 			}
 		}
 	}
 
-	chTx := s.getTxChannelByAccount(event.account)
+	chTx := s.getTxChannelByAccount(event.accountNamespace)
 	txHex, _ := tx.ToHex()
 
 	var hash string
@@ -342,11 +342,11 @@ func (s *service) dbEventHandler(event dbEvent) {
 			TxHex:       txHex,
 			BlockHash:   hash,
 			BlockHeight: blockHeight,
-			Accounts:    map[string]struct{}{event.account: {}},
+			Accounts:    map[string]struct{}{event.accountNamespace: {}},
 		}
 	}()
 
-	chUtxos := s.getUtxoChannelByAccount(event.account)
+	chUtxos := s.getUtxoChannelByAccount(event.accountNamespace)
 	if len(spentUtxos) > 0 {
 		go func() { chUtxos <- spentUtxos }()
 	}
@@ -360,26 +360,26 @@ func (s *service) dbEventHandler(event dbEvent) {
 	}
 }
 
-func (s *service) getAddressByScriptHash(account, scriptHash string) *domain.AddressInfo {
+func (s *service) getAddressByScriptHash(accountNamespace, scriptHash string) *domain.AddressInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	info, ok := s.accountAddressesByScriptHash[account][scriptHash]
+	info, ok := s.accountAddressesByScriptHash[accountNamespace][scriptHash]
 	if !ok {
 		return nil
 	}
 	return &info
 }
 
-func (s *service) setAddressesByScriptHash(account string, addresses []domain.AddressInfo) {
+func (s *service) setAddressesByScriptHash(accountNamespace string, addresses []domain.AddressInfo) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if _, ok := s.accountAddressesByScriptHash[account]; !ok {
-		s.accountAddressesByScriptHash[account] = make(map[string]domain.AddressInfo)
+	if _, ok := s.accountAddressesByScriptHash[accountNamespace]; !ok {
+		s.accountAddressesByScriptHash[accountNamespace] = make(map[string]domain.AddressInfo)
 	}
 
 	for _, addr := range addresses {
-		s.accountAddressesByScriptHash[account][calcScriptHash(addr.Script)] = addr
+		s.accountAddressesByScriptHash[accountNamespace][calcScriptHash(addr.Script)] = addr
 	}
 }

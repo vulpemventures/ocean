@@ -50,7 +50,7 @@ func testExternalTransaction(t *testing.T) {
 		)
 
 		selectedUtxos, change, expirationDate, err := svc.SelectUtxos(
-			ctx, accountName, regtest.AssetID, 1000000, coinSelectionStrategy,
+			ctx, accountNamespace, regtest.AssetID, 1000000, coinSelectionStrategy,
 		)
 		require.NoError(t, err)
 		require.NotEmpty(t, selectedUtxos)
@@ -67,7 +67,7 @@ func testExternalTransaction(t *testing.T) {
 
 		if change > 0 {
 			addrInfo, err := repoManager.WalletRepository().
-				DeriveNextInternalAddressesForAccount(ctx, accountName, 1)
+				DeriveNextInternalAddressesForAccount(ctx, accountNamespace, 1)
 			require.NoError(t, err)
 			require.Len(t, addrInfo, 1)
 			script, _ := hex.DecodeString(addrInfo[0].Script)
@@ -130,7 +130,7 @@ func testInternalTransaction(t *testing.T) {
 			repoManager, mockedBcScanner, regtest, rootPath, utxoExpiryDuration,
 		)
 
-		txid, err := svc.Transfer(ctx, accountName, outputs, 0)
+		txid, err := svc.Transfer(ctx, accountNamespace, outputs, 0)
 		require.NoError(t, err)
 		require.NotEmpty(t, txid)
 	})
@@ -156,14 +156,14 @@ func newRepoManagerForTxService() (ports.RepoManager, error) {
 	if err := rm.WalletRepository().UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
 			w.Unlock(password)
-			w.CreateAccount(accountName, 0)
+			w.CreateAccount("84", "myAccount", 0)
 			return w, nil
 		},
 	); err != nil {
 		return nil, err
 	}
 
-	addrInfo, err := rm.WalletRepository().DeriveNextExternalAddressesForAccount(ctx, accountName, 2)
+	addrInfo, err := rm.WalletRepository().DeriveNextExternalAddressesForAccount(ctx, accountNamespace, 2)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func newRepoManagerForTxService() (ports.RepoManager, error) {
 	addresses := application.AddressesInfo(addrInfo).Addresses()
 	utxos := make([]*domain.Utxo, 0, len(addresses))
 	for _, addr := range addresses {
-		utxo := randomUtxo(accountName, addr)
+		utxo := randomUtxo(accountNamespace, addr)
 		utxo.Value = 100000000
 		utxo.Asset = regtest.AssetID
 		utxos = append(utxos, utxo)

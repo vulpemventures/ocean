@@ -50,15 +50,15 @@ func (m *mockBcScanner) WatchForUtxos(
 		list := make([]*domain.Utxo, 0, len(utxos))
 		for _, u := range utxos {
 			list = append(list, &domain.Utxo{
-				UtxoKey:         u.Key(),
-				Value:           u.Value,
-				Asset:           u.Asset,
-				Script:          u.Script,
-				AssetBlinder:    u.AssetBlinder,
-				ValueBlinder:    u.ValueBlinder,
-				SpentStatus:     u.SpentStatus,
-				ConfirmedStatus: u.ConfirmedStatus,
-				AccountName:     u.AccountName,
+				UtxoKey:            u.Key(),
+				Value:              u.Value,
+				Asset:              u.Asset,
+				Script:             u.Script,
+				AssetBlinder:       u.AssetBlinder,
+				ValueBlinder:       u.ValueBlinder,
+				SpentStatus:        u.SpentStatus,
+				ConfirmedStatus:    u.ConfirmedStatus,
+				FkAccountNamespace: u.FkAccountNamespace,
 			})
 		}
 		m.chUtxos <- list
@@ -209,7 +209,7 @@ func randomUtxos(accountName string, addresses []string) []*domain.Utxo {
 	return utxos
 }
 
-func randomUtxo(accountName, addr string) *domain.Utxo {
+func randomUtxo(accountNamespace, addr string) *domain.Utxo {
 	script, _ := address.ToOutputScript(addr)
 	nonce := append([]byte{3}, randomBytes(32)...)
 	return &domain.Utxo{
@@ -217,15 +217,15 @@ func randomUtxo(accountName, addr string) *domain.Utxo {
 			TxID: randomHex(32),
 			VOut: randomVout(),
 		},
-		Value:           randomValue(),
-		Asset:           randomHex(32),
-		ValueCommitment: randomValueCommitment(),
-		AssetCommitment: randomAssetCommitment(),
-		ValueBlinder:    randomBytes(32),
-		AssetBlinder:    randomBytes(32),
-		Script:          script,
-		Nonce:           nonce,
-		AccountName:     accountName,
+		Value:              randomValue(),
+		Asset:              randomHex(32),
+		ValueCommitment:    randomValueCommitment(),
+		AssetCommitment:    randomAssetCommitment(),
+		ValueBlinder:       randomBytes(32),
+		AssetBlinder:       randomBytes(32),
+		Script:             script,
+		Nonce:              nonce,
+		FkAccountNamespace: accountNamespace,
 		ConfirmedStatus: domain.UtxoStatus{
 			BlockHeight: uint64(randomIntInRange(1, 10000)),
 		},

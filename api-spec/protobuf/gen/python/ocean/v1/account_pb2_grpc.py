@@ -67,6 +67,11 @@ class AccountServiceStub(object):
                 request_serializer=ocean_dot_v1_dot_account__pb2.DeleteAccountRequest.SerializeToString,
                 response_deserializer=ocean_dot_v1_dot_account__pb2.DeleteAccountResponse.FromString,
                 )
+        self.SetAccountLabel = channel.unary_unary(
+                '/ocean.v1.AccountService/SetAccountLabel',
+                request_serializer=ocean_dot_v1_dot_account__pb2.SetAccountLabelRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.SetAccountLabelResponse.FromString,
+                )
 
 
 class AccountServiceServicer(object):
@@ -148,6 +153,13 @@ class AccountServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SetAccountLabel(self, request, context):
+        """SetAccountLabel updates account label
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AccountServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -200,6 +212,11 @@ def add_AccountServiceServicer_to_server(servicer, server):
                     servicer.DeleteAccount,
                     request_deserializer=ocean_dot_v1_dot_account__pb2.DeleteAccountRequest.FromString,
                     response_serializer=ocean_dot_v1_dot_account__pb2.DeleteAccountResponse.SerializeToString,
+            ),
+            'SetAccountLabel': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetAccountLabel,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.SetAccountLabelRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.SetAccountLabelResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -381,5 +398,22 @@ class AccountService(object):
         return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/DeleteAccount',
             ocean_dot_v1_dot_account__pb2.DeleteAccountRequest.SerializeToString,
             ocean_dot_v1_dot_account__pb2.DeleteAccountResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetAccountLabel(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/SetAccountLabel',
+            ocean_dot_v1_dot_account__pb2.SetAccountLabelRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.SetAccountLabelResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
