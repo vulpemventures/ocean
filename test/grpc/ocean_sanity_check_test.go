@@ -127,6 +127,8 @@ loop:
 		g.FailNow("utxo event not received")
 	}
 
+	time.Sleep(3 * time.Second)
+
 	txClient, cancel, err := testutil.GetTransactionClient(address, true, "")
 	g.NoError(err)
 	defer cancel()
