@@ -45,7 +45,6 @@ func (i *InMemoryDbTestSuite) SetupSuite() {
 }
 
 func (i *InMemoryDbTestSuite) TearDownSuite() {
-	inMemoryRepoManager.Close()
 }
 
 func (i *InMemoryDbTestSuite) BeforeTest(suiteName, testName string) {

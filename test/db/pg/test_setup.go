@@ -74,8 +74,6 @@ func (p *PgDbTestSuite) TearDownSuite() {
 	if err := dbtest.TruncateDB(); err != nil {
 		p.FailNow(err.Error())
 	}
-
-	pgRepoManager.Close()
 }
 
 func (p *PgDbTestSuite) BeforeTest(suiteName, testName string) {
@@ -85,4 +83,7 @@ func (p *PgDbTestSuite) BeforeTest(suiteName, testName string) {
 }
 
 func (p *PgDbTestSuite) AfterTest(suiteName, testName string) {
+	if err := dbtest.TruncateDB(); err != nil {
+		p.FailNow(err.Error())
+	}
 }

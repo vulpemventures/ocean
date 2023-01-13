@@ -42,7 +42,7 @@ run: clean
 	export OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
 	go run ./cmd/oceand
 
-test: fmt testinternal testpkg testdb testgrpc
+test: fmt testinternal testpkg testinmemory testbadger testpg testgrpc
 
 testinternal:
 	@echo "Testing internal..."
@@ -52,9 +52,17 @@ testpkg:
 	@echo "Testing pkg..."
 	go test --race --count=1 -v ./pkg/...
 
-testdb:
-	@echo "Testing db..."
-	go test --race --count=1 -v ./test/db/...
+testinmemory:
+	@echo "Testing db inmemory..."
+	go test --race --count=1 -v ./test/db/inmemory/...
+
+testbadger:
+	@echo "Testing db badger..."
+	go test --race --count=1 -v ./test/db/badger/...
+
+testpg:
+	@echo "Testing db pg..."
+	go test --race --count=1 -v ./test/db/pg/...
 
 testgrpc:
 	@echo "Testing grpc..."

@@ -45,7 +45,6 @@ func (b *BadgerDbTestSuite) SetupSuite() {
 }
 
 func (b *BadgerDbTestSuite) TearDownSuite() {
-	badgerRepoManager.Close()
 }
 
 func (b *BadgerDbTestSuite) BeforeTest(suiteName, testName string) {
