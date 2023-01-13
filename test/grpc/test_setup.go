@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	mnemonic = "tell worth behave duty duty file alien bacon design element attract era enter turtle cycle foot bone sand elevator useless release affair giggle engage"
+	mnemonic = "tell tell behave duty duty file alien bacon design element attract era enter turtle cycle foot bone sand elevator useless release affair giggle engage"
 	password = "password"
 
 	ctx     = context.Background()
