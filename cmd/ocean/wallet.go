@@ -66,6 +66,12 @@ var (
 			"if it's initialized, in sync or unlocked",
 		RunE: walletStatus,
 	}
+	authWalletCmd = &cobra.Command{
+		Use:   "auth",
+		Short: "auth wallet password",
+		Long:  "verifies whether the given password is valid without unlocking the wallet",
+		RunE:  authWallet,
+	}
 	walletCmd = &cobra.Command{
 		Use:   "wallet",
 		Short: "interact with ocean wallet interface",
@@ -94,7 +100,7 @@ func init() {
 
 	walletCmd.AddCommand(
 		walletGenSeedCmd, walletCreateCmd, walletUnlockCmd, walletLockCmd,
-		walletChangePwdCmd, walletInfoCmd, walletStatusCmd,
+		walletChangePwdCmd, walletInfoCmd, walletStatusCmd, authWalletCmd,
 	)
 }
 
@@ -261,6 +267,27 @@ func walletStatus(cmd *cobra.Command, args []string) error {
 		printErr(err)
 		return nil
 	}
+
+	jsonReply, err := jsonResponse(reply)
+	if err != nil {
+		printErr(err)
+		return nil
+	}
+
+	fmt.Println(jsonReply)
+	return nil
+}
+
+func authWallet(cmd *cobra.Command, _ []string) error {
+	client, cleanup, err := getWalletClient()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	reply, err := client.Auth(context.Background(), &pb.AuthRequest{
+		Password: password,
+	})
 
 	jsonReply, err := jsonResponse(reply)
 	if err != nil {

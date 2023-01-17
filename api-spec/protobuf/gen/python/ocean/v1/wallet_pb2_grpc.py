@@ -60,6 +60,11 @@ class WalletServiceStub(object):
                 request_serializer=ocean_dot_v1_dot_wallet__pb2.GetInfoRequest.SerializeToString,
                 response_deserializer=ocean_dot_v1_dot_wallet__pb2.GetInfoResponse.FromString,
                 )
+        self.Auth = channel.unary_unary(
+                '/ocean.v1.WalletService/Auth',
+                request_serializer=ocean_dot_v1_dot_wallet__pb2.AuthRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_wallet__pb2.AuthResponse.FromString,
+                )
 
 
 class WalletServiceServicer(object):
@@ -131,6 +136,13 @@ class WalletServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Auth(self, request, context):
+        """Auth verifies whether the given password is valid without unlocking the wallet
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_WalletServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -173,6 +185,11 @@ def add_WalletServiceServicer_to_server(servicer, server):
                     servicer.GetInfo,
                     request_deserializer=ocean_dot_v1_dot_wallet__pb2.GetInfoRequest.FromString,
                     response_serializer=ocean_dot_v1_dot_wallet__pb2.GetInfoResponse.SerializeToString,
+            ),
+            'Auth': grpc.unary_unary_rpc_method_handler(
+                    servicer.Auth,
+                    request_deserializer=ocean_dot_v1_dot_wallet__pb2.AuthRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_wallet__pb2.AuthResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -323,5 +340,22 @@ class WalletService(object):
         return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/GetInfo',
             ocean_dot_v1_dot_wallet__pb2.GetInfoRequest.SerializeToString,
             ocean_dot_v1_dot_wallet__pb2.GetInfoResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Auth(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.WalletService/Auth',
+            ocean_dot_v1_dot_wallet__pb2.AuthRequest.SerializeToString,
+            ocean_dot_v1_dot_wallet__pb2.AuthResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

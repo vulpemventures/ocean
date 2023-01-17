@@ -162,3 +162,17 @@ func (w *wallet) GetInfo(ctx context.Context, _ *pb.GetInfoRequest) (*pb.GetInfo
 		},
 	}, nil
 }
+
+func (w *wallet) Auth(
+	ctx context.Context,
+	req *pb.AuthRequest,
+) (*pb.AuthResponse, error) {
+	verified, err := w.appSvc.Auth(ctx, req.GetPassword())
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.AuthResponse{
+		Verified: verified,
+	}, nil
+}
