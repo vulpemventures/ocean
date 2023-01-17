@@ -167,7 +167,12 @@ func (w *wallet) Auth(
 	ctx context.Context,
 	req *pb.AuthRequest,
 ) (*pb.AuthResponse, error) {
-	verified, err := w.appSvc.Auth(ctx, req.GetPassword())
+	password, err := parsePassword(req.GetPassword())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	verified, err := w.appSvc.Auth(ctx, password)
 	if err != nil {
 		return nil, err
 	}
