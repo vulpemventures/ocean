@@ -167,9 +167,9 @@ func (w *walletRepositoryPg) UpdateWallet(
 	// loop over accounts and update account table if it is existing
 	// or insert new account if it is not existing
 	// insert account scripts as well
-	for _, account := range updatedWallet.AccountsByKey {
+	for _, account := range updatedWallet.AccountsByNamespace {
 		newAccount := false
-		_, err := querierWithTx.GetAccount(ctx, account.Info.Key.Namespace)
+		_, err := querierWithTx.GetAccount(ctx, account.Info.Namespace)
 		if err != nil {
 			if err.Error() == pgxNoRows {
 				newAccount = true
@@ -188,8 +188,8 @@ func (w *walletRepositoryPg) UpdateWallet(
 
 		if newAccount {
 			if _, err := querierWithTx.InsertAccount(ctx, queries.InsertAccountParams{
-				Namespace:         account.Info.Key.Namespace,
-				Index:             int32(account.Info.Key.Index),
+				Namespace:         account.Info.Namespace,
+				Index:             int32(account.Info.Index),
 				Xpub:              account.Info.Xpub,
 				DerivationPath:    account.Info.DerivationPath,
 				NextExternalIndex: int32(account.NextExternalIndex),
@@ -206,7 +206,7 @@ func (w *walletRepositoryPg) UpdateWallet(
 					NextExternalIndex: int32(account.NextExternalIndex),
 					NextInternalIndex: int32(account.NextInternalIndex),
 					Label:             label,
-					Namespace:         account.Info.Key.Namespace,
+					Namespace:         account.Info.Namespace,
 				},
 			); err != nil {
 				return err
@@ -219,7 +219,7 @@ func (w *walletRepositoryPg) UpdateWallet(
 				Script:         k,
 				DerivationPath: v,
 				FkAccountNamespace: sql.NullString{
-					String: account.Info.Key.Namespace,
+					String: account.Info.Namespace,
 					Valid:  true,
 				},
 			})
@@ -228,7 +228,7 @@ func (w *walletRepositoryPg) UpdateWallet(
 			if err := querierWithTx.DeleteAccountScripts(
 				ctx,
 				sql.NullString{
-					String: account.Info.Key.Namespace,
+					String: account.Info.Namespace,
 					Valid:  true,
 				},
 			); err != nil {
@@ -253,14 +253,13 @@ func (w *walletRepositoryPg) UpdateWallet(
 
 func (w *walletRepositoryPg) CreateAccount(
 	ctx context.Context,
-	rootPathPurpose string,
 	label string,
 	birthdayBlock uint32,
 ) (*domain.AccountInfo, error) {
 	var accountInfo *domain.AccountInfo
 	if err := w.UpdateWallet(
 		ctx, func(wallet *domain.Wallet) (*domain.Wallet, error) {
-			account, err := wallet.CreateAccount(rootPathPurpose, label, birthdayBlock)
+			account, err := wallet.CreateAccount(label, birthdayBlock)
 			if err != nil {
 				return nil, err
 			}
@@ -274,7 +273,7 @@ func (w *walletRepositoryPg) CreateAccount(
 
 	go w.publishEvent(domain.WalletEvent{
 		EventType:        domain.WalletAccountCreated,
-		AccountNamespace: accountInfo.Key.Namespace,
+		AccountNamespace: accountInfo.Namespace,
 	})
 
 	return accountInfo, nil
@@ -282,15 +281,20 @@ func (w *walletRepositoryPg) CreateAccount(
 
 func (w *walletRepositoryPg) DeriveNextExternalAddressesForAccount(
 	ctx context.Context,
-	namespace string,
+	accountName string,
 	numOfAddresses uint64,
 ) ([]domain.AddressInfo, error) {
 	addressesInfo := make([]domain.AddressInfo, 0)
 
+	account, err := w.querier.GetAccount(ctx, accountName)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := w.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
 			for i := 0; i < int(numOfAddresses); i++ {
-				addrInfo, err := w.DeriveNextExternalAddressForAccount(namespace)
+				addrInfo, err := w.DeriveNextExternalAddressForAccount(accountName)
 				if err != nil {
 					return nil, err
 				}
@@ -304,7 +308,7 @@ func (w *walletRepositoryPg) DeriveNextExternalAddressesForAccount(
 
 	go w.publishEvent(domain.WalletEvent{
 		EventType:        domain.WalletAccountAddressesDerived,
-		AccountNamespace: namespace,
+		AccountNamespace: account.Namespace,
 		AccountAddresses: addressesInfo,
 	})
 
@@ -313,15 +317,20 @@ func (w *walletRepositoryPg) DeriveNextExternalAddressesForAccount(
 
 func (w *walletRepositoryPg) DeriveNextInternalAddressesForAccount(
 	ctx context.Context,
-	namespace string,
+	accountName string,
 	numOfAddresses uint64,
 ) ([]domain.AddressInfo, error) {
 	addressesInfo := make([]domain.AddressInfo, 0)
 
+	account, err := w.querier.GetAccount(ctx, accountName)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := w.UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
 			for i := 0; i < int(numOfAddresses); i++ {
-				addrInfo, err := w.DeriveNextInternalAddressForAccount(namespace)
+				addrInfo, err := w.DeriveNextInternalAddressForAccount(accountName)
 				if err != nil {
 					return nil, err
 				}
@@ -335,7 +344,7 @@ func (w *walletRepositoryPg) DeriveNextInternalAddressesForAccount(
 
 	go w.publishEvent(domain.WalletEvent{
 		EventType:        domain.WalletAccountAddressesDerived,
-		AccountNamespace: namespace,
+		AccountNamespace: account.Namespace,
 		AccountAddresses: addressesInfo,
 	})
 
@@ -344,7 +353,7 @@ func (w *walletRepositoryPg) DeriveNextInternalAddressesForAccount(
 
 func (w *walletRepositoryPg) DeleteAccount(
 	ctx context.Context,
-	namespace string,
+	accountName string,
 ) error {
 	conn, err := w.pgxPool.Acquire(ctx)
 	if err != nil {
@@ -360,7 +369,7 @@ func (w *walletRepositoryPg) DeleteAccount(
 
 	querierWithTx := w.querier.WithTx(tx)
 
-	_, err = querierWithTx.GetAccount(ctx, namespace)
+	account, err := querierWithTx.GetAccount(ctx, accountName)
 	if err != nil {
 		if err.Error() == pgxNoRows {
 			return ErrAccountNotFound
@@ -371,14 +380,14 @@ func (w *walletRepositoryPg) DeleteAccount(
 	if err := querierWithTx.DeleteAccountScripts(
 		ctx,
 		sql.NullString{
-			String: namespace,
+			String: account.Namespace,
 			Valid:  true,
 		},
 	); err != nil {
 		return err
 	}
 
-	if err := querierWithTx.DeleteAccount(ctx, namespace); err != nil {
+	if err := querierWithTx.DeleteAccount(ctx, account.Namespace); err != nil {
 		return err
 	}
 
@@ -388,7 +397,7 @@ func (w *walletRepositoryPg) DeleteAccount(
 
 	go w.publishEvent(domain.WalletEvent{
 		EventType:        domain.WalletAccountDeleted,
-		AccountNamespace: namespace,
+		AccountNamespace: account.Namespace,
 	})
 
 	return nil
@@ -443,13 +452,11 @@ func (w *walletRepositoryPg) getWallet(
 				}
 				accounts[v.Namespace.String] = domain.Account{
 					Info: domain.AccountInfo{
-						Key: domain.AccountKey{
-							Namespace: v.Namespace.String,
-							Index:     uint32(v.Index.Int32),
-						},
+						Namespace:      v.Namespace.String,
+						Index:          uint32(v.Index.Int32),
+						Label:          label,
 						Xpub:           v.Xpub.String,
 						DerivationPath: v.AccountDerivationPath.String,
-						Label:          label,
 					},
 					BirthdayBlock:          uint32(v.BirthdayBlockHeight),
 					NextExternalIndex:      uint(v.NextExternalIndex.Int32),
@@ -465,31 +472,22 @@ func (w *walletRepositoryPg) getWallet(
 		}
 	}
 
-	accountsByKey := make(map[string]*domain.Account)
-	accountKeysByIndex := make(map[uint32]string)
-	accountKeysByNamespace := make(map[string]string)
+	accountsNamespaceByLabel := make(map[string]string)
+	accountsByNamespace := make(map[string]*domain.Account)
 	for k := range accounts {
 		v := accounts[k]
-		accountKey := domain.AccountKey{
-			Namespace: k,
-			Index:     v.Info.Key.Index,
-		}
-		accountsByKey[accountKey.String()] = &v
-
-		accountKeysByIndex[v.Info.Key.Index] = accountKey.String()
-
-		accountKeysByNamespace[v.Info.Key.Namespace] = accountKey.String()
+		accountsNamespaceByLabel[v.Info.Label] = v.Info.Namespace
+		accountsByNamespace[v.Info.Namespace] = &v
 	}
 
 	return &domain.Wallet{
-		EncryptedMnemonic:      walletAccounts[0].EncryptedMnemonic,
-		PasswordHash:           walletAccounts[0].PasswordHash,
-		BirthdayBlockHeight:    uint32(walletAccounts[0].BirthdayBlockHeight),
-		RootPath:               walletAccounts[0].RootPath,
-		NetworkName:            walletAccounts[0].NetworkName,
-		NextAccountIndex:       uint32(walletAccounts[0].NextAccountIndex),
-		AccountsByKey:          accountsByKey,
-		AccountKeysByIndex:     accountKeysByIndex,
-		AccountKeysByNamespace: accountKeysByNamespace,
+		EncryptedMnemonic:        walletAccounts[0].EncryptedMnemonic,
+		PasswordHash:             walletAccounts[0].PasswordHash,
+		BirthdayBlockHeight:      uint32(walletAccounts[0].BirthdayBlockHeight),
+		RootPath:                 walletAccounts[0].RootPath,
+		NetworkName:              walletAccounts[0].NetworkName,
+		AccountsNamespaceByLabel: accountsNamespaceByLabel,
+		AccountsByNamespace:      accountsByNamespace,
+		NextAccountIndex:         uint32(walletAccounts[0].NextAccountIndex),
 	}, nil
 }

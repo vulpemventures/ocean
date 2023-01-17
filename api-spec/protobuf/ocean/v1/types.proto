@@ -75,8 +75,8 @@ message Output {
 }
 
 message Utxos {
-  // Account namespace.
-  string namespace = 1;
+  // Account.
+  string account = 1;
   // List of utxos.
   repeated Utxo utxos = 2;
 }
@@ -102,8 +102,8 @@ message Utxo {
   string asset_blinder = 6;
   // Value blinder for confidential utxo.
   string value_blinder = 7;
-  // Namespace of the account owning the utxo.
-  string namespace = 8;
+  // Account owning the utxo.
+  string account = 8;
   // Info about utxo's spent status.
   UtxoStatus spent_status = 9;
   // Info about utxo's confirmation status.

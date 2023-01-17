@@ -16,7 +16,7 @@ WHERE w.id = $1;
 UPDATE wallet SET encrypted_mnemonic = $2, password_hash = $3, birthday_block_height = $4, root_path = $5, network_name = $6, next_account_index = $7 WHERE id = $1 RETURNING *;
 
 -- name: GetAccount :one
-SELECT * FROM account WHERE namespace = $1;
+SELECT * FROM account WHERE namespace = $1 OR label = $1;
 
 -- name: InsertAccount :one
 INSERT INTO account(namespace,index,xpub,derivation_path,next_external_index,next_internal_index,fk_wallet_id, label)

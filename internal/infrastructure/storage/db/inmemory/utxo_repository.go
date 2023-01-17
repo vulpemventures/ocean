@@ -8,9 +8,10 @@ import (
 )
 
 type utxoInmemoryStore struct {
-	utxosByAccount map[string][]domain.UtxoKey
-	utxos          map[string]*domain.Utxo
-	lock           *sync.RWMutex
+	utxosByAccount   map[string][]domain.UtxoKey
+	utxos            map[string]*domain.Utxo
+	lock             *sync.RWMutex
+	walletRepository domain.WalletRepository
 }
 
 type utxoRepository struct {
@@ -20,16 +21,17 @@ type utxoRepository struct {
 	chLock           *sync.Mutex
 }
 
-func NewUtxoRepository() domain.UtxoRepository {
-	return newUtxoRepository()
+func NewUtxoRepository(walletRepository domain.WalletRepository) domain.UtxoRepository {
+	return newUtxoRepository(walletRepository)
 }
 
-func newUtxoRepository() *utxoRepository {
+func newUtxoRepository(walletRepository domain.WalletRepository) *utxoRepository {
 	return &utxoRepository{
 		store: &utxoInmemoryStore{
-			utxosByAccount: make(map[string][]domain.UtxoKey),
-			utxos:          make(map[string]*domain.Utxo),
-			lock:           &sync.RWMutex{},
+			utxosByAccount:   make(map[string][]domain.UtxoKey),
+			utxos:            make(map[string]*domain.Utxo),
+			lock:             &sync.RWMutex{},
+			walletRepository: walletRepository,
 		},
 		chEvents:         make(chan domain.UtxoEvent),
 		externalChEvents: make(chan domain.UtxoEvent),
@@ -79,12 +81,12 @@ func (r *utxoRepository) GetSpendableUtxos(_ context.Context) ([]*domain.Utxo, e
 }
 
 func (r *utxoRepository) GetAllUtxosForAccount(
-	_ context.Context, account string,
+	_ context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	return r.getUtxosForAccount(account, false, false)
+	return r.getUtxosForAccount(accountName, false, false)
 }
 
 func (r *utxoRepository) GetSpendableUtxosForAccount(
@@ -106,12 +108,12 @@ func (r *utxoRepository) GetLockedUtxosForAccount(
 }
 
 func (r *utxoRepository) GetBalanceForAccount(
-	_ context.Context, account string,
+	_ context.Context, accountName string,
 ) (map[string]*domain.Balance, error) {
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	utxos, _ := r.getUtxosForAccount(account, false, false)
+	utxos, _ := r.getUtxosForAccount(accountName, false, false)
 	balance := make(map[string]*domain.Balance)
 	for _, u := range utxos {
 		if u.IsSpent() {
@@ -175,14 +177,19 @@ func (r *utxoRepository) UnlockUtxos(
 func (r *utxoRepository) DeleteUtxosForAccount(
 	_ context.Context, accountName string,
 ) error {
-	keys, ok := r.store.utxosByAccount[accountName]
+	account, err := r.getAccount(accountName)
+	if err != nil {
+		return err
+	}
+
+	keys, ok := r.store.utxosByAccount[account]
 	if !ok {
 		return nil
 	}
 	for _, key := range keys {
 		delete(r.store.utxos, key.Hash())
 	}
-	delete(r.store.utxosByAccount, accountName)
+	delete(r.store.utxosByAccount, account)
 	return nil
 }
 
@@ -198,8 +205,8 @@ func (r *utxoRepository) addUtxos(utxos []*domain.Utxo) (int, error) {
 			continue
 		}
 		r.store.utxos[u.Key().Hash()] = u
-		r.store.utxosByAccount[u.FkAccountNamespace] = append(
-			r.store.utxosByAccount[u.FkAccountNamespace], u.Key(),
+		r.store.utxosByAccount[u.Account] = append(
+			r.store.utxosByAccount[u.Account], u.Key(),
 		)
 		utxosInfo = append(utxosInfo, u.Info())
 		count++
@@ -230,8 +237,17 @@ func (r *utxoRepository) getUtxos(spendableOnly bool) []*domain.Utxo {
 }
 
 func (r *utxoRepository) getUtxosForAccount(
-	account string, spendableOnly, lockedOnly bool,
+	accountName string, spendableOnly, lockedOnly bool,
 ) ([]*domain.Utxo, error) {
+	account, err := r.getAccount(accountName)
+	if err != nil {
+		if err == domain.ErrAccountNotFound {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
 	keys := r.store.utxosByAccount[account]
 	if len(keys) == 0 {
 		return nil, nil
@@ -399,4 +415,18 @@ func (r *utxoRepository) publishEvent(event domain.UtxoEvent) {
 func (r *utxoRepository) close() {
 	close(r.chEvents)
 	close(r.externalChEvents)
+}
+
+func (r *utxoRepository) getAccount(accountName string) (string, error) {
+	wallet, err := r.store.walletRepository.GetWallet(context.Background())
+	if err != nil {
+		return "", err
+	}
+
+	account, err := wallet.GetAccount(accountName)
+	if err != nil {
+		return "", err
+	}
+
+	return account.Info.Namespace, err
 }

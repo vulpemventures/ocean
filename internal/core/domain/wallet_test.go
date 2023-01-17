@@ -53,9 +53,8 @@ func TestNewWallet(t *testing.T) {
 		require.Equal(t, regtest, w.NetworkName)
 		require.Equal(t, encryptedMnemonic, b2h(w.EncryptedMnemonic))
 		require.Equal(t, passwordHash, b2h(w.PasswordHash))
-		require.Empty(t, w.AccountKeysByIndex)
-		require.Empty(t, w.AccountKeysByNamespace)
-		require.Empty(t, w.AccountsByKey)
+		require.Empty(t, w.AccountsNamespaceByLabel)
+		require.Empty(t, w.AccountsByNamespace)
 		require.Equal(t, 0, int(w.NextAccountIndex))
 		require.True(t, w.IsInitialized())
 		require.True(t, w.IsLocked())
@@ -156,69 +155,69 @@ func TestWalletAccount(t *testing.T) {
 	err = w.Lock(password)
 	require.NoError(t, err)
 
-	account, err := w.CreateAccount("84", "myaccount", 0)
+	account, err := w.CreateAccount("myAccount", 0)
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())
 	require.Nil(t, account)
 
 	err = w.Unlock(password)
 	require.NoError(t, err)
 
-	account, err = w.CreateAccount("84", "myaccount", 0)
+	account, err = w.CreateAccount("myAccount", 0)
 	require.NoError(t, err)
 	require.NotNil(t, account)
 	require.Empty(t, account.NextExternalIndex)
 	require.Empty(t, account.NextInternalIndex)
 	require.Empty(t, account.DerivationPathByScript)
-	require.Equal(t, 0, int(account.Info.Key.Index))
-	require.Equal(t, "84-account-0", account.Info.Key.Namespace)
+	require.Equal(t, 0, int(account.Info.Index))
+	require.Equal(t, "bip84-account0", account.Info.Namespace)
 	require.Equal(t, "m/84'/1'/0'", account.Info.DerivationPath)
 	require.NotEmpty(t, account.Info.Xpub)
 
 	err = w.Lock(password)
 	require.NoError(t, err)
 
-	gotAccount, err := w.GetAccount("84-account-0")
+	gotAccount, err := w.GetAccount("bip84-account0")
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())
 	require.Nil(t, gotAccount)
 
 	w.Unlock(password)
 
-	gotAccount, err = w.GetAccount("84-account-0")
+	gotAccount, err = w.GetAccount("bip84-account0")
 	require.NoError(t, err)
 	require.Exactly(t, *account, *gotAccount)
 
 	err = w.Lock(password)
 	require.NoError(t, err)
 
-	allAddrInfo, err := w.AllDerivedAddressesForAccount("84-account-0")
+	allAddrInfo, err := w.AllDerivedAddressesForAccount("bip84-account0")
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())
 	require.Nil(t, allAddrInfo)
 
 	w.Unlock(password)
 
-	allAddrInfo, err = w.AllDerivedAddressesForAccount("84-account-0")
+	allAddrInfo, err = w.AllDerivedAddressesForAccount("bip84-account0")
 	require.NoError(t, err)
 	require.Empty(t, allAddrInfo)
 
 	err = w.Lock(password)
 	require.NoError(t, err)
 
-	addrInfo, err := w.DeriveNextExternalAddressForAccount("84-account-0")
+	addrInfo, err := w.DeriveNextExternalAddressForAccount("bip84-account0")
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())
 	require.Nil(t, addrInfo)
 
 	w.Unlock(password)
 
-	addrInfo, err = w.DeriveNextExternalAddressForAccount("84-account-0")
+	addrInfo, err = w.DeriveNextExternalAddressForAccount("bip84-account0")
 	require.NoError(t, err)
 	require.NotNil(t, addrInfo)
 	require.NotEmpty(t, addrInfo.Address)
 	require.NotEmpty(t, addrInfo.BlindingKey)
 	require.NotEmpty(t, addrInfo.Script)
 	require.NotEmpty(t, addrInfo.DerivationPath)
-	require.NotEmpty(t, addrInfo.AccountKey.Namespace)
+	require.NotEmpty(t, addrInfo.AccountNamespace)
 
-	allAddrInfo, err = w.AllDerivedAddressesForAccount("84-account-0")
+	allAddrInfo, err = w.AllDerivedAddressesForAccount("bip84-account0")
 	require.NoError(t, err)
 	require.Len(t, allAddrInfo, 1)
 	require.Exactly(t, *addrInfo, allAddrInfo[0])
@@ -226,15 +225,15 @@ func TestWalletAccount(t *testing.T) {
 	err = w.Lock(password)
 	require.NoError(t, err)
 
-	err = w.DeleteAccount("84-account-0")
+	err = w.DeleteAccount("bip84-account0")
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())
 
 	w.Unlock(password)
 
-	err = w.DeleteAccount("84-account-0")
+	err = w.DeleteAccount("bip84-account0")
 	require.NoError(t, err)
 
-	_, err = w.GetAccount("84-account-0")
+	_, err = w.GetAccount("bip84-account0")
 	require.EqualError(t, domain.ErrAccountNotFound, err.Error())
 }
 

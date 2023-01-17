@@ -30,56 +30,56 @@ func newMockedBcScanner() *mockBcScanner {
 func (m *mockBcScanner) Start() {}
 func (m *mockBcScanner) Stop()  {}
 func (m *mockBcScanner) WatchForAccount(
-	accountName string, staringBlock uint32, addrInfo []domain.AddressInfo,
+	account string, staringBlock uint32, addrInfo []domain.AddressInfo,
 ) {
 	addresses := application.AddressesInfo(addrInfo).Addresses()
 	if len(addresses) > 0 {
-		utxos := randomUtxos(accountName, addresses)
+		utxos := randomUtxos(account, addresses)
 		m.chUtxos <- utxos
 
 		for _, u := range utxos {
-			tx := randomTx(accountName, u.TxID)
+			tx := randomTx(account, u.TxID)
 			m.chTxs <- tx
 		}
 	}
 }
 func (m *mockBcScanner) WatchForUtxos(
-	accountName string, utxos []domain.UtxoInfo,
+	account string, utxos []domain.UtxoInfo,
 ) {
 	if len(utxos) > 0 {
 		list := make([]*domain.Utxo, 0, len(utxos))
 		for _, u := range utxos {
 			list = append(list, &domain.Utxo{
-				UtxoKey:            u.Key(),
-				Value:              u.Value,
-				Asset:              u.Asset,
-				Script:             u.Script,
-				AssetBlinder:       u.AssetBlinder,
-				ValueBlinder:       u.ValueBlinder,
-				SpentStatus:        u.SpentStatus,
-				ConfirmedStatus:    u.ConfirmedStatus,
-				FkAccountNamespace: u.FkAccountNamespace,
+				UtxoKey:         u.Key(),
+				Value:           u.Value,
+				Asset:           u.Asset,
+				Script:          u.Script,
+				AssetBlinder:    u.AssetBlinder,
+				ValueBlinder:    u.ValueBlinder,
+				SpentStatus:     u.SpentStatus,
+				ConfirmedStatus: u.ConfirmedStatus,
+				Account:         u.Account,
 			})
 		}
 		m.chUtxos <- list
 
 		for _, u := range utxos {
-			tx := randomTx(accountName, u.TxID)
+			tx := randomTx(account, u.TxID)
 			m.chTxs <- tx
 		}
 	}
 }
 
-func (m *mockBcScanner) StopWatchForAccount(accountName string) {
+func (m *mockBcScanner) StopWatchForAccount(account string) {
 	close(m.chTxs)
 	close(m.chUtxos)
 }
 
-func (m *mockBcScanner) GetUtxoChannel(accountName string) chan []*domain.Utxo {
+func (m *mockBcScanner) GetUtxoChannel(account string) chan []*domain.Utxo {
 	return m.chUtxos
 }
 
-func (m *mockBcScanner) GetTxChannel(accountName string) chan *domain.Transaction {
+func (m *mockBcScanner) GetTxChannel(account string) chan *domain.Transaction {
 	return m.chTxs
 }
 
@@ -201,15 +201,15 @@ func (m *mockMnemonicCypher) Decrypt(
 	return res, args.Error(1)
 }
 
-func randomUtxos(accountName string, addresses []string) []*domain.Utxo {
+func randomUtxos(account string, addresses []string) []*domain.Utxo {
 	utxos := make([]*domain.Utxo, 0, len(addresses))
 	for _, addr := range addresses {
-		utxos = append(utxos, randomUtxo(accountName, addr))
+		utxos = append(utxos, randomUtxo(account, addr))
 	}
 	return utxos
 }
 
-func randomUtxo(accountNamespace, addr string) *domain.Utxo {
+func randomUtxo(account, addr string) *domain.Utxo {
 	script, _ := address.ToOutputScript(addr)
 	nonce := append([]byte{3}, randomBytes(32)...)
 	return &domain.Utxo{
@@ -217,29 +217,29 @@ func randomUtxo(accountNamespace, addr string) *domain.Utxo {
 			TxID: randomHex(32),
 			VOut: randomVout(),
 		},
-		Value:              randomValue(),
-		Asset:              randomHex(32),
-		ValueCommitment:    randomValueCommitment(),
-		AssetCommitment:    randomAssetCommitment(),
-		ValueBlinder:       randomBytes(32),
-		AssetBlinder:       randomBytes(32),
-		Script:             script,
-		Nonce:              nonce,
-		FkAccountNamespace: accountNamespace,
+		Value:           randomValue(),
+		Asset:           randomHex(32),
+		ValueCommitment: randomValueCommitment(),
+		AssetCommitment: randomAssetCommitment(),
+		ValueBlinder:    randomBytes(32),
+		AssetBlinder:    randomBytes(32),
+		Script:          script,
+		Nonce:           nonce,
+		Account:         account,
 		ConfirmedStatus: domain.UtxoStatus{
 			BlockHeight: uint64(randomIntInRange(1, 10000)),
 		},
 	}
 }
 
-func randomTx(txid, accountName string) *domain.Transaction {
+func randomTx(txid, account string) *domain.Transaction {
 	return &domain.Transaction{
 		TxHex:       randomHex(200),
 		TxID:        txid,
 		BlockHash:   randomHex(32),
 		BlockHeight: uint64(randomIntInRange(1, 10000)),
 		Accounts: map[string]struct{}{
-			accountName: {},
+			account: {},
 		},
 	}
 }

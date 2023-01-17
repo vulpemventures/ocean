@@ -101,23 +101,23 @@ func (s *service) GetTxChannel(namespace string) chan *domain.Transaction {
 }
 
 func (s *service) WatchForAccount(
-	namespace string, startingBlock uint32, addressesInfo []domain.AddressInfo,
+	account string, startingBlock uint32, addressesInfo []domain.AddressInfo,
 ) {
-	scannerSvc := s.getOrCreateScanner(namespace, startingBlock)
+	scannerSvc := s.getOrCreateScanner(account, startingBlock)
 	scannerSvc.watchAddresses(addressesInfo)
 }
 
 func (s *service) WatchForUtxos(
-	accountNamespace string, utxos []domain.UtxoInfo,
+	account string, utxos []domain.UtxoInfo,
 ) {
-	scannerSvc := s.getOrCreateScanner(accountNamespace, 0)
+	scannerSvc := s.getOrCreateScanner(account, 0)
 	scannerSvc.watchUtxos(utxos)
 }
 
-func (s *service) StopWatchForAccount(accountNamespace string) {
-	scannerSvc := s.getOrCreateScanner(accountNamespace, 0)
+func (s *service) StopWatchForAccount(account string) {
+	scannerSvc := s.getOrCreateScanner(account, 0)
 	scannerSvc.stop()
-	s.removeScanner(accountNamespace)
+	s.removeScanner(account)
 }
 
 func (s *service) GetUtxos(utxoList []domain.Utxo) ([]domain.Utxo, error) {
@@ -206,29 +206,29 @@ func (s *service) GetBlockHash(height uint32) ([]byte, error) {
 }
 
 func (s *service) getOrCreateScanner(
-	accountNamespace string, startingBlock uint32,
+	account string, startingBlock uint32,
 ) *scannerService {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if scannerSvc, ok := s.scanners[accountNamespace]; ok {
+	if scannerSvc, ok := s.scanners[account]; ok {
 		return scannerSvc
 	}
 
 	genesisHash := genesisBlockHashForNetwork(s.args.Network)
 	scannerSvc := newScannerSvc(
-		accountNamespace, startingBlock, s.filtersRepo, s.headersRepo, s.blockSvc,
+		account, startingBlock, s.filtersRepo, s.headersRepo, s.blockSvc,
 		genesisHash,
 	)
-	s.scanners[accountNamespace] = scannerSvc
+	s.scanners[account] = scannerSvc
 	return scannerSvc
 }
 
-func (s *service) removeScanner(accountNamespace string) {
+func (s *service) removeScanner(account string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	delete(s.scanners, accountNamespace)
+	delete(s.scanners, account)
 }
 
 func genesisBlockHashForNetwork(net string) *chainhash.Hash {

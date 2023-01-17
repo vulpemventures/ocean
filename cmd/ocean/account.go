@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -11,7 +12,7 @@ import (
 
 var (
 	label           string
-	namespace       string
+	accountName     string
 	numOfAddresses  uint64
 	changeAddresses bool
 
@@ -82,11 +83,12 @@ func init() {
 	)
 
 	accountCmd.PersistentFlags().StringVar(&label, "label", "", "account label")
-	accountCmd.PersistentFlags().StringVar(&namespace, "namespace", "", "account namespace")
+	accountCmd.PersistentFlags().StringVar(&accountName, "account-name", "", "account label or namespace")
 
 	accountCmd.AddCommand(
 		accountCreateCmd, accountDeriveAddressesCmd, accountBalanceCmd,
 		accountListAddressesCmd, accountListUtxosCmd, accountDeleteCmd,
+		accountSetLabelCmd,
 	)
 }
 
@@ -128,12 +130,12 @@ func accountDeriveAddresses(cmd *cobra.Command, _ []string) error {
 	var reply protoreflect.ProtoMessage
 	if !changeAddresses {
 		reply, err = client.DeriveAddresses(ctx, &pb.DeriveAddressesRequest{
-			Namespace:      namespace,
+			Name:           accountName,
 			NumOfAddresses: numOfAddresses,
 		})
 	} else {
 		reply, err = client.DeriveChangeAddresses(ctx, &pb.DeriveChangeAddressesRequest{
-			Namespace:      namespace,
+			Name:           accountName,
 			NumOfAddresses: numOfAddresses,
 		})
 	}
@@ -161,7 +163,7 @@ func accountBalance(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.Balance(
 		context.Background(), &pb.BalanceRequest{
-			Namespace: namespace,
+			Name: accountName,
 		},
 	)
 	if err != nil {
@@ -188,7 +190,7 @@ func accountListAddresses(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.ListAddresses(
 		context.Background(), &pb.ListAddressesRequest{
-			Namespace: namespace,
+			Name: accountName,
 		},
 	)
 	if err != nil {
@@ -215,7 +217,7 @@ func accountListUtxos(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.ListUtxos(
 		context.Background(), &pb.ListUtxosRequest{
-			Namespace: namespace,
+			Name: accountName,
 		},
 	)
 	if err != nil {
@@ -242,7 +244,7 @@ func accountDelete(cmd *cobra.Command, _ []string) error {
 
 	if _, err := client.DeleteAccount(
 		context.Background(), &pb.DeleteAccountRequest{
-			Namespace: namespace,
+			Name: accountName,
 		},
 	); err != nil {
 		printErr(err)
@@ -253,7 +255,15 @@ func accountDelete(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func accountSetLabel(cmd *cobra.Command, _ []string) error {
+func accountSetLabel(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return errors.New("missing account label")
+	}
+
+	if len(args) > 1 {
+		return errors.New("too many arguments, please provide label only")
+	}
+
 	client, cleanup, err := getAccountClient()
 	if err != nil {
 		return err
@@ -261,8 +271,8 @@ func accountSetLabel(cmd *cobra.Command, _ []string) error {
 	defer cleanup()
 
 	_, err = client.SetAccountLabel(context.Background(), &pb.SetAccountLabelRequest{
-		Namespace: namespace,
-		Label:     label,
+		Name:  accountName,
+		Label: args[0],
 	})
 	if err != nil {
 		printErr(err)

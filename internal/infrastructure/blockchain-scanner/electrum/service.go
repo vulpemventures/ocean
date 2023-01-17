@@ -127,7 +127,7 @@ func (s *service) WatchForAccount(
 }
 
 func (s *service) WatchForUtxos(
-	accountNamespace string, utxos []domain.UtxoInfo,
+	account string, utxos []domain.UtxoInfo,
 ) {
 }
 
@@ -263,7 +263,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 		for i, out := range tx.Outputs {
 			if len(out.Script) > 0 {
 				scriptHash := calcScriptHash(hex.EncodeToString(out.Script))
-				addrInfo := s.getAddressByScriptHash(event.accountNamespace, scriptHash)
+				addrInfo := s.getAddressByScriptHash(event.account, scriptHash)
 				if addrInfo != nil {
 					confirmedUtxos = append(confirmedUtxos, &domain.Utxo{
 						UtxoKey: domain.UtxoKey{
@@ -285,7 +285,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 		for i, out := range tx.Outputs {
 			if len(out.Script) > 0 {
 				scriptHash := calcScriptHash(hex.EncodeToString(out.Script))
-				addrInfo := s.getAddressByScriptHash(event.accountNamespace, scriptHash)
+				addrInfo := s.getAddressByScriptHash(event.account, scriptHash)
 				if addrInfo != nil {
 					var nonce, valueCommit, assetCommit []byte
 					if out.IsConfidential() {
@@ -310,23 +310,23 @@ func (s *service) dbEventHandler(event dbEvent) {
 							TxID: event.tx.Txid,
 							VOut: uint32(i),
 						},
-						Asset:              elementsutil.TxIDFromBytes(unblindedData.Asset),
-						Value:              unblindedData.Value,
-						AssetCommitment:    assetCommit,
-						ValueCommitment:    valueCommit,
-						AssetBlinder:       unblindedData.AssetBlindingFactor,
-						ValueBlinder:       unblindedData.ValueBlindingFactor,
-						Nonce:              nonce,
-						Script:             out.Script,
-						FkAccountNamespace: event.accountNamespace,
-						ConfirmedStatus:    confirmedStatus,
+						Asset:           elementsutil.TxIDFromBytes(unblindedData.Asset),
+						Value:           unblindedData.Value,
+						AssetCommitment: assetCommit,
+						ValueCommitment: valueCommit,
+						AssetBlinder:    unblindedData.AssetBlindingFactor,
+						ValueBlinder:    unblindedData.ValueBlindingFactor,
+						Nonce:           nonce,
+						Script:          out.Script,
+						Account:         event.account,
+						ConfirmedStatus: confirmedStatus,
 					})
 				}
 			}
 		}
 	}
 
-	chTx := s.getTxChannelByAccount(event.accountNamespace)
+	chTx := s.getTxChannelByAccount(event.account)
 	txHex, _ := tx.ToHex()
 
 	var hash string
@@ -342,11 +342,11 @@ func (s *service) dbEventHandler(event dbEvent) {
 			TxHex:       txHex,
 			BlockHash:   hash,
 			BlockHeight: blockHeight,
-			Accounts:    map[string]struct{}{event.accountNamespace: {}},
+			Accounts:    map[string]struct{}{event.account: {}},
 		}
 	}()
 
-	chUtxos := s.getUtxoChannelByAccount(event.accountNamespace)
+	chUtxos := s.getUtxoChannelByAccount(event.account)
 	if len(spentUtxos) > 0 {
 		go func() { chUtxos <- spentUtxos }()
 	}
@@ -360,26 +360,26 @@ func (s *service) dbEventHandler(event dbEvent) {
 	}
 }
 
-func (s *service) getAddressByScriptHash(accountNamespace, scriptHash string) *domain.AddressInfo {
+func (s *service) getAddressByScriptHash(account, scriptHash string) *domain.AddressInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	info, ok := s.accountAddressesByScriptHash[accountNamespace][scriptHash]
+	info, ok := s.accountAddressesByScriptHash[account][scriptHash]
 	if !ok {
 		return nil
 	}
 	return &info
 }
 
-func (s *service) setAddressesByScriptHash(accountNamespace string, addresses []domain.AddressInfo) {
+func (s *service) setAddressesByScriptHash(account string, addresses []domain.AddressInfo) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if _, ok := s.accountAddressesByScriptHash[accountNamespace]; !ok {
-		s.accountAddressesByScriptHash[accountNamespace] = make(map[string]domain.AddressInfo)
+	if _, ok := s.accountAddressesByScriptHash[account]; !ok {
+		s.accountAddressesByScriptHash[account] = make(map[string]domain.AddressInfo)
 	}
 
 	for _, addr := range addresses {
-		s.accountAddressesByScriptHash[accountNamespace][calcScriptHash(addr.Script)] = addr
+		s.accountAddressesByScriptHash[account][calcScriptHash(addr.Script)] = addr
 	}
 }

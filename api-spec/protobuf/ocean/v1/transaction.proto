@@ -74,8 +74,8 @@ message GetTransactionResponse{
 }
 
 message SelectUtxosRequest{
-  // Account namespace.
-  string namespace = 1;
+  // Account namespace or label.
+  string name = 1;
   // Asset hash of the utxos to select.
   string target_asset = 2;
   // Target amount to cover.
@@ -228,8 +228,8 @@ message BurnResponse{
 }
 
 message TransferRequest{
-  // Account namespace.
-  string namespace = 1;
+  // Account namespace or label.
+  string name = 1;
   // Receivers are the receivers of the funds.
   repeated Output receivers = 2;
   // mSats/byte fee ratio.

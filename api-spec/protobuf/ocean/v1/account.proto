@@ -84,8 +84,8 @@ message SetAccountTemplateRequest {
 message SetAccountTemplateResponse {}
 
 message DeriveAddressesRequest{
-  // Account namespace.
-  string namespace = 1;
+  // Account namespace or label.
+  string name = 1;
   // The number of addresses to generate.
   uint64 num_of_addresses = 2;
 }
@@ -94,8 +94,8 @@ message DeriveAddressesResponse{
 }
 
 message DeriveChangeAddressesRequest{
-  // Account namespace.
-  string namespace = 1;
+  // Account namespace or label.
+  string name = 1;
   // The number of addresses to generate.
   uint64 num_of_addresses = 2;
 }
@@ -104,16 +104,16 @@ message DeriveChangeAddressesResponse{
 }
 
 message ListAddressesRequest {
-  // Account namespace.
-  string namespace = 1;
+  // Account namespace or label.
+  string name = 1;
 }
 message ListAddressesResponse {
   repeated string addresses = 1;
 }
 
 message BalanceRequest{
-  // Account namespace.
-  string namespace = 1;
+  // Account namespace or label.
+  string name = 1;
   // Addresses for which calculating balance. If not specified, the cumulative
   // balance is returned.
   repeated string addresses = 3;
@@ -125,8 +125,8 @@ message BalanceResponse{
 }
 
 message ListUtxosRequest{
-  // Account namespace.
-  string namespace = 1;
+  // Account namespace or label.
+  string name = 1;
   // List of account's addresses for which listing utxos. If not specified,
   // the list of all utxos owned by the account is returned.
   repeated string addresses = 3;
@@ -139,14 +139,14 @@ message ListUtxosResponse{
 }
 
 message DeleteAccountRequest{
-  // Account namespace.
-  string namespace = 1;
+  // Account namespace or label.
+  string name = 1;
 }
 message DeleteAccountResponse{}
 
 message SetAccountLabelRequest{
-  // Account namespace.
-  string namespace = 1;
+  // Account namespace or label.
+  string name = 1;
   // Account label
   string label = 2;
 }

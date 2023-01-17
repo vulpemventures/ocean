@@ -12,7 +12,8 @@ import (
 )
 
 type utxoRepository struct {
-	store            *badgerhold.Store
+	utxoStore        *badgerhold.Store
+	walletStore      *badgerhold.Store
 	chEvents         chan domain.UtxoEvent
 	externalChEvents chan domain.UtxoEvent
 	lock             *sync.Mutex
@@ -20,11 +21,11 @@ type utxoRepository struct {
 	log func(format string, a ...interface{})
 }
 
-func NewUtxoRepository(store *badgerhold.Store) domain.UtxoRepository {
-	return newUtxoRepository(store)
+func NewUtxoRepository(utxoStore, walletStore *badgerhold.Store) domain.UtxoRepository {
+	return newUtxoRepository(utxoStore, walletStore)
 }
 
-func newUtxoRepository(store *badgerhold.Store) *utxoRepository {
+func newUtxoRepository(utxoStore, walletStore *badgerhold.Store) *utxoRepository {
 	chEvents := make(chan domain.UtxoEvent)
 	externalChEvents := make(chan domain.UtxoEvent)
 	lock := &sync.Mutex{}
@@ -32,7 +33,14 @@ func newUtxoRepository(store *badgerhold.Store) *utxoRepository {
 		format = fmt.Sprintf("utxo repository: %s", format)
 		log.Debugf(format, a...)
 	}
-	return &utxoRepository{store, chEvents, externalChEvents, lock, logFn}
+	return &utxoRepository{
+		utxoStore,
+		walletStore,
+		chEvents,
+		externalChEvents,
+		lock,
+		logFn,
+	}
 }
 
 func (r *utxoRepository) AddUtxos(
@@ -75,36 +83,72 @@ func (r *utxoRepository) GetSpendableUtxos(
 }
 
 func (r *utxoRepository) GetAllUtxosForAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
-	query := badgerhold.Where("FkAccountNamespace").Eq(namespace)
+	account, err := r.getAccount(ctx, accountName)
+	if err != nil {
+		if err == domain.ErrAccountNotFound {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	query := badgerhold.Where("Account").Eq(account)
 
 	return r.findUtxos(ctx, query)
 }
 
 func (r *utxoRepository) GetSpendableUtxosForAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
+	account, err := r.getAccount(ctx, accountName)
+	if err != nil {
+		if err == domain.ErrAccountNotFound {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).
-		And("LockTimestamp").Eq(int64(0)).And("FkAccountNamespace").Eq(namespace)
+		And("LockTimestamp").Eq(int64(0)).And("Account").Eq(account)
 
 	return r.findUtxos(ctx, query)
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
+	account, err := r.getAccount(ctx, accountName)
+	if err != nil {
+		if err == domain.ErrAccountNotFound {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
-		And("LockTimestamp").Gt(int64(0)).And("FkAccountNamespace").Eq(namespace)
+		And("LockTimestamp").Gt(int64(0)).And("Account").Eq(account)
 
 	return r.findUtxos(ctx, query)
 }
 
 func (r *utxoRepository) GetBalanceForAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) (map[string]*domain.Balance, error) {
-	utxos, err := r.GetAllUtxosForAccount(ctx, namespace)
+	account, err := r.getAccount(ctx, accountName)
+	if err != nil {
+		if err == domain.ErrAccountNotFound {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	utxos, err := r.GetAllUtxosForAccount(ctx, account)
 	if err != nil {
 		return nil, err
 	}
@@ -159,9 +203,14 @@ func (r *utxoRepository) UnlockUtxos(
 }
 
 func (r *utxoRepository) DeleteUtxosForAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) error {
-	query := badgerhold.Where("FkAccountNamespace").Eq(namespace)
+	account, err := r.getAccount(ctx, accountName)
+	if err != nil {
+		return nil
+	}
+
+	query := badgerhold.Where("Account").Eq(account)
 
 	utxos, err := r.findUtxos(ctx, query)
 	if err != nil {
@@ -433,9 +482,9 @@ func (r *utxoRepository) findUtxos(
 	var err error
 	if ctx.Value("tx") != nil {
 		tx := ctx.Value("tx").(*badger.Txn)
-		err = r.store.TxFind(tx, &utxos, query)
+		err = r.utxoStore.TxFind(tx, &utxos, query)
 	} else {
-		err = r.store.Find(&utxos, query)
+		err = r.utxoStore.Find(&utxos, query)
 	}
 	if err != nil {
 		if err == badgerhold.ErrNotFound {
@@ -458,7 +507,7 @@ func (r *utxoRepository) updateUtxo(
 	query := badgerhold.Where("TxID").Eq(key.TxID).And("VOut").Eq(key.VOut)
 	if ctx.Value("tx") != nil {
 		tx := ctx.Value("tx").(*badger.Txn)
-		return r.store.TxUpdateMatching(
+		return r.utxoStore.TxUpdateMatching(
 			tx, domain.Utxo{}, query, func(record interface{}) error {
 				u := record.(*domain.Utxo)
 				*u = *utxo
@@ -467,7 +516,7 @@ func (r *utxoRepository) updateUtxo(
 		)
 	}
 
-	return r.store.UpdateMatching(domain.Utxo{}, query, func(record interface{}) error {
+	return r.utxoStore.UpdateMatching(domain.Utxo{}, query, func(record interface{}) error {
 		u := record.(*domain.Utxo)
 		*u = *utxo
 		return nil
@@ -480,9 +529,9 @@ func (r *utxoRepository) insertUtxo(
 	var err error
 	if ctx.Value("tx") != nil {
 		tx := ctx.Value("tx").(*badger.Txn)
-		err = r.store.TxInsert(tx, utxo.Key().Hash(), *utxo)
+		err = r.utxoStore.TxInsert(tx, utxo.Key().Hash(), *utxo)
 	} else {
-		err = r.store.Insert(utxo.Key().Hash(), *utxo)
+		err = r.utxoStore.Insert(utxo.Key().Hash(), *utxo)
 	}
 	if err != nil {
 		if err == badgerhold.ErrKeyExists {
@@ -504,10 +553,36 @@ func (r *utxoRepository) deleteUtxos(
 
 	if ctx.Value("tx") != nil {
 		tx := ctx.Value("tx").(*badger.Txn)
-		return r.store.TxDeleteMatching(tx, &domain.Utxo{}, query)
+		return r.utxoStore.TxDeleteMatching(tx, &domain.Utxo{}, query)
 	}
 
-	return r.store.DeleteMatching(&domain.Utxo{}, query)
+	return r.utxoStore.DeleteMatching(&domain.Utxo{}, query)
+}
+
+func (r *utxoRepository) getAccount(ctx context.Context, accountName string) (string, error) {
+	var err error
+	var wallet domain.Wallet
+
+	if ctx.Value("tx") != nil {
+		tx := ctx.Value("tx").(*badger.Txn)
+		err = r.walletStore.TxGet(tx, walletKey, &wallet)
+	} else {
+		err = r.walletStore.Get(walletKey, &wallet)
+	}
+
+	if err != nil {
+		if err == badgerhold.ErrNotFound {
+			return "", fmt.Errorf("wallet is not initialized")
+		}
+		return "", err
+	}
+
+	account, err := wallet.GetAccount(accountName)
+	if err != nil {
+		return "", err
+	}
+
+	return account.Info.Namespace, nil
 }
 
 func (r *utxoRepository) publishEvent(event domain.UtxoEvent) {
@@ -525,7 +600,7 @@ func (r *utxoRepository) publishEvent(event domain.UtxoEvent) {
 }
 
 func (r *utxoRepository) close() {
-	r.store.Close()
+	r.utxoStore.Close()
 	close(r.chEvents)
 	close(r.externalChEvents)
 }

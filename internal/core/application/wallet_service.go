@@ -185,8 +185,8 @@ func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
 
 	birthdayBlock, _ := ws.bcScanner.GetBlockHash(w.BirthdayBlockHeight)
 	masterBlingingKey, _ := w.GetMasterBlindingKey()
-	accounts := make([]AccountInfo, 0, len(w.AccountsByKey))
-	for _, a := range w.AccountsByKey {
+	accounts := make([]AccountInfo, 0, len(w.AccountsByNamespace))
+	for _, a := range w.AccountsByNamespace {
 		accounts = append(accounts, AccountInfo(a.Info))
 	}
 	return &WalletInfo{

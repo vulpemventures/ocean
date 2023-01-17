@@ -138,25 +138,32 @@ func createWalletAccount(
 	err := repo.DeleteAccount(ctx, "dummy")
 	require.Error(t, err)
 
-	account, err := repo.CreateAccount(ctx, "84", "myAccount", 0)
+	account, err := repo.CreateAccount(ctx, "myAccount", 0)
 	require.NoError(t, err)
 	require.NotNil(t, account)
-	require.Equal(t, account.Key.Namespace, "84-account-0")
+	require.Equal(t, account.Namespace, "bip84-account0")
 	require.Equal(t, account.Label, "myAccount")
 
 	wallet, err := repo.GetWallet(ctx)
 	require.NoError(t, err)
-	require.Equal(t, wallet.AccountKeysByNamespace["84-account-0"], wallet.AccountKeysByIndex[0])
+	require.Equal(
+		t,
+		wallet.AccountsByNamespace["bip84-account0"].Info.Namespace,
+		wallet.AccountsNamespaceByLabel["myAccount"],
+	)
 	require.Equal(t, wallet.NextAccountIndex, uint32(1))
 
-	account, err = repo.CreateAccount(ctx, "84", "myAccount1", 0)
+	account, err = repo.CreateAccount(ctx, "myAccount1", 0)
 	require.NoError(t, err)
-	require.Equal(t, account.Key.Namespace, "84-account-1")
+	require.Equal(t, account.Namespace, "bip84-account1")
 	require.Equal(t, account.Label, "myAccount1")
 
 	wallet, err = repo.GetWallet(ctx)
 	require.NoError(t, err)
-	require.Equal(t, wallet.AccountKeysByNamespace["84-account-1"], wallet.AccountKeysByIndex[1])
+	require.Equal(t,
+		wallet.AccountsByNamespace["bip84-account1"].Info.Namespace,
+		wallet.AccountsNamespaceByLabel["myAccount1"],
+	)
 }
 
 func deriveWalletAccountAddresses(
@@ -166,7 +173,7 @@ func deriveWalletAccountAddresses(
 ) {
 	addrInfo, err := repo.DeriveNextExternalAddressesForAccount(
 		ctx,
-		"84-account-0",
+		"bip84-account0",
 		2,
 	)
 	require.NoError(t, err)
@@ -174,7 +181,7 @@ func deriveWalletAccountAddresses(
 
 	addrInfo, err = repo.DeriveNextInternalAddressesForAccount(
 		ctx,
-		"84-account-0",
+		"bip84-account0",
 		3,
 	)
 	require.NoError(t, err)

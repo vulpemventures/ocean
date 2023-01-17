@@ -29,10 +29,10 @@ func (a *account) CreateAccountBIP44(
 	return &pb.CreateAccountBIP44Response{
 		AccountInfo: &pb.AccountInfo{
 			Label:          req.GetLabel(),
-			Index:          accountInfo.Key.Index,
+			Index:          accountInfo.Index,
 			DerivationPath: accountInfo.DerivationPath,
 			Xpubs:          []string{accountInfo.Xpub},
-			Namespace:      accountInfo.Key.Namespace,
+			Namespace:      accountInfo.Namespace,
 		},
 	}, nil
 }
@@ -58,14 +58,14 @@ func (a *account) SetAccountTemplate(
 func (a *account) DeriveAddresses(
 	ctx context.Context, req *pb.DeriveAddressesRequest,
 ) (*pb.DeriveAddressesResponse, error) {
-	namespace, err := parseAccountNamespace(req.GetNamespace())
+	accountName, err := parseAccountName(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	numOfAddresses := req.GetNumOfAddresses()
 
 	addressesInfo, err := a.appSvc.DeriveAddressesForAccount(
-		ctx, namespace, numOfAddresses,
+		ctx, accountName, numOfAddresses,
 	)
 	if err != nil {
 		return nil, err
@@ -79,14 +79,14 @@ func (a *account) DeriveAddresses(
 func (a *account) DeriveChangeAddresses(
 	ctx context.Context, req *pb.DeriveChangeAddressesRequest,
 ) (*pb.DeriveChangeAddressesResponse, error) {
-	namespace, err := parseAccountNamespace(req.GetNamespace())
+	accountName, err := parseAccountName(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	numOfAddresses := req.GetNumOfAddresses()
 
 	addressesInfo, err := a.appSvc.DeriveChangeAddressesForAccount(
-		ctx, namespace, numOfAddresses,
+		ctx, accountName, numOfAddresses,
 	)
 	if err != nil {
 		return nil, err
@@ -99,12 +99,12 @@ func (a *account) DeriveChangeAddresses(
 func (a *account) ListAddresses(
 	ctx context.Context, req *pb.ListAddressesRequest,
 ) (*pb.ListAddressesResponse, error) {
-	namespace, err := parseAccountNamespace(req.GetNamespace())
+	accountName, err := parseAccountName(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	addressesInfo, err := a.appSvc.ListAddressesForAccount(ctx, namespace)
+	addressesInfo, err := a.appSvc.ListAddressesForAccount(ctx, accountName)
 	if err != nil {
 		return nil, err
 	}
@@ -116,12 +116,12 @@ func (a *account) ListAddresses(
 func (a *account) Balance(
 	ctx context.Context, req *pb.BalanceRequest,
 ) (*pb.BalanceResponse, error) {
-	namespace, err := parseAccountNamespace(req.GetNamespace())
+	accountName, err := parseAccountName(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	balanceInfo, err := a.appSvc.GetBalanceForAccount(ctx, namespace)
+	balanceInfo, err := a.appSvc.GetBalanceForAccount(ctx, accountName)
 	if err != nil {
 		return nil, err
 	}
@@ -140,12 +140,12 @@ func (a *account) Balance(
 func (a *account) ListUtxos(
 	ctx context.Context, req *pb.ListUtxosRequest,
 ) (*pb.ListUtxosResponse, error) {
-	namespace, err := parseAccountNamespace(req.GetNamespace())
+	accountName, err := parseAccountName(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	utxosInfo, err := a.appSvc.ListUtxosForAccount(ctx, namespace)
+	utxosInfo, err := a.appSvc.ListUtxosForAccount(ctx, accountName)
 	if err != nil {
 		return nil, err
 	}
@@ -153,12 +153,12 @@ func (a *account) ListUtxos(
 	lockedUtxos := parseUtxos(utxosInfo.Locked.Info())
 	return &pb.ListUtxosResponse{
 		SpendableUtxos: &pb.Utxos{
-			Namespace: namespace,
-			Utxos:     spendableUtxos,
+			Account: accountName,
+			Utxos:   spendableUtxos,
 		},
 		LockedUtxos: &pb.Utxos{
-			Namespace: namespace,
-			Utxos:     lockedUtxos,
+			Account: accountName,
+			Utxos:   lockedUtxos,
 		},
 	}, nil
 }
@@ -166,12 +166,12 @@ func (a *account) ListUtxos(
 func (a *account) DeleteAccount(
 	ctx context.Context, req *pb.DeleteAccountRequest,
 ) (*pb.DeleteAccountResponse, error) {
-	namespace, err := parseAccountNamespace(req.GetNamespace())
+	accountName, err := parseAccountName(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := a.appSvc.DeleteAccount(ctx, namespace); err != nil {
+	if err := a.appSvc.DeleteAccount(ctx, accountName); err != nil {
 		return nil, err
 	}
 	return &pb.DeleteAccountResponse{}, nil
@@ -181,12 +181,12 @@ func (a *account) SetAccountLabel(
 	ctx context.Context,
 	req *pb.SetAccountLabelRequest,
 ) (*pb.SetAccountLabelResponse, error) {
-	namespace, err := parseAccountNamespace(req.GetNamespace())
+	accountName, err := parseAccountName(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := a.appSvc.SetAccountLabel(ctx, namespace, req.GetLabel()); err != nil {
+	if err := a.appSvc.SetAccountLabel(ctx, accountName, req.GetLabel()); err != nil {
 		return nil, err
 	}
 

@@ -65,7 +65,7 @@ func (as *AccountService) CreateAccountBIP44(
 		return nil, err
 	}
 	accountInfo, err := as.repoManager.WalletRepository().CreateAccount(
-		ctx, bip84RootPathPurpose, label, birthdayBlockHeight,
+		ctx, label, birthdayBlockHeight,
 	)
 	if err != nil {
 		return nil, err
@@ -74,14 +74,14 @@ func (as *AccountService) CreateAccountBIP44(
 }
 
 func (as *AccountService) DeriveAddressesForAccount(
-	ctx context.Context, namespace string, numOfAddresses uint64,
+	ctx context.Context, accountName string, numOfAddresses uint64,
 ) (AddressesInfo, error) {
 	if numOfAddresses == 0 {
 		numOfAddresses = 1
 	}
 
 	addressesInfo, err := as.repoManager.WalletRepository().
-		DeriveNextExternalAddressesForAccount(ctx, namespace, numOfAddresses)
+		DeriveNextExternalAddressesForAccount(ctx, accountName, numOfAddresses)
 	if err != nil {
 		return nil, err
 	}
@@ -89,14 +89,14 @@ func (as *AccountService) DeriveAddressesForAccount(
 }
 
 func (as *AccountService) DeriveChangeAddressesForAccount(
-	ctx context.Context, namespace string, numOfAddresses uint64,
+	ctx context.Context, accountName string, numOfAddresses uint64,
 ) (AddressesInfo, error) {
 	if numOfAddresses == 0 {
 		numOfAddresses = 1
 	}
 
 	addressesInfo, err := as.repoManager.WalletRepository().
-		DeriveNextInternalAddressesForAccount(ctx, namespace, numOfAddresses)
+		DeriveNextInternalAddressesForAccount(ctx, accountName, numOfAddresses)
 	if err != nil {
 		return nil, err
 	}
@@ -104,60 +104,60 @@ func (as *AccountService) DeriveChangeAddressesForAccount(
 }
 
 func (as *AccountService) ListAddressesForAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) (AddressesInfo, error) {
 	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	addressesInfo, err := w.AllDerivedAddressesForAccount(namespace)
+	addressesInfo, err := w.AllDerivedAddressesForAccount(accountName)
 	if err != nil {
 		return nil, err
 	}
-	return AddressesInfo(addressesInfo), nil
+	return addressesInfo, nil
 }
 
 func (as *AccountService) GetBalanceForAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) (BalanceInfo, error) {
 	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	account, err := w.GetAccount(namespace)
+	account, err := w.GetAccount(accountName)
 	if err != nil {
 		return nil, err
 	}
 
 	return as.repoManager.UtxoRepository().GetBalanceForAccount(
-		ctx, account.Info.Key.Namespace,
+		ctx, account.Info.Namespace,
 	)
 }
 
 func (as *AccountService) ListUtxosForAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) (*UtxoInfo, error) {
 	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	account, err := w.GetAccount(namespace)
+	account, err := w.GetAccount(accountName)
 	if err != nil {
 		return nil, err
 	}
 
 	spendableUtxos, err := as.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
-		ctx, account.Info.Key.Namespace,
+		ctx, account.Info.Namespace,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	lockedUtxos, err := as.repoManager.UtxoRepository().GetLockedUtxosForAccount(
-		ctx, account.Info.Key.Namespace,
+		ctx, account.Info.Namespace,
 	)
 	if err != nil {
 		return nil, err
@@ -167,15 +167,15 @@ func (as *AccountService) ListUtxosForAccount(
 }
 
 func (as *AccountService) DeleteAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) (err error) {
-	balance, err := as.GetBalanceForAccount(ctx, namespace)
+	balance, err := as.GetBalanceForAccount(ctx, accountName)
 	if err != nil {
 		return
 	}
 	if len(balance) > 0 {
 		err = fmt.Errorf(
-			"account %s must have zero balance to be deleted", namespace,
+			"account %s must have zero balance to be deleted", accountName,
 		)
 		return
 	}
@@ -183,29 +183,29 @@ func (as *AccountService) DeleteAccount(
 	defer func() {
 		if err == nil {
 			if err := as.repoManager.UtxoRepository().DeleteUtxosForAccount(
-				ctx, namespace,
+				ctx, accountName,
 			); err != nil {
 				as.warn(
 					err, "account service: error while deleting utxos for account %s",
-					namespace,
+					accountName,
 				)
 			}
 		}
 	}()
 
-	err = as.repoManager.WalletRepository().DeleteAccount(ctx, namespace)
+	err = as.repoManager.WalletRepository().DeleteAccount(ctx, accountName)
 	return
 }
 
 func (as *AccountService) SetAccountLabel(
 	ctx context.Context,
-	namespace string,
+	accountName string,
 	label string,
 ) error {
 	return as.repoManager.WalletRepository().UpdateWallet(
 		ctx,
 		func(w *domain.Wallet) (*domain.Wallet, error) {
-			if err := w.UpdateAccountsLabel(namespace, label); err != nil {
+			if err := w.UpdateAccountsLabel(accountName, label); err != nil {
 				return nil, err
 			}
 			return w, nil
@@ -219,9 +219,7 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 		domain.WalletUnlocked, func(event domain.WalletEvent) {
 			w, _ := as.repoManager.WalletRepository().GetWallet(context.Background())
 
-			for namespace := range w.AccountKeysByNamespace {
-				accountKey := w.AccountKeysByNamespace[namespace]
-				account := w.AccountsByKey[accountKey]
+			for namespace, account := range w.AccountsByNamespace {
 				addressesInfo, _ := w.AllDerivedAddressesForAccount(namespace)
 				if len(addressesInfo) > 0 {
 					as.log("start watching addresses for account %s", namespace)
@@ -261,7 +259,7 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 	// Start watching for when utxos are spent as soon as they are added to the storage.
 	as.repoManager.RegisterHandlerForUtxoEvent(
 		domain.UtxoAdded, func(event domain.UtxoEvent) {
-			namespace := event.Utxos[0].FkAccountNamespace
+			namespace := event.Utxos[0].Account
 			as.bcScanner.WatchForUtxos(namespace, event.Utxos)
 		},
 	)
@@ -277,7 +275,7 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 		}
 		for _, u := range utxos {
 			if !u.IsSpent() {
-				as.bcScanner.WatchForUtxos(u.FkAccountNamespace, []domain.UtxoInfo{u.Info()})
+				as.bcScanner.WatchForUtxos(u.Account, []domain.UtxoInfo{u.Info()})
 			}
 		}
 	}()

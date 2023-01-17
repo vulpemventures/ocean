@@ -67,7 +67,7 @@ func (u *utxoRepositoryPg) AddUtxos(
 			RangeProof:      v.RangeProof,
 			SurjectionProof: v.SurjectionProof,
 			FkAccountNamespace: sql.NullString{
-				String: v.FkAccountNamespace,
+				String: v.Account,
 				Valid:  true,
 			},
 			LockTimestamp:       v.LockTimestamp,
@@ -161,7 +161,7 @@ func (u *utxoRepositoryPg) GetUtxosByKey(
 			Nonce:               utxo[0].Nonce,
 			RangeProof:          utxo[0].RangeProof,
 			SurjectionProof:     utxo[0].SurjectionProof,
-			FkAccountNamespace:  utxo[0].FkAccountNamespace.String,
+			Account:             utxo[0].FkAccountNamespace.String,
 			LockTimestamp:       utxo[0].LockTimestamp,
 			LockExpiryTimestamp: utxo[0].LockExpiryTimestamp,
 		}
@@ -236,7 +236,7 @@ func (u *utxoRepositoryPg) convertToUtxos(
 				Nonce:               v.Nonce,
 				RangeProof:          v.RangeProof,
 				SurjectionProof:     v.SurjectionProof,
-				FkAccountNamespace:  v.FkAccountNamespace.String,
+				Account:             v.FkAccountNamespace.String,
 				LockTimestamp:       v.LockTimestamp,
 				LockExpiryTimestamp: v.LockExpiryTimestamp,
 			}
@@ -304,11 +304,21 @@ func (u *utxoRepositoryPg) GetSpendableUtxos(
 }
 
 func (u *utxoRepositoryPg) GetAllUtxosForAccount(
-	ctx context.Context, accountNamespace string,
+	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
+
+	account, err := u.querier.GetAccount(ctx, accountName)
+	if err != nil {
+		if err.Error() == pgxNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
 	utxos, err := u.querier.GetUtxosForAccount(ctx, sql.NullString{
-		String: accountNamespace,
+		String: account.Namespace,
 		Valid:  true,
 	})
 	if err != nil {
@@ -337,11 +347,21 @@ func (u *utxoRepositoryPg) GetAllUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
-	ctx context.Context, accountNamespace string,
+	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
+
+	account, err := u.querier.GetAccount(ctx, accountName)
+	if err != nil {
+		if err.Error() == pgxNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
 	utxos, err := u.querier.GetUtxosForAccount(ctx, sql.NullString{
-		String: accountNamespace,
+		String: account.Namespace,
 		Valid:  true,
 	})
 	if err != nil {
@@ -372,11 +392,21 @@ func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
-	ctx context.Context, accountNamespace string,
+	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
+
+	account, err := u.querier.GetAccount(ctx, accountName)
+	if err != nil {
+		if err.Error() == pgxNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
 	utxos, err := u.querier.GetUtxosForAccount(ctx, sql.NullString{
-		String: accountNamespace,
+		String: account.Namespace,
 		Valid:  true,
 	})
 	if err != nil {
@@ -407,11 +437,21 @@ func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetBalanceForAccount(
-	ctx context.Context, accountNamespace string,
+	ctx context.Context, accountName string,
 ) (map[string]*domain.Balance, error) {
 	resp := make(map[string]*domain.Balance)
+
+	account, err := u.querier.GetAccount(ctx, accountName)
+	if err != nil {
+		if err.Error() == pgxNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
 	utxos, err := u.querier.GetUtxosForAccount(ctx, sql.NullString{
-		String: accountNamespace,
+		String: account.Namespace,
 		Valid:  true,
 	})
 	if err != nil {
@@ -482,7 +522,7 @@ func (u *utxoRepositoryPg) UnlockUtxos(
 }
 
 func (u *utxoRepositoryPg) DeleteUtxosForAccount(
-	ctx context.Context, namespace string,
+	ctx context.Context, accountName string,
 ) error {
 	conn, err := u.pgxPool.Acquire(ctx)
 	if err != nil {
@@ -503,8 +543,13 @@ func (u *utxoRepositoryPg) DeleteUtxosForAccount(
 
 	querierWithTx := u.querier.WithTx(tx)
 
+	account, err := querierWithTx.GetAccount(ctx, accountName)
+	if err != nil {
+		return err
+	}
+
 	utxos, err := querierWithTx.GetUtxosForAccount(ctx, sql.NullString{
-		String: namespace,
+		String: account.Namespace,
 		Valid:  true,
 	})
 	if err != nil {
@@ -519,7 +564,7 @@ func (u *utxoRepositoryPg) DeleteUtxosForAccount(
 	}
 
 	if err := querierWithTx.DeleteUtxosForAccountNamespace(ctx, sql.NullString{
-		String: namespace,
+		String: account.Namespace,
 		Valid:  true,
 	}); err != nil {
 		return err
@@ -618,7 +663,7 @@ func (u *utxoRepositoryPg) updateUtxo(
 		RangeProof:      utxo.RangeProof,
 		SurjectionProof: utxo.SurjectionProof,
 		FkAccountNamespace: sql.NullString{
-			String: utxo.FkAccountNamespace,
+			String: utxo.Account,
 			Valid:  true,
 		},
 		LockTimestamp:       utxo.LockTimestamp,

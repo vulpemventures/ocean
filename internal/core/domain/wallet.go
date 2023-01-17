@@ -17,8 +17,8 @@ const (
 	externalChain = 0
 	internalChain = 1
 
-	// namespaceFormat <root_path_purpose>-account-<derivation index>
-	namespaceFormat = "%v-account-%v"
+	// namespaceFormat bip<root_path_purpose>-account<derivation index>
+	namespaceFormat = "bip%v-account%v"
 )
 
 var (
@@ -42,25 +42,24 @@ var (
 
 // AddressInfo holds useful info about a derived address.
 type AddressInfo struct {
-	AccountKey     AccountKey
-	Address        string
-	BlindingKey    []byte
-	DerivationPath string
-	Script         string
+	AccountNamespace string
+	Address          string
+	BlindingKey      []byte
+	DerivationPath   string
+	Script           string
 }
 
 // Wallet is the data structure representing a secure HD wallet, ie. protected
 // by a password that encrypts/decrypts the mnemonic seed.
 type Wallet struct {
-	EncryptedMnemonic      []byte
-	PasswordHash           []byte
-	BirthdayBlockHeight    uint32
-	RootPath               string
-	NetworkName            string
-	AccountsByKey          map[string]*Account
-	AccountKeysByIndex     map[uint32]string
-	AccountKeysByNamespace map[string]string
-	NextAccountIndex       uint32
+	EncryptedMnemonic        []byte
+	PasswordHash             []byte
+	BirthdayBlockHeight      uint32
+	RootPath                 string
+	NetworkName              string
+	AccountsNamespaceByLabel map[string]string
+	AccountsByNamespace      map[string]*Account
+	NextAccountIndex         uint32
 }
 
 // NewWallet encrypts the provided mnemonic with the passhrase and returns a new
@@ -104,25 +103,21 @@ func NewWallet(
 		return nil, err
 	}
 
-	accountsByKey := make(map[string]*Account)
-	accountKeysByIndex := make(map[uint32]string)
-	accountKeysByNamespace := make(map[string]string)
+	accountNamespacesByLabel := make(map[string]string)
+	accountsByNamespace := make(map[string]*Account)
 	for _, a := range accounts {
-		key := a.Info.Key
-		accountsByKey[key.String()] = &a
-		accountKeysByIndex[key.Index] = key.String()
-		accountKeysByNamespace[key.Namespace] = key.String()
+		accountNamespacesByLabel[a.Info.Label] = a.Info.Namespace
+		accountsByNamespace[a.Info.Namespace] = &a
 	}
 
 	return &Wallet{
-		EncryptedMnemonic:      encryptedMnemonic,
-		PasswordHash:           btcutil.Hash160([]byte(password)),
-		BirthdayBlockHeight:    birthdayBlock,
-		RootPath:               rootPath,
-		AccountsByKey:          accountsByKey,
-		AccountKeysByIndex:     accountKeysByIndex,
-		AccountKeysByNamespace: accountKeysByNamespace,
-		NetworkName:            network,
+		EncryptedMnemonic:        encryptedMnemonic,
+		PasswordHash:             btcutil.Hash160([]byte(password)),
+		BirthdayBlockHeight:      birthdayBlock,
+		RootPath:                 rootPath,
+		AccountsNamespaceByLabel: accountNamespacesByLabel,
+		AccountsByNamespace:      accountsByNamespace,
+		NetworkName:              network,
 	}, nil
 }
 
@@ -224,7 +219,6 @@ func (w *Wallet) ChangePassword(currentPassword, newPassword string) error {
 // CreateAccount creates a new account with the given name by preventing
 // collisions with existing ones. If successful, returns the Account created.
 func (w *Wallet) CreateAccount(
-	rootPathPurpose string,
 	label string,
 	birthdayBlock uint32,
 ) (*Account, error) {
@@ -232,8 +226,8 @@ func (w *Wallet) CreateAccount(
 		return nil, ErrWalletLocked
 	}
 
-	namespace := fmt.Sprintf(namespaceFormat, rootPathPurpose, w.NextAccountIndex)
-	if _, ok := w.AccountKeysByNamespace[namespace]; ok {
+	namespace := fmt.Sprintf(namespaceFormat, extractPurpose(w.RootPath), w.NextAccountIndex)
+	if _, ok := w.AccountsByNamespace[namespace]; ok {
 		return nil, nil
 	}
 	if w.NextAccountIndex == hdkeychain.HardenedKeyStart {
@@ -248,7 +242,6 @@ func (w *Wallet) CreateAccount(
 	})
 	xpub, _ := ww.AccountExtendedPublicKey(singlesig.ExtendedKeyArgs{Account: w.NextAccountIndex})
 
-	accountKey := AccountKey{namespace, w.NextAccountIndex}
 	derivationPath, _ := path.ParseDerivationPath(w.RootPath)
 	derivationPath = append(derivationPath, w.NextAccountIndex+hdkeychain.HardenedKeyStart)
 	bdayBlock := w.BirthdayBlockHeight
@@ -256,7 +249,8 @@ func (w *Wallet) CreateAccount(
 		bdayBlock = birthdayBlock
 	}
 	accountInfo := AccountInfo{
-		Key:            accountKey,
+		Namespace:      namespace,
+		Index:          w.NextAccountIndex,
 		Label:          label,
 		Xpub:           xpub,
 		DerivationPath: derivationPath.String(),
@@ -267,66 +261,68 @@ func (w *Wallet) CreateAccount(
 		BirthdayBlock:          bdayBlock,
 	}
 
-	w.AccountsByKey[accountKey.String()] = account
-	w.AccountKeysByIndex[accountKey.Index] = accountKey.String()
-	w.AccountKeysByNamespace[accountKey.Namespace] = accountKey.String()
+	w.AccountsNamespaceByLabel[label] = namespace
+	w.AccountsByNamespace[namespace] = account
 	w.NextAccountIndex++
 	return account, nil
 }
 
+func extractPurpose(rootPath string) string {
+	return strings.ReplaceAll(strings.Split(rootPath, "/")[1], "'", "")
+}
+
 // GetAccount safely returns an Account identified by the given namespace.
-func (w *Wallet) GetAccount(namespace string) (*Account, error) {
-	return w.getAccount(namespace)
+func (w *Wallet) GetAccount(accountName string) (*Account, error) {
+	return w.getAccount(accountName)
 }
 
 // DeleteAccount safely removes an Account and all related stored info from the
 // Wallet.
-func (w *Wallet) DeleteAccount(namespace string) error {
-	account, err := w.getAccount(namespace)
+func (w *Wallet) DeleteAccount(accountName string) error {
+	account, err := w.getAccount(accountName)
 	if err != nil {
 		return err
 	}
 
-	delete(w.AccountKeysByIndex, account.Info.Key.Index)
-	delete(w.AccountKeysByNamespace, account.Info.Key.Namespace)
-	delete(w.AccountsByKey, account.Info.Key.String())
+	delete(w.AccountsByNamespace, account.Info.Namespace)
+	delete(w.AccountsNamespaceByLabel, account.Info.Label)
 	return nil
 }
 
 // DeriveNextExternalAddressForAccount returns all useful info about the next
 // new receiving address for the given account.
 func (w *Wallet) DeriveNextExternalAddressForAccount(
-	namespace string,
+	accountName string,
 ) (*AddressInfo, error) {
-	return w.deriveNextAddressForAccount(namespace, externalChain)
+	return w.deriveNextAddressForAccount(accountName, externalChain)
 }
 
 // DeriveNextInternalAddressForAccount returns all useful info about the next
 // new change address for the given account.
 func (w *Wallet) DeriveNextInternalAddressForAccount(
-	namespace string,
+	accountName string,
 ) (*AddressInfo, error) {
-	return w.deriveNextAddressForAccount(namespace, internalChain)
+	return w.deriveNextAddressForAccount(accountName, internalChain)
 }
 
 // AllDerivedAddressesForAccount returns info about all derived receiving and
 // change addresses derived so far for the given account.
 func (w *Wallet) AllDerivedAddressesForAccount(
-	namespace string,
+	accountName string,
 ) ([]AddressInfo, error) {
-	return w.allDerivedAddressesForAccount(namespace, true)
+	return w.allDerivedAddressesForAccount(accountName, true)
 }
 
 // AllDerivedExternalAddressesForAccount returns info about all derived
 // receiving addresses derived so far for the given account.
 func (w *Wallet) AllDerivedExternalAddressesForAccount(
-	namespace string,
+	accountName string,
 ) ([]AddressInfo, error) {
-	return w.allDerivedAddressesForAccount(namespace, false)
+	return w.allDerivedAddressesForAccount(accountName, false)
 }
 
-func (w *Wallet) UpdateAccountsLabel(namespace string, label string) error {
-	account, err := w.getAccount(namespace)
+func (w *Wallet) UpdateAccountsLabel(accountName string, label string) error {
+	account, err := w.getAccount(accountName)
 	if err != nil {
 		return err
 	}
@@ -339,22 +335,28 @@ func (w *Wallet) isValidPassword(password string) bool {
 	return bytes.Equal(w.PasswordHash, btcutil.Hash160([]byte(password)))
 }
 
-func (w *Wallet) getAccount(namespace string) (*Account, error) {
+func (w *Wallet) getAccount(accountName string) (*Account, error) {
 	if w.IsLocked() {
 		return nil, ErrWalletLocked
 	}
 
-	accountkey, ok := w.AccountKeysByNamespace[namespace]
-	if !ok {
-		return nil, ErrAccountNotFound
+	account, ok := w.AccountsByNamespace[accountName]
+	if ok {
+		return account, nil
 	}
-	return w.AccountsByKey[accountkey], nil
+
+	namespace, ok := w.AccountsNamespaceByLabel[accountName]
+	if ok {
+		return w.AccountsByNamespace[namespace], nil
+	}
+
+	return nil, ErrAccountNotFound
 }
 
 func (w *Wallet) deriveNextAddressForAccount(
-	namespace string, chainIndex int,
+	accountName string, chainIndex int,
 ) (*AddressInfo, error) {
-	account, err := w.getAccount(namespace)
+	account, err := w.getAccount(accountName)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +373,7 @@ func (w *Wallet) deriveNextAddressForAccount(
 	}
 	derivationPath := fmt.Sprintf(
 		"%d'/%d/%d",
-		account.Info.Key.Index, chainIndex, addressIndex,
+		account.Info.Index, chainIndex, addressIndex,
 	)
 	net := networkFromName(w.NetworkName)
 	addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
@@ -394,18 +396,18 @@ func (w *Wallet) deriveNextAddressForAccount(
 	}
 
 	return &AddressInfo{
-		AccountKey:     account.Info.Key,
-		Address:        addr,
-		Script:         hex.EncodeToString(script),
-		BlindingKey:    blindingKey.Serialize(),
-		DerivationPath: derivationPath,
+		AccountNamespace: account.Info.Namespace,
+		Address:          addr,
+		BlindingKey:      blindingKey.Serialize(),
+		DerivationPath:   derivationPath,
+		Script:           hex.EncodeToString(script),
 	}, nil
 }
 
 func (w *Wallet) allDerivedAddressesForAccount(
-	namespace string, includeInternals bool,
+	accountName string, includeInternals bool,
 ) ([]AddressInfo, error) {
-	account, err := w.getAccount(namespace)
+	account, err := w.getAccount(accountName)
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +427,7 @@ func (w *Wallet) allDerivedAddressesForAccount(
 	for i := 0; i < int(account.NextExternalIndex); i++ {
 		derivationPath := fmt.Sprintf(
 			"%d'/%d/%d",
-			account.Info.Key.Index, externalChain, i,
+			account.Info.Index, externalChain, i,
 		)
 		addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
 			DerivationPath: derivationPath,
@@ -438,18 +440,18 @@ func (w *Wallet) allDerivedAddressesForAccount(
 			Script: script,
 		})
 		info = append(info, AddressInfo{
-			AccountKey:     account.Info.Key,
-			Address:        addr,
-			BlindingKey:    key.Serialize(),
-			DerivationPath: derivationPath,
-			Script:         hex.EncodeToString(script),
+			AccountNamespace: account.Info.Namespace,
+			Address:          addr,
+			BlindingKey:      key.Serialize(),
+			DerivationPath:   derivationPath,
+			Script:           hex.EncodeToString(script),
 		})
 	}
 	if includeInternals {
 		for i := 0; i < int(account.NextInternalIndex); i++ {
 			derivationPath := fmt.Sprintf(
 				"%d'/%d/%d",
-				account.Info.Key.Index, internalChain, i,
+				account.Info.Index, internalChain, i,
 			)
 			addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
 				DerivationPath: derivationPath,
@@ -462,11 +464,11 @@ func (w *Wallet) allDerivedAddressesForAccount(
 				Script: script,
 			})
 			info = append(info, AddressInfo{
-				AccountKey:     account.Info.Key,
-				Address:        addr,
-				BlindingKey:    key.Serialize(),
-				DerivationPath: derivationPath,
-				Script:         hex.EncodeToString(script),
+				AccountNamespace: account.Info.Namespace,
+				Address:          addr,
+				BlindingKey:      key.Serialize(),
+				DerivationPath:   derivationPath,
+				Script:           hex.EncodeToString(script),
 			})
 		}
 	}

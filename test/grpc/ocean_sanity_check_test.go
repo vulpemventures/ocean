@@ -42,11 +42,11 @@ func (g *GrpcDbTestSuite) TestOceanSanity() {
 		ExtraXpubs: nil,
 	})
 	g.NoError(err)
-	g.Equal("84-account-0", accountInfo.GetAccountInfo().GetNamespace())
+	g.Equal("bip84-account0", accountInfo.GetAccountInfo().GetNamespace())
 	g.Equal("myAccount", accountInfo.GetAccountInfo().GetLabel())
 
 	deriveAddressResp, err := accountClient.DeriveAddresses(ctx, &pb.DeriveAddressesRequest{
-		Namespace:      accountInfo.GetAccountInfo().GetNamespace(),
+		Name:           accountInfo.GetAccountInfo().GetNamespace(),
 		NumOfAddresses: 1,
 	})
 	g.NoError(err)

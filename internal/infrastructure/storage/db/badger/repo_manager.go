@@ -54,7 +54,7 @@ func NewRepoManager(baseDbDir string, logger badger.Logger) (ports.RepoManager, 
 		return nil, fmt.Errorf("opening tx db: %w", err)
 	}
 
-	utxoRepo := newUtxoRepository(utxoDb)
+	utxoRepo := newUtxoRepository(utxoDb, walletDb)
 	walletRepo := newWalletRepository(walletDb)
 	txRepo := newTransactionRepository(txDb)
 

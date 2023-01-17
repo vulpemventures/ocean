@@ -87,15 +87,15 @@ func (ts *TransactionService) GetTransactionInfo(
 }
 
 func (ts *TransactionService) SelectUtxos(
-	ctx context.Context, accountNamespace, targetAsset string, targetAmount uint64,
+	ctx context.Context, accountName, targetAsset string, targetAmount uint64,
 	coinSelectionStrategy int,
 ) (Utxos, uint64, int64, error) {
-	if _, err := ts.getAccount(ctx, accountNamespace); err != nil {
+	if _, err := ts.getAccount(ctx, accountName); err != nil {
 		return nil, 0, -1, err
 	}
 
 	utxos, err := ts.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
-		ctx, accountNamespace,
+		ctx, accountName,
 	)
 	if err != nil {
 		return nil, 0, -1, err
@@ -122,7 +122,7 @@ func (ts *TransactionService) SelectUtxos(
 	if count > 0 {
 		ts.log(
 			"locked %d utxo(s) for account %s (%s)",
-			count, accountNamespace, UtxoKeys(keys),
+			count, accountName, UtxoKeys(keys),
 		)
 	}
 
@@ -318,14 +318,14 @@ func (ts *TransactionService) SignPset(
 }
 
 func (ts *TransactionService) Transfer(
-	ctx context.Context, accountNamespace string, outputs Outputs,
+	ctx context.Context, accountName string, outputs Outputs,
 	millisatsPerByte uint64,
 ) (string, error) {
 	w, err := ts.getWallet(ctx)
 	if err != nil {
 		return "", err
 	}
-	account, err := ts.getAccount(ctx, accountNamespace)
+	account, err := ts.getAccount(ctx, accountName)
 	if err != nil {
 		return "", err
 	}
@@ -333,22 +333,22 @@ func (ts *TransactionService) Transfer(
 	utxoRepo := ts.repoManager.UtxoRepository()
 	walletRepo := ts.repoManager.WalletRepository()
 
-	balance, err := utxoRepo.GetBalanceForAccount(ctx, accountNamespace)
+	balance, err := utxoRepo.GetBalanceForAccount(ctx, accountName)
 	if err != nil {
 		return "", err
 	}
 	if len(balance) <= 0 {
-		return "", fmt.Errorf("account %s has 0 balance", accountNamespace)
+		return "", fmt.Errorf("account %s has 0 balance", accountName)
 	}
 
 	utxos, err := utxoRepo.GetSpendableUtxosForAccount(
-		ctx, accountNamespace,
+		ctx, accountName,
 	)
 	if err != nil {
 		return "", err
 	}
 	if len(utxos) == 0 {
-		return "", fmt.Errorf("no utxos found for account %s", accountNamespace)
+		return "", fmt.Errorf("no utxos found for account %s", accountName)
 	}
 
 	changeByAsset := make(map[string]uint64)
@@ -387,7 +387,7 @@ func (ts *TransactionService) Transfer(
 	changeOutputs := make([]wallet.Output, 0)
 	if len(changeByAsset) > 0 {
 		addressesInfo, err := walletRepo.DeriveNextInternalAddressesForAccount(
-			ctx, accountNamespace, uint64(len(changeByAsset)),
+			ctx, accountName, uint64(len(changeByAsset)),
 		)
 		if err != nil {
 			return "", err
@@ -494,7 +494,7 @@ func (ts *TransactionService) Transfer(
 				// change output to the list if it's still not in the list.
 				if _, ok := changeByAsset[targetAsset]; !ok {
 					addrInfo, err := walletRepo.DeriveNextInternalAddressesForAccount(
-						ctx, accountNamespace, 1,
+						ctx, accountName, 1,
 					)
 					if err != nil {
 						return "", err
@@ -578,7 +578,7 @@ func (ts *TransactionService) Transfer(
 	if count > 0 {
 		ts.log(
 			"locked %d utxo(s) for account %s (%s) ",
-			count, accountNamespace, UtxoKeys(keys),
+			count, accountName, UtxoKeys(keys),
 		)
 	}
 
@@ -614,7 +614,7 @@ func (ts *TransactionService) scheduleUtxoUnlocker() {
 	utxoRepo := ts.repoManager.UtxoRepository()
 	w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)
 
-	for namespace := range w.AccountKeysByNamespace {
+	for namespace := range w.AccountsByNamespace {
 		utxos, _ := utxoRepo.GetLockedUtxosForAccount(
 			ctx, namespace,
 		)
@@ -772,7 +772,7 @@ func (ts *TransactionService) getWalletInputs(
 			return nil, ErrForbiddenUnlockedInputs
 		}
 
-		account, _ := w.GetAccount(u.FkAccountNamespace)
+		account, _ := w.GetAccount(u.Account)
 		script := hex.EncodeToString(u.Script)
 		derivationPath := account.DerivationPathByScript[script]
 
@@ -827,7 +827,7 @@ func (ts *TransactionService) findLockedInputs(
 			)
 
 		}
-		account, _ := w.GetAccount(u.FkAccountNamespace)
+		account, _ := w.GetAccount(u.Account)
 		script := hex.EncodeToString(u.Script)
 		inIndex := findUtxoIndexInTx(tx, u)
 		inputs[inIndex] = wallet.Input{

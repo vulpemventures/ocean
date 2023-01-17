@@ -32,14 +32,14 @@ func (k UtxoKey) String() string {
 // they must be revealed to return useful UtxoInfo.
 type UtxoInfo struct {
 	UtxoKey
-	Value              uint64
-	Asset              string
-	Script             []byte
-	ValueBlinder       []byte
-	AssetBlinder       []byte
-	FkAccountNamespace string
-	SpentStatus        UtxoStatus
-	ConfirmedStatus    UtxoStatus
+	Value           uint64
+	Asset           string
+	Script          []byte
+	ValueBlinder    []byte
+	AssetBlinder    []byte
+	Account         string
+	SpentStatus     UtxoStatus
+	ConfirmedStatus UtxoStatus
 }
 
 func (i UtxoInfo) Key() UtxoKey {
@@ -79,7 +79,7 @@ type Utxo struct {
 	Nonce               []byte
 	RangeProof          []byte
 	SurjectionProof     []byte
-	FkAccountNamespace  string
+	Account             string
 	LockTimestamp       int64
 	LockExpiryTimestamp int64
 	SpentStatus         UtxoStatus
@@ -129,7 +129,7 @@ func (u *Utxo) Key() UtxoKey {
 func (u *Utxo) Info() UtxoInfo {
 	return UtxoInfo{
 		u.Key(), u.Value, u.Asset, u.Script, u.ValueBlinder, u.AssetBlinder,
-		u.FkAccountNamespace, u.SpentStatus, u.ConfirmedStatus,
+		u.Account, u.SpentStatus, u.ConfirmedStatus,
 	}
 }
 

@@ -75,9 +75,9 @@ func PrepareTestCaseData(
 	err = w.Unlock(password)
 	require.NoError(t, err)
 
-	account, err := walletRepo.CreateAccount(ctx, "84", "myAccount", 0)
+	account, err := walletRepo.CreateAccount(ctx, "myAccount", 0)
 	require.NoError(t, err)
-	namespace := account.Key.Namespace
+	namespace := account.Namespace
 
 	newUtxos, utxoKeys, balanceByAsset := RandomUtxosForAccount(namespace)
 
@@ -94,16 +94,16 @@ func RandomUtxosForAccount(
 	for i := 0; i < num; i++ {
 		key := RandomKey()
 		utxo := &domain.Utxo{
-			UtxoKey:            key,
-			Value:              RandomValue(),
-			Asset:              RandomHex(32),
-			ValueCommitment:    RandomValueCommitment(),
-			AssetCommitment:    RandomAssetCommitment(),
-			ValueBlinder:       RandomBytes(32),
-			AssetBlinder:       RandomBytes(32),
-			Script:             RandomScript(),
-			Nonce:              RandomBytes(33),
-			FkAccountNamespace: namespace,
+			UtxoKey:         key,
+			Value:           RandomValue(),
+			Asset:           RandomHex(32),
+			ValueCommitment: RandomValueCommitment(),
+			AssetCommitment: RandomAssetCommitment(),
+			ValueBlinder:    RandomBytes(32),
+			AssetBlinder:    RandomBytes(32),
+			Script:          RandomScript(),
+			Nonce:           RandomBytes(33),
+			Account:         namespace,
 		}
 
 		if _, ok := balanceByAsset[utxo.Asset]; !ok {

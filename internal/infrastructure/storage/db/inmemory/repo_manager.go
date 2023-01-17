@@ -19,8 +19,8 @@ type repoManager struct {
 }
 
 func NewRepoManager() ports.RepoManager {
-	utxoRepo := newUtxoRepository()
 	walletRepo := newWalletRepository()
+	utxoRepo := newUtxoRepository(walletRepo)
 	txRepo := newTransactionRepository()
 
 	rm := &repoManager{

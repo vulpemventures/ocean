@@ -56,7 +56,7 @@ func (q *Queries) DeleteUtxosForAccountNamespace(ctx context.Context, fkAccountN
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id, namespace, label FROM account WHERE namespace = $1
+SELECT index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id, namespace, label FROM account WHERE namespace = $1 OR label = $1
 `
 
 func (q *Queries) GetAccount(ctx context.Context, namespace string) (Account, error) {

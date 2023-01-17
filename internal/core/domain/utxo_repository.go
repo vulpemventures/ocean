@@ -50,16 +50,16 @@ type UtxoRepository interface {
 	GetSpendableUtxos(ctx context.Context) ([]*Utxo, error)
 	// GetAllUtxosForAccount returns the list of all utxos for the given
 	// account.
-	GetAllUtxosForAccount(ctx context.Context, namespace string) ([]*Utxo, error)
+	GetAllUtxosForAccount(ctx context.Context, accountName string) ([]*Utxo, error)
 	// GetSpendableUtxosForAccount returns the list of spendable utxos for the
 	// given account. The list incldues only confirmed and unlocked utxos.
-	GetSpendableUtxosForAccount(ctx context.Context, namespace string) ([]*Utxo, error)
+	GetSpendableUtxosForAccount(ctx context.Context, accountName string) ([]*Utxo, error)
 	// GetLockedUtxosForAccount returns the list of all currently locked utxos
 	// for the given account.
-	GetLockedUtxosForAccount(ctx context.Context, namespace string) ([]*Utxo, error)
+	GetLockedUtxosForAccount(ctx context.Context, accountName string) ([]*Utxo, error)
 	// GetBalanceForAccount returns the confirmed, unconfirmed and locked
 	// balances per each asset for the given account.
-	GetBalanceForAccount(ctx context.Context, namespace string) (map[string]*Balance, error)
+	GetBalanceForAccount(ctx context.Context, accountName string) (map[string]*Balance, error)
 	// SpendUtxos updates the status of the given list of utxos to "spent".
 	// Generates a UtxoSpent event if successfull.
 	SpendUtxos(ctx context.Context, utxoKeys []UtxoKey, status UtxoStatus) (int, error)
@@ -74,7 +74,7 @@ type UtxoRepository interface {
 	UnlockUtxos(ctx context.Context, utxoKeys []UtxoKey) (int, error)
 	// DeleteUtxosForAccount deletes every utxo associated to the given account
 	// from the repository.
-	DeleteUtxosForAccount(ctx context.Context, namespace string) error
+	DeleteUtxosForAccount(ctx context.Context, accountName string) error
 	// GetEventChannel returns the channel of UtxoEvents.
 	GetEventChannel() chan UtxoEvent
 }
