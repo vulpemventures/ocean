@@ -60,7 +60,7 @@ var (
 	}
 	accountSetLabelCmd = &cobra.Command{
 		Use:   "label",
-		Short: "set accounts label",
+		Short: "set account label",
 		Long:  "this command lets you set label of an existing account",
 		RunE:  accountSetLabel,
 	}
