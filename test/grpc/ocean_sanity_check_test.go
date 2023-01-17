@@ -116,7 +116,7 @@ loop:
 				g.T().Log(e.Err.Error())
 			}
 			if e.EvenType != "" {
-				g.T().Logf("receivet utxo event: %v", e.EvenType)
+				g.T().Logf("received utxo event: %v", e.EvenType)
 				utxoEventReceived = true
 				break loop
 			}
@@ -127,7 +127,7 @@ loop:
 		g.FailNow("utxo event not received")
 	}
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	txClient, cancel, err := testutil.GetTransactionClient(address, true, "")
 	g.NoError(err)
