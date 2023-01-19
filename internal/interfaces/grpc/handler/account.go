@@ -29,7 +29,6 @@ func (a *account) CreateAccountBIP44(
 	return &pb.CreateAccountBIP44Response{
 		AccountInfo: &pb.AccountInfo{
 			Label:          req.GetLabel(),
-			Index:          accountInfo.Index,
 			DerivationPath: accountInfo.DerivationPath,
 			Xpubs:          []string{accountInfo.Xpub},
 			Namespace:      accountInfo.Namespace,
@@ -58,7 +57,7 @@ func (a *account) SetAccountTemplate(
 func (a *account) DeriveAddresses(
 	ctx context.Context, req *pb.DeriveAddressesRequest,
 ) (*pb.DeriveAddressesResponse, error) {
-	accountName, err := parseAccountName(req.GetName())
+	accountName, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -79,7 +78,7 @@ func (a *account) DeriveAddresses(
 func (a *account) DeriveChangeAddresses(
 	ctx context.Context, req *pb.DeriveChangeAddressesRequest,
 ) (*pb.DeriveChangeAddressesResponse, error) {
-	accountName, err := parseAccountName(req.GetName())
+	accountName, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -99,7 +98,7 @@ func (a *account) DeriveChangeAddresses(
 func (a *account) ListAddresses(
 	ctx context.Context, req *pb.ListAddressesRequest,
 ) (*pb.ListAddressesResponse, error) {
-	accountName, err := parseAccountName(req.GetName())
+	accountName, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -116,7 +115,7 @@ func (a *account) ListAddresses(
 func (a *account) Balance(
 	ctx context.Context, req *pb.BalanceRequest,
 ) (*pb.BalanceResponse, error) {
-	accountName, err := parseAccountName(req.GetName())
+	accountName, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -140,7 +139,7 @@ func (a *account) Balance(
 func (a *account) ListUtxos(
 	ctx context.Context, req *pb.ListUtxosRequest,
 ) (*pb.ListUtxosResponse, error) {
-	accountName, err := parseAccountName(req.GetName())
+	accountName, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -153,12 +152,12 @@ func (a *account) ListUtxos(
 	lockedUtxos := parseUtxos(utxosInfo.Locked.Info())
 	return &pb.ListUtxosResponse{
 		SpendableUtxos: &pb.Utxos{
-			Account: accountName,
-			Utxos:   spendableUtxos,
+			AccountName: accountName,
+			Utxos:       spendableUtxos,
 		},
 		LockedUtxos: &pb.Utxos{
-			Account: accountName,
-			Utxos:   lockedUtxos,
+			AccountName: accountName,
+			Utxos:       lockedUtxos,
 		},
 	}, nil
 }
@@ -166,7 +165,7 @@ func (a *account) ListUtxos(
 func (a *account) DeleteAccount(
 	ctx context.Context, req *pb.DeleteAccountRequest,
 ) (*pb.DeleteAccountResponse, error) {
-	accountName, err := parseAccountName(req.GetName())
+	accountName, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

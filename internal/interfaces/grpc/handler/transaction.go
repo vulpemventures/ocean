@@ -42,7 +42,7 @@ func (t *transaction) GetTransaction(
 func (t *transaction) SelectUtxos(
 	ctx context.Context, req *pb.SelectUtxosRequest,
 ) (*pb.SelectUtxosResponse, error) {
-	accountName, err := parseAccountName(req.GetName())
+	accountName, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -229,7 +229,7 @@ func (t *transaction) Burn(
 func (t *transaction) Transfer(
 	ctx context.Context, req *pb.TransferRequest,
 ) (*pb.TransferResponse, error) {
-	accountName, err := parseAccountName(req.GetName())
+	accountName, err := parseAccountName(req.GetAccountName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

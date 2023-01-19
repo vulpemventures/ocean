@@ -14,14 +14,12 @@ message BuildInfo {
 message AccountInfo {
   // Label name.
   string label = 1;
-  // Account index.
-  uint32 index = 2;
   // Derivation path.
-  string derivation_path = 3;
+  string derivation_path = 2;
   // Xpubs.
-  repeated string xpubs = 4;
+  repeated string xpubs = 3;
   // Namespace of the account
-  string namespace = 5;
+  string namespace = 4;
 }
 
 message BalanceInfo {
@@ -76,7 +74,7 @@ message Output {
 
 message Utxos {
   // Account.
-  string account = 1;
+  string account_name = 1;
   // List of utxos.
   repeated Utxo utxos = 2;
 }
@@ -103,7 +101,7 @@ message Utxo {
   // Value blinder for confidential utxo.
   string value_blinder = 7;
   // Account owning the utxo.
-  string account = 8;
+  string account_name = 8;
   // Info about utxo's spent status.
   UtxoStatus spent_status = 9;
   // Info about utxo's confirmation status.

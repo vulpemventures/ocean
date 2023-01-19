@@ -72,7 +72,7 @@ func txTransfer(_ *cobra.Command, _ []string) error {
 	}
 
 	reply, err := client.Transfer(ctx, &pb.TransferRequest{
-		Name:             accountName,
+		AccountName:      accountName,
 		MillisatsPerByte: uint64(satsPerByte * 1000),
 		Receivers:        receivers.proto(),
 	})

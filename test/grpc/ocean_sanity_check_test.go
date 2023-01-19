@@ -46,7 +46,7 @@ func (g *GrpcDbTestSuite) TestOceanSanity() {
 	g.Equal("myAccount", accountInfo.GetAccountInfo().GetLabel())
 
 	deriveAddressResp, err := accountClient.DeriveAddresses(ctx, &pb.DeriveAddressesRequest{
-		Name:           accountInfo.GetAccountInfo().GetNamespace(),
+		AccountName:    accountInfo.GetAccountInfo().GetNamespace(),
 		NumOfAddresses: 1,
 	})
 	g.NoError(err)

@@ -130,12 +130,12 @@ func accountDeriveAddresses(cmd *cobra.Command, _ []string) error {
 	var reply protoreflect.ProtoMessage
 	if !changeAddresses {
 		reply, err = client.DeriveAddresses(ctx, &pb.DeriveAddressesRequest{
-			Name:           accountName,
+			AccountName:    accountName,
 			NumOfAddresses: numOfAddresses,
 		})
 	} else {
 		reply, err = client.DeriveChangeAddresses(ctx, &pb.DeriveChangeAddressesRequest{
-			Name:           accountName,
+			AccountName:    accountName,
 			NumOfAddresses: numOfAddresses,
 		})
 	}
@@ -163,7 +163,7 @@ func accountBalance(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.Balance(
 		context.Background(), &pb.BalanceRequest{
-			Name: accountName,
+			AccountName: accountName,
 		},
 	)
 	if err != nil {
@@ -190,7 +190,7 @@ func accountListAddresses(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.ListAddresses(
 		context.Background(), &pb.ListAddressesRequest{
-			Name: accountName,
+			AccountName: accountName,
 		},
 	)
 	if err != nil {
@@ -217,7 +217,7 @@ func accountListUtxos(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.ListUtxos(
 		context.Background(), &pb.ListUtxosRequest{
-			Name: accountName,
+			AccountName: accountName,
 		},
 	)
 	if err != nil {
@@ -244,7 +244,7 @@ func accountDelete(cmd *cobra.Command, _ []string) error {
 
 	if _, err := client.DeleteAccount(
 		context.Background(), &pb.DeleteAccountRequest{
-			Name: accountName,
+			AccountName: accountName,
 		},
 	); err != nil {
 		printErr(err)

@@ -43,7 +43,6 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 	for _, a := range accounts {
 		list = append(list, &pb.AccountInfo{
 			Namespace:      a.Namespace,
-			Index:          a.Index,
 			Xpubs:          []string{a.Xpub},
 			DerivationPath: a.DerivationPath,
 		})
@@ -90,7 +89,7 @@ func parseUtxos(utxos []domain.UtxoInfo) []*pb.Utxo {
 			Script:          hex.EncodeToString(u.Script),
 			AssetBlinder:    elementsutil.TxIDFromBytes(u.AssetBlinder),
 			ValueBlinder:    elementsutil.TxIDFromBytes(u.ValueBlinder),
-			Account:         u.Account,
+			AccountName:     u.Account,
 			SpentStatus:     spentStatus,
 			ConfirmedStatus: confirmedStatus,
 		})
