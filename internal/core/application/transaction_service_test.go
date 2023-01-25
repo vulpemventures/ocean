@@ -171,7 +171,7 @@ func newRepoManagerForTxService() (ports.RepoManager, error) {
 	addresses := application.AddressesInfo(addrInfo).Addresses()
 	utxos := make([]*domain.Utxo, 0, len(addresses))
 	for _, addr := range addresses {
-		utxo := randomUtxo(accountName, addr)
+		utxo := randomUtxo(accountNamespace, addr)
 		utxo.Value = 100000000
 		utxo.Asset = regtest.AssetID
 		utxos = append(utxos, utxo)

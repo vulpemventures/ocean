@@ -39,7 +39,7 @@ func testGetUtxoChannel(t *testing.T) {
 
 	go listenToUtxoEvents(t, chEvents)
 
-	utxos := randomUtxos(accountName, testAddresses)
+	utxos := randomUtxos(accountNamespace, testAddresses)
 	repoManager.UtxoRepository().AddUtxos(ctx, utxos)
 
 	time.Sleep(time.Second)
