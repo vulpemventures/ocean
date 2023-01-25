@@ -265,7 +265,7 @@ func (w *walletRepositoryPg) CreateAccount(
 
 	go w.publishEvent(domain.WalletEvent{
 		EventType:   domain.WalletAccountCreated,
-		AccountName: accountName,
+		AccountName: accountInfo.Namespace,
 	})
 
 	return accountInfo, nil
@@ -295,7 +295,7 @@ func (w *walletRepositoryPg) DeriveNextExternalAddressesForAccount(
 
 	go w.publishEvent(domain.WalletEvent{
 		EventType:        domain.WalletAccountAddressesDerived,
-		AccountName:      accountName,
+		AccountName:      addressesInfo[0].Account,
 		AccountAddresses: addressesInfo,
 	})
 
@@ -326,7 +326,7 @@ func (w *walletRepositoryPg) DeriveNextInternalAddressesForAccount(
 
 	go w.publishEvent(domain.WalletEvent{
 		EventType:        domain.WalletAccountAddressesDerived,
-		AccountName:      accountName,
+		AccountName:      addressesInfo[0].Account,
 		AccountAddresses: addressesInfo,
 	})
 
@@ -337,21 +337,7 @@ func (w *walletRepositoryPg) DeleteAccount(
 	ctx context.Context,
 	accountName string,
 ) error {
-	conn, err := w.pgxPool.Acquire(ctx)
-	if err != nil {
-		return err
-	}
-	defer conn.Release()
-
-	tx, err := conn.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-
-	querierWithTx := w.querier.WithTx(tx)
-
-	_, err = querierWithTx.GetAccount(ctx, accountName)
+	account, err := w.querier.GetAccount(ctx, accountName)
 	if err != nil {
 		if err.Error() == pgxNoRows {
 			return ErrAccountNotFound
@@ -359,21 +345,13 @@ func (w *walletRepositoryPg) DeleteAccount(
 		return err
 	}
 
-	if err := querierWithTx.DeleteAccountScripts(ctx, accountName); err != nil {
-		return err
-	}
-
-	if err := querierWithTx.DeleteAccount(ctx, accountName); err != nil {
-		return err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
+	if err := w.querier.DeleteAccount(ctx, account.Namespace); err != nil {
 		return err
 	}
 
 	go w.publishEvent(domain.WalletEvent{
 		EventType:   domain.WalletAccountDeleted,
-		AccountName: accountName,
+		AccountName: account.Namespace,
 	})
 
 	return nil

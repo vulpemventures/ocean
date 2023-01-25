@@ -90,12 +90,13 @@ func (ts *TransactionService) SelectUtxos(
 	ctx context.Context, accountName, targetAsset string, targetAmount uint64,
 	coinSelectionStrategy int,
 ) (Utxos, uint64, int64, error) {
-	if _, err := ts.getAccount(ctx, accountName); err != nil {
+	account, err := ts.getAccount(ctx, accountName)
+	if err != nil {
 		return nil, 0, -1, err
 	}
 
 	utxos, err := ts.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
-		ctx, accountName,
+		ctx, account.Namespace,
 	)
 	if err != nil {
 		return nil, 0, -1, err
@@ -122,7 +123,7 @@ func (ts *TransactionService) SelectUtxos(
 	if count > 0 {
 		ts.log(
 			"locked %d utxo(s) for account %s (%s)",
-			count, accountName, UtxoKeys(keys),
+			count, account.Namespace, UtxoKeys(keys),
 		)
 	}
 
@@ -333,7 +334,7 @@ func (ts *TransactionService) Transfer(
 	utxoRepo := ts.repoManager.UtxoRepository()
 	walletRepo := ts.repoManager.WalletRepository()
 
-	balance, err := utxoRepo.GetBalanceForAccount(ctx, accountName)
+	balance, err := utxoRepo.GetBalanceForAccount(ctx, account.Namespace)
 	if err != nil {
 		return "", err
 	}
@@ -342,7 +343,7 @@ func (ts *TransactionService) Transfer(
 	}
 
 	utxos, err := utxoRepo.GetSpendableUtxosForAccount(
-		ctx, accountName,
+		ctx, account.Namespace,
 	)
 	if err != nil {
 		return "", err
@@ -387,7 +388,7 @@ func (ts *TransactionService) Transfer(
 	changeOutputs := make([]wallet.Output, 0)
 	if len(changeByAsset) > 0 {
 		addressesInfo, err := walletRepo.DeriveNextInternalAddressesForAccount(
-			ctx, accountName, uint64(len(changeByAsset)),
+			ctx, account.Namespace, uint64(len(changeByAsset)),
 		)
 		if err != nil {
 			return "", err
@@ -494,7 +495,7 @@ func (ts *TransactionService) Transfer(
 				// change output to the list if it's still not in the list.
 				if _, ok := changeByAsset[targetAsset]; !ok {
 					addrInfo, err := walletRepo.DeriveNextInternalAddressesForAccount(
-						ctx, accountName, 1,
+						ctx, account.Namespace, 1,
 					)
 					if err != nil {
 						return "", err
@@ -578,7 +579,7 @@ func (ts *TransactionService) Transfer(
 	if count > 0 {
 		ts.log(
 			"locked %d utxo(s) for account %s (%s) ",
-			count, accountName, UtxoKeys(keys),
+			count, account.Namespace, UtxoKeys(keys),
 		)
 	}
 
