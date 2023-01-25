@@ -32,6 +32,11 @@ class AccountServiceStub(object):
                 request_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomRequest.SerializeToString,
                 response_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomResponse.FromString,
                 )
+        self.SetAccountLabel = channel.unary_unary(
+                '/ocean.v1.AccountService/SetAccountLabel',
+                request_serializer=ocean_dot_v1_dot_account__pb2.SetAccountLabelRequest.SerializeToString,
+                response_deserializer=ocean_dot_v1_dot_account__pb2.SetAccountLabelResponse.FromString,
+                )
         self.SetAccountTemplate = channel.unary_unary(
                 '/ocean.v1.AccountService/SetAccountTemplate',
                 request_serializer=ocean_dot_v1_dot_account__pb2.SetAccountTemplateRequest.SerializeToString,
@@ -91,6 +96,13 @@ class AccountServiceServicer(object):
 
     def CreateAccountCustom(self, request, context):
         """CreateAccountCustom creates a new custom account for which loading a template.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetAccountLabel(self, request, context):
+        """SetAccountLabel sets a label for the account that can be used later to refer to it.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -165,6 +177,11 @@ def add_AccountServiceServicer_to_server(servicer, server):
                     servicer.CreateAccountCustom,
                     request_deserializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomRequest.FromString,
                     response_serializer=ocean_dot_v1_dot_account__pb2.CreateAccountCustomResponse.SerializeToString,
+            ),
+            'SetAccountLabel': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetAccountLabel,
+                    request_deserializer=ocean_dot_v1_dot_account__pb2.SetAccountLabelRequest.FromString,
+                    response_serializer=ocean_dot_v1_dot_account__pb2.SetAccountLabelResponse.SerializeToString,
             ),
             'SetAccountTemplate': grpc.unary_unary_rpc_method_handler(
                     servicer.SetAccountTemplate,
@@ -262,6 +279,23 @@ class AccountService(object):
         return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/CreateAccountCustom',
             ocean_dot_v1_dot_account__pb2.CreateAccountCustomRequest.SerializeToString,
             ocean_dot_v1_dot_account__pb2.CreateAccountCustomResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetAccountLabel(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ocean.v1.AccountService/SetAccountLabel',
+            ocean_dot_v1_dot_account__pb2.SetAccountLabelRequest.SerializeToString,
+            ocean_dot_v1_dot_account__pb2.SetAccountLabelResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

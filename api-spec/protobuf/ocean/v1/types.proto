@@ -12,10 +12,10 @@ message BuildInfo {
 }
 
 message AccountInfo {
-  // Account name.
-  string name = 1;
-  // Account index.
-  uint32 index = 2;
+  // Account namespace.
+  string namespace = 1;
+  // Account label.
+  string label = 2;
   // Derivation path.
   string derivation_path = 3;
   // Xpubs.
@@ -73,7 +73,7 @@ message Output {
 }
 
 message Utxos {
-  // Account name.
+  // Account namespace.
   string account_name = 1;
   // List of utxos.
   repeated Utxo utxos = 2;
@@ -100,7 +100,7 @@ message Utxo {
   string asset_blinder = 6;
   // Value blinder for confidential utxo.
   string value_blinder = 7;
-  // Name of the account owning the utxo.
+  // Namespace of the account owning the utxo.
   string account_name = 8;
   // Info about utxo's spent status.
   UtxoStatus spent_status = 9;
