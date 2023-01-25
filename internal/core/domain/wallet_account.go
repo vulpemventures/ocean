@@ -1,27 +1,13 @@
 package domain
 
 import (
-	"encoding/hex"
-	"fmt"
-
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 )
 
-// AccountKey holds the unique info of an account: name and HD index.
-type AccountKey struct {
-	Name  string
-	Index uint32
-}
-
-func (ak *AccountKey) String() string {
-	key := btcutil.Hash160([]byte(fmt.Sprintf("%s%d", ak.Name, ak.Index)))
-	return hex.EncodeToString(key[:6])
-}
-
 // AccountInfo holds basic info about an account.
 type AccountInfo struct {
-	Key            AccountKey
+	Namespace      string
+	Label          string
 	Xpub           string
 	DerivationPath string
 }
@@ -29,7 +15,8 @@ type AccountInfo struct {
 // Account defines the entity data struture for a derived account of the
 // daemon's HD wallet
 type Account struct {
-	Info                   AccountInfo
+	AccountInfo
+	Index                  uint32
 	BirthdayBlock          uint32
 	NextExternalIndex      uint
 	NextInternalIndex      uint

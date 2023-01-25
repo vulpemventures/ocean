@@ -28,7 +28,8 @@ func TestAccountService(t *testing.T) {
 	accountInfo, err := svc.CreateAccountBIP44(ctx, accountName)
 	require.NoError(t, err)
 	require.NotNil(t, accountInfo)
-	require.Equal(t, accountName, accountInfo.Key.Name)
+	require.Equal(t, accountName, accountInfo.Label)
+	require.Equal(t, accountNamespace, accountInfo.Namespace)
 	require.NotEmpty(t, accountInfo.DerivationPath)
 	require.NotEmpty(t, accountInfo.Xpub)
 

@@ -144,7 +144,7 @@ func (r *walletRepository) CreateAccount(
 			if account == nil {
 				return nil, fmt.Errorf("account %s already existing", accountName)
 			}
-			accountInfo = &account.Info
+			accountInfo = &account.AccountInfo
 			return w, nil
 		},
 	); err != nil {

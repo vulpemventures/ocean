@@ -42,8 +42,8 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 	list := make([]*pb.AccountInfo, 0, len(accounts))
 	for _, a := range accounts {
 		list = append(list, &pb.AccountInfo{
-			Name:           a.Key.Name,
-			Index:          a.Key.Index,
+			Namespace:      a.Namespace,
+			Label:          a.Label,
 			Xpubs:          []string{a.Xpub},
 			DerivationPath: a.DerivationPath,
 		})
@@ -53,7 +53,7 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 
 func parseAccountName(name string) (string, error) {
 	if name == "" {
-		return "", fmt.Errorf("missing account name")
+		return "", fmt.Errorf("missing account namespace or label")
 	}
 	return name, nil
 }

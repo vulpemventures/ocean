@@ -614,7 +614,7 @@ func (ts *TransactionService) scheduleUtxoUnlocker() {
 	utxoRepo := ts.repoManager.UtxoRepository()
 	w, _ := ts.repoManager.WalletRepository().GetWallet(ctx)
 
-	for accountName := range w.AccountKeysByName {
+	for accountName := range w.Accounts {
 		utxos, _ := utxoRepo.GetLockedUtxosForAccount(
 			ctx, accountName,
 		)
