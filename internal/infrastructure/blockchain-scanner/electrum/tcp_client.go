@@ -3,13 +3,11 @@ package electrum_scanner
 import (
 	"bufio"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -41,22 +39,9 @@ type tcpClient struct {
 }
 
 func newTCPClient(addr string) (electrumClient, error) {
-	split := strings.Split(addr, "://")
-	proto, url := split[0], split[1]
-	var conn net.Conn
-	switch proto {
-	case "tcp":
-		c, err := net.Dial(proto, url)
-		if err != nil {
-			return nil, err
-		}
-		conn = c
-	case "ssl":
-		c, err := tls.Dial("tcp", url, nil)
-		if err != nil {
-			return nil, err
-		}
-		conn = c
+	conn, err := getConn(addr)
+	if err != nil {
+		return nil, err
 	}
 
 	logFn := func(format string, a ...interface{}) {
@@ -149,22 +134,9 @@ func (c *tcpClient) reconnect() {
 	c.chQuit <- struct{}{}
 
 	// re-establish the connection with electrum server.
-	split := strings.Split(c.addr, "://")
-	proto, url := split[0], split[1]
-	var conn net.Conn
-	switch proto {
-	case "tcp":
-		c, err := net.Dial(proto, url)
-		if err != nil {
-			log.WithError(err).Fatal("failed to reconnect to server")
-		}
-		conn = c
-	case "ssl":
-		c, err := tls.Dial("tcp", url, nil)
-		if err != nil {
-			log.WithError(err).Fatal("failed to reconnect to server")
-		}
-		conn = c
+	conn, err := getConn(c.addr)
+	if err != nil {
+		log.WithError(err).Fatal("failed to reconnect to server")
 	}
 
 	c.conn = conn
