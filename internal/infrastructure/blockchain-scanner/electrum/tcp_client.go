@@ -3,12 +3,11 @@ package electrum_scanner
 import (
 	"bufio"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,12 +22,14 @@ import (
 const delim = byte('\n')
 
 type tcpClient struct {
+	addr           string
 	conn           net.Conn
 	nextId         uint64
 	chHandler      *chHandler
 	chainTip       blockInfo
 	reportHandlers map[string]*reportHandler
 	chQuit         chan struct{}
+	subscriptions  []request
 
 	tipLock  *sync.RWMutex
 	sendLock *sync.RWMutex
@@ -38,22 +39,9 @@ type tcpClient struct {
 }
 
 func newTCPClient(addr string) (electrumClient, error) {
-	split := strings.Split(addr, "://")
-	proto, url := split[0], split[1]
-	var conn net.Conn
-	switch proto {
-	case "tcp":
-		c, err := net.Dial(proto, url)
-		if err != nil {
-			return nil, err
-		}
-		conn = c
-	case "ssl":
-		c, err := tls.Dial("tcp", url, nil)
-		if err != nil {
-			return nil, err
-		}
-		conn = c
+	conn, err := getConn(addr)
+	if err != nil {
+		return nil, err
 	}
 
 	logFn := func(format string, a ...interface{}) {
@@ -66,11 +54,13 @@ func newTCPClient(addr string) (electrumClient, error) {
 	}
 
 	svc := &tcpClient{
+		addr:           addr,
 		conn:           conn,
 		nextId:         0,
 		chHandler:      newChHandler(),
 		reportHandlers: make(map[string]*reportHandler, 0),
 		chQuit:         make(chan struct{}),
+		subscriptions:  make([]request, 0),
 		tipLock:        &sync.RWMutex{},
 		sendLock:       &sync.RWMutex{},
 		log:            logFn,
@@ -88,7 +78,9 @@ func (c *tcpClient) listen() {
 		var resp response
 		bytes, err := conn.ReadBytes(delim)
 		if err != nil {
-			if errors.Is(err, net.ErrClosed) {
+			if errors.Is(err, net.ErrClosed) || errors.Is(err, io.EOF) {
+				c.log("connection with server dropped, attempting to reconnect...")
+				c.reconnect()
 				return
 			}
 			log.WithError(err).Fatal("failed to read message from socket")
@@ -137,6 +129,37 @@ func (c *tcpClient) keepAliveConnection() {
 	}
 }
 
+func (c *tcpClient) reconnect() {
+	// stop sending ping messages.
+	c.chQuit <- struct{}{}
+
+	// re-establish the connection with electrum server.
+	conn, err := getConn(c.addr)
+	if err != nil {
+		log.WithError(err).Fatal("failed to reconnect to server")
+	}
+
+	c.conn = conn
+
+	// restart listening over tcp socket and sending ping messages.
+	go c.listen()
+	go c.keepAliveConnection()
+
+	// restore all subscriptions
+	c.log("restoring %d subscriptions...", len(c.subscriptions))
+	responses, err := c.batchRequests(c.subscriptions)
+	if err != nil {
+		log.WithError(err).Fatal("failed to restore subscriptions after reconnection")
+	}
+	for _, resp := range responses {
+		if err := resp.error(); err != nil {
+			log.WithError(err).Fatal("failed to restore subscriptions after reconnection")
+		}
+	}
+
+	c.log("connection with server restored")
+}
+
 func (c *tcpClient) close() {
 	c.conn.Close()
 	c.chHandler.clear()
@@ -156,6 +179,10 @@ func (c *tcpClient) subscribeForBlocks() {
 	json.Unmarshal(buf, &block)
 
 	c.updateChainTip(block)
+
+	c.subscriptions = append(
+		c.subscriptions, c.newJSONRequest("blockchain.headers.subscribe"),
+	)
 }
 
 func (c *tcpClient) subscribeForAccount(
@@ -235,6 +262,7 @@ func (c *tcpClient) subscribeForScripts(
 	for _, scriptHash := range scriptHashes {
 		c.chHandler.addAccountScriptHash(accountName, scriptHash)
 	}
+	c.subscriptions = append(c.subscriptions, reqs...)
 	return nil
 }
 
