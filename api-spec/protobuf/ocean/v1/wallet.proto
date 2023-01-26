@@ -38,6 +38,9 @@ service WalletService {
 
   // GetInfo returns info about the HD wallet.
   rpc GetInfo(GetInfoRequest) returns (GetInfoResponse);
+
+  // Auth verifies whether the given password is valid without unlocking the wallet
+  rpc Auth(AuthRequest) returns (AuthResponse);
 }
 
 message GenSeedRequest{}
@@ -84,7 +87,7 @@ message RestoreWalletRequest{
   // The password to decrypt HD wallet. After restoration, the wallet is locked
   // and the same password is required to unlock it.
   string password = 2;
-  // The height of the block at original wallet creation time. This will be the 
+  // The height of the block at original wallet creation time. This will be the
   // starting block for the wallet rescan.
   // If not given, will rescan from genesis block.
   uint32 birthday_block_height = 3;
@@ -139,4 +142,11 @@ message GetInfoResponse{
   repeated AccountInfo accounts = 7;
   // Info about the current version of the ocean wallet.
   BuildInfo build_info = 8;
+}
+message AuthRequest {
+  string password = 1;
+}
+
+message AuthResponse {
+  bool verified = 1;
 }

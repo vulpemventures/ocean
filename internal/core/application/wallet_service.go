@@ -462,6 +462,18 @@ func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
 	}, nil
 }
 
+func (ws *WalletService) Auth(
+	ctx context.Context,
+	password string,
+) (bool, error) {
+	wallet, err := ws.repoManager.WalletRepository().GetWallet(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return wallet.IsValidPassword(password), nil
+}
+
 func (ws *WalletService) RegisterHandlerForWalletEvent(
 	eventType domain.WalletEventType, handler ports.WalletEventHandler,
 ) {

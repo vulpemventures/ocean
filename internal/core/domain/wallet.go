@@ -178,7 +178,7 @@ func (w *Wallet) Lock(password string) error {
 		return nil
 	}
 
-	if !w.isValidPassword(password) {
+	if !w.IsValidPassword(password) {
 		return ErrWalletInvalidPassword
 	}
 
@@ -193,7 +193,7 @@ func (w *Wallet) Unlock(password string) error {
 		return nil
 	}
 
-	if !w.isValidPassword(password) {
+	if !w.IsValidPassword(password) {
 		return ErrWalletInvalidPassword
 	}
 
@@ -213,7 +213,7 @@ func (w *Wallet) ChangePassword(currentPassword, newPassword string) error {
 	if !w.IsLocked() {
 		return ErrWalletUnlocked
 	}
-	if !w.isValidPassword(currentPassword) {
+	if !w.IsValidPassword(currentPassword) {
 		return ErrWalletInvalidPassword
 	}
 
@@ -325,7 +325,7 @@ func (w *Wallet) AllDerivedExternalAddressesForAccount(
 	return w.allDerivedAddressesForAccount(accountName, false)
 }
 
-func (w *Wallet) isValidPassword(password string) bool {
+func (w *Wallet) IsValidPassword(password string) bool {
 	return bytes.Equal(w.PasswordHash, btcutil.Hash160([]byte(password)))
 }
 
