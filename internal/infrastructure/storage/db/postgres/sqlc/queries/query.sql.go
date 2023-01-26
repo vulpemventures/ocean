@@ -11,7 +11,7 @@ import (
 )
 
 const deleteAccount = `-- name: DeleteAccount :exec
-DELETE FROM account WHERE namespace = $1 OR label = $1
+DELETE FROM account WHERE namespace = $1
 `
 
 func (q *Queries) DeleteAccount(ctx context.Context, namespace string) error {

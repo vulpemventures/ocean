@@ -29,7 +29,7 @@ INSERT INTO account_script_info (script,derivation_path,fk_account_name) VALUES 
 DELETE FROM account_script_info WHERE fk_account_name = $1;
 
 -- name: DeleteAccount :exec
-DELETE FROM account WHERE namespace = $1 OR label = $1;
+DELETE FROM account WHERE namespace = $1;
 
 /* UTXO */
 -- name: InsertUtxo :one
