@@ -3,6 +3,8 @@ package wallet
 import (
 	"fmt"
 
+	"github.com/vulpemventures/go-elements/confidential"
+	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/psetv2"
 )
 
@@ -76,7 +78,22 @@ func CreatePset(args CreatePsetArgs) (string, error) {
 		prevout := in.Prevout()
 		updater.AddInWitnessUtxo(i, prevout)
 		if prevout.IsConfidential() {
-			updater.AddInUtxoRangeProof(i, in.RangeProof)
+			asset, _ := elementsutil.TxIDToBytes(in.Asset)
+			assetProof, _ := confidential.CreateBlindAssetProof(
+				asset, in.AssetCommitment, in.AssetBlinder,
+			)
+			valueProof, _ := confidential.CreateBlindValueProof(
+				nil, in.ValueBlinder, in.Value, in.ValueCommitment, in.AssetCommitment,
+			)
+			if err := updater.AddInUtxoRangeProof(i, in.RangeProof); err != nil {
+				return "", err
+			}
+			if err := updater.AddInExplicitAsset(i, asset, assetProof); err != nil {
+				return "", err
+			}
+			if err := updater.AddInExplicitValue(i, in.Value, valueProof); err != nil {
+				return "", err
+			}
 		}
 		if len(in.RedeemScript) > 0 {
 			updater.AddInWitnessScript(i, in.RedeemScript)
@@ -158,7 +175,20 @@ func UpdatePset(args UpdatePsetArgs) (string, error) {
 			return "", err
 		}
 		if prevout.IsConfidential() {
+			asset, _ := elementsutil.TxIDToBytes(in.Asset)
+			assetProof, _ := confidential.CreateBlindAssetProof(
+				asset, in.AssetCommitment, in.AssetBlinder,
+			)
+			valueProof, _ := confidential.CreateBlindValueProof(
+				nil, in.ValueBlinder, in.Value, in.ValueCommitment, in.AssetCommitment,
+			)
 			if err := updater.AddInUtxoRangeProof(inIndex, in.RangeProof); err != nil {
+				return "", err
+			}
+			if err := updater.AddInExplicitAsset(inIndex, asset, assetProof); err != nil {
+				return "", err
+			}
+			if err := updater.AddInExplicitValue(inIndex, in.Value, valueProof); err != nil {
 				return "", err
 			}
 		}
