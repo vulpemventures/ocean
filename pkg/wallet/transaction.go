@@ -85,15 +85,10 @@ func CreatePset(args CreatePsetArgs) (string, error) {
 			valueProof, _ := confidential.CreateBlindValueProof(
 				nil, in.ValueBlinder, in.Value, in.ValueCommitment, in.AssetCommitment,
 			)
-			if err := updater.AddInUtxoRangeProof(i, in.RangeProof); err != nil {
-				return "", err
-			}
-			if err := updater.AddInExplicitAsset(i, asset, assetProof); err != nil {
-				return "", err
-			}
-			if err := updater.AddInExplicitValue(i, in.Value, valueProof); err != nil {
-				return "", err
-			}
+
+			updater.AddInUtxoRangeProof(i, in.RangeProof)
+			updater.AddInExplicitAsset(i, asset, assetProof)
+			updater.AddInExplicitValue(i, in.Value, valueProof)
 		}
 		if len(in.RedeemScript) > 0 {
 			updater.AddInWitnessScript(i, in.RedeemScript)
@@ -182,15 +177,10 @@ func UpdatePset(args UpdatePsetArgs) (string, error) {
 			valueProof, _ := confidential.CreateBlindValueProof(
 				nil, in.ValueBlinder, in.Value, in.ValueCommitment, in.AssetCommitment,
 			)
-			if err := updater.AddInUtxoRangeProof(inIndex, in.RangeProof); err != nil {
-				return "", err
-			}
-			if err := updater.AddInExplicitAsset(inIndex, asset, assetProof); err != nil {
-				return "", err
-			}
-			if err := updater.AddInExplicitValue(inIndex, in.Value, valueProof); err != nil {
-				return "", err
-			}
+
+			updater.AddInUtxoRangeProof(inIndex, in.RangeProof)
+			updater.AddInExplicitAsset(inIndex, asset, assetProof)
+			updater.AddInExplicitValue(inIndex, in.Value, valueProof)
 		}
 		if len(in.RedeemScript) > 0 {
 			if err := updater.AddInWitnessScript(inIndex, in.RedeemScript); err != nil {
