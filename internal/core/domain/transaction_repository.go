@@ -33,11 +33,11 @@ type TransactionEvent struct {
 type TransactionRepository interface {
 	// AddTransaction adds the provided transaction to the repository by
 	// preventing duplicates.
-	// Generates a TransactionAdded event if successfull.
+	// Generates a TransactionAdded event if successful.
 	AddTransaction(ctx context.Context, tx *Transaction) (bool, error)
 	// ConfirmTransaction adds the given blockhash and block height to the
 	// Transaction identified by the given txid.
-	// Generates a TransactionConfirmed event if successfull.
+	// Generates a TransactionConfirmed event if successful.
 	ConfirmTransaction(
 		ctx context.Context, txid, blockHash string, blockheight uint64,
 	) (bool, error)
