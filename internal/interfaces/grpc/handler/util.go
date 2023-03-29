@@ -211,6 +211,8 @@ func parseTxEventType(eventType domain.TransactionEventType) pb.TxEventType {
 		return pb.TxEventType_TX_EVENT_TYPE_BROADCASTED
 	case domain.TransactionConfirmed:
 		return pb.TxEventType_TX_EVENT_TYPE_CONFIRMED
+	case domain.TransactionUnconfirmed:
+		return pb.TxEventType_TX_EVENT_TYPE_UNCONFIRMED
 	default:
 		return pb.TxEventType_TX_EVENT_TYPE_UNSPECIFIED
 	}
