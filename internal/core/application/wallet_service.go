@@ -184,9 +184,9 @@ func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
 	}
 
 	birthdayBlock, _ := ws.bcScanner.GetBlockHash(w.BirthdayBlockHeight)
-	accounts := make([]AccountInfo, 0, len(w.AccountsByKey))
-	for _, a := range w.AccountsByKey {
-		accounts = append(accounts, AccountInfo{a.Info})
+	accounts := make([]AccountInfo, 0, len(w.Accounts))
+	for _, a := range w.Accounts {
+		accounts = append(accounts, AccountInfo{a.AccountInfo})
 	}
 	return &WalletInfo{
 		Network:             w.NetworkName,

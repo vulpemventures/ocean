@@ -11,11 +11,11 @@ import (
 )
 
 const deleteAccount = `-- name: DeleteAccount :exec
-DELETE FROM account WHERE name = $1
+DELETE FROM account WHERE namespace = $1
 `
 
-func (q *Queries) DeleteAccount(ctx context.Context, name string) error {
-	_, err := q.db.Exec(ctx, deleteAccount, name)
+func (q *Queries) DeleteAccount(ctx context.Context, namespace string) error {
+	_, err := q.db.Exec(ctx, deleteAccount, namespace)
 	return err
 }
 
@@ -56,15 +56,16 @@ func (q *Queries) DeleteUtxosForAccountName(ctx context.Context, accountName str
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id FROM account WHERE name = $1
+SELECT namespace, index, label, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id FROM account WHERE namespace = $1 OR label = $1
 `
 
-func (q *Queries) GetAccount(ctx context.Context, name string) (Account, error) {
-	row := q.db.QueryRow(ctx, getAccount, name)
+func (q *Queries) GetAccount(ctx context.Context, namespace string) (Account, error) {
+	row := q.db.QueryRow(ctx, getAccount, namespace)
 	var i Account
 	err := row.Scan(
-		&i.Name,
+		&i.Namespace,
 		&i.Index,
+		&i.Label,
 		&i.Xpub,
 		&i.DerivationPath,
 		&i.NextExternalIndex,
@@ -381,9 +382,9 @@ func (q *Queries) GetUtxosForAccountName(ctx context.Context, accountName string
 }
 
 const getWalletAccountsAndScripts = `-- name: GetWalletAccountsAndScripts :many
-SELECT w.id as walletId,w.encrypted_mnemonic,w.password_hash,w.birthday_block_height,w.root_path,w.network_name,w.next_account_index, a.name,a.index,a.xpub,a.derivation_path as account_derivation_path,a.next_external_index,a.next_internal_index,a.fk_wallet_id,asi.script,asi.derivation_path as script_derivation_path,asi.fk_account_name FROM
+SELECT w.id as walletId,w.encrypted_mnemonic,w.password_hash,w.birthday_block_height,w.root_path,w.network_name,w.next_account_index, a.namespace,a.label,a.index,a.xpub,a.derivation_path as account_derivation_path,a.next_external_index,a.next_internal_index,a.fk_wallet_id,asi.script,asi.derivation_path as script_derivation_path,asi.fk_account_name FROM
 wallet w LEFT JOIN account a ON w.id = a.fk_wallet_id
-LEFT JOIN account_script_info asi on a.name = asi.fk_account_name
+LEFT JOIN account_script_info asi on a.namespace = asi.fk_account_name
 WHERE w.id = $1
 `
 
@@ -395,7 +396,8 @@ type GetWalletAccountsAndScriptsRow struct {
 	RootPath              string
 	NetworkName           string
 	NextAccountIndex      int32
-	Name                  sql.NullString
+	Namespace             sql.NullString
+	Label                 sql.NullString
 	Index                 sql.NullInt32
 	Xpub                  sql.NullString
 	AccountDerivationPath sql.NullString
@@ -424,7 +426,8 @@ func (q *Queries) GetWalletAccountsAndScripts(ctx context.Context, id string) ([
 			&i.RootPath,
 			&i.NetworkName,
 			&i.NextAccountIndex,
-			&i.Name,
+			&i.Namespace,
+			&i.Label,
 			&i.Index,
 			&i.Xpub,
 			&i.AccountDerivationPath,
@@ -446,12 +449,13 @@ func (q *Queries) GetWalletAccountsAndScripts(ctx context.Context, id string) ([
 }
 
 const insertAccount = `-- name: InsertAccount :one
-INSERT INTO account(name,index,xpub,derivation_path,next_external_index,next_internal_index,fk_wallet_id)
-VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id
+INSERT INTO account(namespace,label,index,xpub,derivation_path,next_external_index,next_internal_index,fk_wallet_id)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING namespace, index, label, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id
 `
 
 type InsertAccountParams struct {
-	Name              string
+	Namespace         string
+	Label             sql.NullString
 	Index             int32
 	Xpub              string
 	DerivationPath    string
@@ -462,7 +466,8 @@ type InsertAccountParams struct {
 
 func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) (Account, error) {
 	row := q.db.QueryRow(ctx, insertAccount,
-		arg.Name,
+		arg.Namespace,
+		arg.Label,
 		arg.Index,
 		arg.Xpub,
 		arg.DerivationPath,
@@ -472,8 +477,9 @@ func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) (A
 	)
 	var i Account
 	err := row.Scan(
-		&i.Name,
+		&i.Namespace,
 		&i.Index,
+		&i.Label,
 		&i.Xpub,
 		&i.DerivationPath,
 		&i.NextExternalIndex,
@@ -537,7 +543,7 @@ func (q *Queries) InsertTransactionInputAccount(ctx context.Context, arg InsertT
 }
 
 const insertUtxo = `-- name: InsertUtxo :one
-INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,nonce,range_proof,surjection_proof,account_name,lock_timestamp, lock_expiry_timestamp)
+INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_blinder,asset_blinder,script,nonce,range_proof,surjection_proof,account_name,lock_timestamp,lock_expiry_timestamp)
 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, $15) RETURNING id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp
 `
 
@@ -672,22 +678,29 @@ func (q *Queries) InsertWallet(ctx context.Context, arg InsertWalletParams) (Wal
 	return i, err
 }
 
-const updateAccountIndexes = `-- name: UpdateAccountIndexes :one
-UPDATE account SET next_external_index = $1, next_internal_index = $2 WHERE name = $3 RETURNING name, index, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id
+const updateAccount = `-- name: UpdateAccount :one
+UPDATE account SET next_external_index = $1, next_internal_index = $2, label = $3 WHERE namespace = $4 RETURNING namespace, index, label, xpub, derivation_path, next_external_index, next_internal_index, fk_wallet_id
 `
 
-type UpdateAccountIndexesParams struct {
+type UpdateAccountParams struct {
 	NextExternalIndex int32
 	NextInternalIndex int32
-	Name              string
+	Label             sql.NullString
+	Namespace         string
 }
 
-func (q *Queries) UpdateAccountIndexes(ctx context.Context, arg UpdateAccountIndexesParams) (Account, error) {
-	row := q.db.QueryRow(ctx, updateAccountIndexes, arg.NextExternalIndex, arg.NextInternalIndex, arg.Name)
+func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error) {
+	row := q.db.QueryRow(ctx, updateAccount,
+		arg.NextExternalIndex,
+		arg.NextInternalIndex,
+		arg.Label,
+		arg.Namespace,
+	)
 	var i Account
 	err := row.Scan(
-		&i.Name,
+		&i.Namespace,
 		&i.Index,
+		&i.Label,
 		&i.Xpub,
 		&i.DerivationPath,
 		&i.NextExternalIndex,

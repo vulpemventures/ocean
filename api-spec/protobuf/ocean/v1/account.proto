@@ -17,6 +17,9 @@ service AccountService {
   // CreateAccountCustom creates a new custom account for which loading a template.
   rpc CreateAccountCustom(CreateAccountCustomRequest) returns (CreateAccountCustomResponse);
 
+  // SetAccountLabel sets a label for the account that can be used later to refer to it.
+  rpc SetAccountLabel(SetAccountLabelRequest) returns (SetAccountLabelResponse);
+
   // SetAccountTemplate sets the template for the account used to generate new addresses.
   rpc SetAccountTemplate(SetAccountTemplateRequest) returns (SetAccountTemplateResponse);
 
@@ -43,53 +46,45 @@ service AccountService {
 }
 
 message CreateAccountBIP44Request{
-  // Name of the account.
-  string name = 1;
-  // List of xpubs of other parties involved in the multisg along with ocean and
-  // the cosigner it interacts with.
-  repeated string extra_xpubs = 2;
+  // Optional label for the new account.
+  string label = 1;
 }
 message CreateAccountBIP44Response{
-  // Account name.
-  string account_name = 1;
-  // Account index.
-  uint32 account_index = 2;
-  // Xpub.
-  string xpub = 3;
-  // Derivation path
-  string derivation_path = 4;
+  // Info about the new account.
+  AccountInfo info = 1;
 }
 
 message CreateAccountMultiSigRequest{
-  // Name of the account.
-  string name = 1;
+  // Optional label for the new account.
+  string label = 1;
 }
 message CreateAccountMultiSigResponse{
-  // Account name.
-  string account_name = 1;
-  // Account index.
-  uint32 account_index = 2;
-  // The custom derivation path of the new account.
-  string derivation_path = 3;
-  // List of xpubs of the multisig account.
-  repeated string xpubs = 4;
+  // Info about the new account.
+  AccountInfo info = 1;
 }
 
 message CreateAccountCustomRequest{
-  // Name of the account.
-  string name = 1;
+  // Optional label for the new account.
+  string label = 1;
 }
 message CreateAccountCustomResponse{
-  // Account name.
+  // Info about the new account.
+  AccountInfo info = 1;
+}
+
+message SetAccountLabelRequest {
+  // Account namespace or label.
   string account_name = 1;
-  // The custom derivation path of the new account.
-  string derivation_path = 2;
-  // Xpub.
-  string xpub = 3;
+  // New account label.
+  string label = 2;
+}
+message SetAccountLabelResponse {
+  // Info about the updated account.
+  AccountInfo info = 1;
 }
 
 message SetAccountTemplateRequest {
-  // Account name.
+  // Account namespace or label.
   string account_name = 1;
   // Output descriptor template.
   Template template = 2;
@@ -97,7 +92,7 @@ message SetAccountTemplateRequest {
 message SetAccountTemplateResponse {}
 
 message DeriveAddressesRequest{
-  // Account name.
+  // Account namespace or label.
   string account_name = 1;
   // The number of addresses to generate.
   uint64 num_of_addresses = 2;
@@ -107,7 +102,7 @@ message DeriveAddressesResponse{
 }
 
 message DeriveChangeAddressesRequest{
-  // Account name.
+  // Account namespace or label.
   string account_name = 1;
   // The number of addresses to generate.
   uint64 num_of_addresses = 2;
@@ -117,7 +112,7 @@ message DeriveChangeAddressesResponse{
 }
 
 message ListAddressesRequest {
-  // Account name.
+  // Account namespace or label.
   string account_name = 1;
 }
 message ListAddressesResponse {
@@ -125,7 +120,7 @@ message ListAddressesResponse {
 }
 
 message BalanceRequest{
-  // Account name.
+  // Account namespace or label.
   string account_name = 1;
   // Addresses for which calculating balance. If not specified, the cumulative
   // balance is returned.
@@ -138,7 +133,7 @@ message BalanceResponse{
 }
 
 message ListUtxosRequest{
-  // Account name.
+  // Account namespace or label.
   string account_name = 1;
   // List of account's addresses for which listing utxos. If not specified,
   // the list of all utxos owned by the account is returned.
@@ -152,7 +147,7 @@ message ListUtxosResponse{
 }
 
 message DeleteAccountRequest{
-  // Account name.
+  // Account namespace or label.
   string account_name = 1;
 }
 message DeleteAccountResponse{}

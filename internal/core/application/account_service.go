@@ -57,19 +57,43 @@ func NewAccountService(
 }
 
 func (as *AccountService) CreateAccountBIP44(
-	ctx context.Context, accountName string,
+	ctx context.Context, label string,
 ) (*AccountInfo, error) {
 	_, birthdayBlockHeight, err := as.bcScanner.GetLatestBlock()
 	if err != nil {
 		return nil, err
 	}
 	accountInfo, err := as.repoManager.WalletRepository().CreateAccount(
-		ctx, accountName, birthdayBlockHeight,
+		ctx, label, birthdayBlockHeight,
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &AccountInfo{*accountInfo}, nil
+}
+
+func (as *AccountService) SetAccountLabel(
+	ctx context.Context, accountName, label string,
+) (*AccountInfo, error) {
+	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := w.SetLabelForAccount(accountName, label); err != nil {
+		return nil, err
+	}
+
+	if err := as.repoManager.WalletRepository().UpdateWallet(
+		ctx, func(_ *domain.Wallet) (*domain.Wallet, error) {
+			return w, nil
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	account, _ := w.GetAccount(label)
+	return &AccountInfo{account.AccountInfo}, nil
 }
 
 func (as *AccountService) DeriveAddressesForAccount(
@@ -131,7 +155,7 @@ func (as *AccountService) GetBalanceForAccount(
 	}
 
 	return as.repoManager.UtxoRepository().GetBalanceForAccount(
-		ctx, account.Info.Key.Name,
+		ctx, account.Namespace,
 	)
 }
 
@@ -149,14 +173,14 @@ func (as *AccountService) ListUtxosForAccount(
 	}
 
 	spendableUtxos, err := as.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
-		ctx, account.Info.Key.Name,
+		ctx, account.Namespace,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	lockedUtxos, err := as.repoManager.UtxoRepository().GetLockedUtxosForAccount(
-		ctx, account.Info.Key.Name,
+		ctx, account.Namespace,
 	)
 	if err != nil {
 		return nil, err
@@ -202,16 +226,20 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 		domain.WalletUnlocked, func(event domain.WalletEvent) {
 			w, _ := as.repoManager.WalletRepository().GetWallet(context.Background())
 
-			for accountName := range w.AccountKeysByName {
-				accountKey := w.AccountKeysByName[accountName]
-				account := w.AccountsByKey[accountKey]
-				addressesInfo, _ := w.AllDerivedAddressesForAccount(accountName)
+			for _, account := range w.Accounts {
+				addressesInfo, _ := w.AllDerivedAddressesForAccount(account.Namespace)
 				if len(addressesInfo) > 0 {
-					as.log("start watching addresses for account %s", accountName)
-					as.bcScanner.WatchForAccount(accountName, account.BirthdayBlock, addressesInfo)
+					as.log("start watching addresses for account %s", account.Namespace)
+					as.bcScanner.WatchForAccount(
+						account.Namespace, account.BirthdayBlock, addressesInfo,
+					)
 				}
-				go as.listenToUtxoChannel(accountName, as.bcScanner.GetUtxoChannel(accountName))
-				go as.listenToTxChannel(accountName, as.bcScanner.GetTxChannel(accountName))
+				go as.listenToUtxoChannel(
+					account.Namespace, as.bcScanner.GetUtxoChannel(account.Namespace),
+				)
+				go as.listenToTxChannel(
+					account.Namespace, as.bcScanner.GetTxChannel(account.Namespace),
+				)
 			}
 		},
 	)

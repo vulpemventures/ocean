@@ -43,8 +43,8 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 	for _, a := range accounts {
 		masterBlindingKey, _ := a.GetMasterBlindingKey()
 		list = append(list, &pb.AccountInfo{
-			Name:              a.Key.Name,
-			Index:             a.Key.Index,
+			Namespace:         a.Namespace,
+			Label:             a.Label,
 			Xpubs:             []string{a.Xpub},
 			DerivationPath:    a.DerivationPath,
 			MasterBlindingKey: masterBlindingKey,
@@ -55,7 +55,7 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 
 func parseAccountName(name string) (string, error) {
 	if name == "" {
-		return "", fmt.Errorf("missing account name")
+		return "", fmt.Errorf("missing account namespace or label")
 	}
 	return name, nil
 }
