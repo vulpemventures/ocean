@@ -259,6 +259,13 @@ func (r *walletRepository) publishEvent(event domain.WalletEvent) {
 	}
 }
 
+func (r *walletRepository) reset() {
+	r.store.lock.Lock()
+	defer r.store.lock.Unlock()
+
+	r.store.wallet = nil
+}
+
 func (r *walletRepository) close() {
 	close(r.chEvents)
 	close(r.externalChEvents)

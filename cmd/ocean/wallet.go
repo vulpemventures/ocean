@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"path/filepath"
 
 	"github.com/btcsuite/btcd/btcutil"
@@ -14,10 +15,14 @@ var (
 	datadir   = btcutil.AppDataDir("ocean-cli", false)
 	statePath = filepath.Join(datadir, "state.json")
 
-	mnemonic    string
-	password    string
-	oldPassword string
-	newPassword string
+	mnemonic,
+	password,
+	oldPassword,
+	newPassword,
+	rootPath string
+	birthdayBlock,
+	accountThreshold,
+	addressThreshold uint32
 
 	walletGenSeedCmd = &cobra.Command{
 		Use:   "genseed",
@@ -33,6 +38,13 @@ var (
 			"with the given mnemonic (or let me create one for you), " +
 			"encrypted with your choosen password",
 		RunE: walletCreate,
+	}
+	walletRestoreCmd = &cobra.Command{
+		Use:   "restore",
+		Short: "restore an existing wallet from a seed",
+		Long: "this command lets you restore an ocean wallet from the given " +
+			"mnemonic, encrypted with your choosen password",
+		RunE: walletRestore,
 	}
 	walletUnlockCmd = &cobra.Command{
 		Use:   "unlock",
@@ -87,6 +99,23 @@ func init() {
 	walletCreateCmd.Flags().StringVar(&password, "password", "", "encryption password")
 	walletCreateCmd.MarkFlagRequired("password")
 
+	walletRestoreCmd.Flags().StringVar(
+		&mnemonic, "mnemonic", "", "space separated word list as wallet seed",
+	)
+	walletRestoreCmd.Flags().StringVar(&password, "password", "", "encryption password")
+	walletRestoreCmd.Flags().Uint32Var(
+		&birthdayBlock, "birthday-block", 0, "height of the blockchain when wallet was created",
+	)
+	walletRestoreCmd.Flags().StringVar(&rootPath, "root-path", "", "wallet root path")
+	walletRestoreCmd.Flags().Uint32Var(
+		&accountThreshold, "account-threshold", 0, "threshold for the number of consecutive accounts to be found empty to consider the restore of the wallet completed",
+	)
+	walletRestoreCmd.Flags().Uint32Var(
+		&addressThreshold, "address-threshold", 0, "threshold for the number of consecutive addresses to be found unused to consider the restore of a wallet account completed",
+	)
+	walletRestoreCmd.MarkFlagRequired("mnemonic")
+	walletRestoreCmd.MarkFlagRequired("password")
+
 	walletUnlockCmd.Flags().StringVar(&password, "password", "", "encryption password")
 	walletUnlockCmd.MarkFlagRequired("password")
 
@@ -99,8 +128,8 @@ func init() {
 	walletChangePwdCmd.MarkFlagRequired("new-password")
 
 	walletCmd.AddCommand(
-		walletGenSeedCmd, walletCreateCmd, walletUnlockCmd, walletLockCmd,
-		walletChangePwdCmd, walletInfoCmd, walletStatusCmd, authWalletCmd,
+		walletGenSeedCmd, walletCreateCmd, walletRestoreCmd, walletUnlockCmd,
+		walletLockCmd, walletChangePwdCmd, walletInfoCmd, walletStatusCmd, authWalletCmd,
 	)
 }
 
@@ -168,6 +197,43 @@ func walletCreate(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("")
 	fmt.Println("wallet initialized")
+	return nil
+}
+
+func walletRestore(cmd *cobra.Command, args []string) error {
+	client, cleanup, err := getWalletClient()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	stream, err := client.RestoreWallet(
+		context.Background(), &pb.RestoreWalletRequest{
+			Mnemonic:               mnemonic,
+			Password:               password,
+			BirthdayBlockHeight:    birthdayBlock,
+			RootPath:               rootPath,
+			EmptyAccountThreshold:  accountThreshold,
+			UnusedAddressThreshold: addressThreshold,
+		},
+	)
+	if err != nil {
+		printErr(err)
+		return nil
+	}
+
+	for {
+		reply, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+
+		fmt.Println("- message:", reply.GetMessage())
+	}
+
 	return nil
 }
 

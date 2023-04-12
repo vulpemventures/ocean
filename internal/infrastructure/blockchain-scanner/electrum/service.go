@@ -6,10 +6,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/confidential"
 	"github.com/vulpemventures/go-elements/elementsutil"
+	"github.com/vulpemventures/go-elements/network"
+	"github.com/vulpemventures/go-elements/payment"
+	"github.com/vulpemventures/go-elements/slip77"
+	"github.com/vulpemventures/go-elements/transaction"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
 )
@@ -20,6 +24,7 @@ type service struct {
 
 	lock *sync.RWMutex
 
+	net                          *network.Network
 	accountAddressesByScriptHash map[string]map[string]domain.AddressInfo
 	utxoChannelByAccount         map[string]chan []*domain.Utxo
 	txChannelByAccount           map[string]chan *domain.Transaction
@@ -30,7 +35,8 @@ type service struct {
 }
 
 type ServiceArgs struct {
-	Addr string
+	Addr    string
+	Network *network.Network
 }
 
 func (a ServiceArgs) validate() error {
@@ -39,6 +45,9 @@ func (a ServiceArgs) validate() error {
 	}
 	if !a.withTCP() && !a.withWS() {
 		return fmt.Errorf("invalid address: unknown protocol")
+	}
+	if a.Network == nil {
+		return fmt.Errorf("missing network")
 	}
 	return nil
 }
@@ -87,7 +96,7 @@ func NewService(args ServiceArgs) (ports.BlockchainScanner, error) {
 	}
 
 	svc := &service{
-		client, db, lock, accountAddressesByScriptHash,
+		client, db, lock, args.Network, accountAddressesByScriptHash,
 		utxoChannelByAccount, txChannelByAccount, reportChannelByAccount,
 		logFn, warnFn,
 	}
@@ -110,8 +119,7 @@ func (s *service) Stop() {
 }
 
 func (s *service) WatchForAccount(
-	accountName string, _ uint32,
-	addresses []domain.AddressInfo,
+	accountName string, _ uint32, addresses []domain.AddressInfo,
 ) {
 	accountCh, txHistory := s.client.subscribeForAccount(accountName, addresses)
 	if _, ok := s.getAccountChannel(accountName); !ok {
@@ -129,6 +137,30 @@ func (s *service) WatchForAccount(
 func (s *service) WatchForUtxos(
 	accountName string, utxos []domain.UtxoInfo,
 ) {
+}
+
+func (s *service) RestoreAccount(
+	accountIndex uint32, accountName, xpub string, masterBlindingKey []byte,
+	_, addressesThreshold uint32,
+) ([]domain.AddressInfo, []domain.AddressInfo, error) {
+	masterKey, err := hdkeychain.NewKeyFromString(xpub)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid xpub: %s", err)
+	}
+
+	masterBlindKey, err := slip77.FromMasterKey(masterBlindingKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid master blinding key: %s", err)
+	}
+
+	externalAddresses := s.restoreAddressesForAccount(
+		accountName, accountIndex, 0, masterKey, masterBlindKey, addressesThreshold,
+	)
+	internalAddresses := s.restoreAddressesForAccount(
+		accountName, accountIndex, 1, masterKey, masterBlindKey, addressesThreshold,
+	)
+
+	return externalAddresses, internalAddresses, nil
 }
 
 func (s *service) StopWatchForAccount(accountName string) {
@@ -149,17 +181,191 @@ func (s *service) GetLatestBlock() ([]byte, uint32, error) {
 
 // GetBlockHash returns the hash of the block identified by its height.
 func (s *service) GetBlockHash(height uint32) ([]byte, error) {
-	hash, _, err := s.client.getBlockInfo(height)
+	blocks, err := s.client.getBlocksInfo([]uint32{height})
 	if err != nil {
 		return nil, err
 	}
-	return hash[:], nil
+	return blocks[0].hash()[:], nil
 }
 
 // GetUtxos is a sync function to get info about the utxos represented by
 // given outpoints (UtxoKeys).
 func (s *service) GetUtxos(utxos []domain.Utxo) ([]domain.Utxo, error) {
 	return s.client.getUtxos(utxos)
+}
+
+func (s *service) GetUtxosForAddresses(
+	addresses []domain.AddressInfo,
+) ([]*domain.Utxo, error) {
+	// Parse addresses into script hashes.
+	scriptHashes := make([]string, 0, len(addresses))
+	addressesByScriptHash := make(map[string]domain.AddressInfo)
+	for _, addr := range addresses {
+		scriptHash := calcScriptHash(addr.Script)
+		scriptHashes = append(scriptHashes, scriptHash)
+		addressesByScriptHash[scriptHash] = addr
+	}
+
+	// Retrieve tx history for all addresses.
+	history, err := s.client.getScriptHashesHistory(scriptHashes)
+	if err != nil {
+		return nil, err
+	}
+
+	allTxsById := make(map[string]txInfo)
+	for _, txHistory := range history {
+		for _, txInfo := range txHistory {
+			allTxsById[txInfo.Txid] = txInfo
+		}
+	}
+	allTxs := make([]string, 0, len(allTxsById))
+	for txid := range allTxsById {
+		allTxs = append(allTxs, txid)
+	}
+
+	txs, err := s.client.getTxs(allTxs)
+	if err != nil {
+		return nil, err
+	}
+
+	// For every tx of the history, add all inputs to the list (map) of spent
+	// utxos, and all outputs owned by any of the given addresses to the
+	// list (map) of all utxos.
+	spentUtxosByKey := make(map[domain.UtxoKey]struct{})
+	utxosByScriptHash := make(map[string][]*domain.Utxo)
+	for _, tx := range txs {
+		for _, in := range tx.Inputs {
+			spentUtxosByKey[domain.UtxoKey{
+				TxID: elementsutil.TxIDFromBytes(in.Hash),
+				VOut: in.Index,
+			}] = struct{}{}
+		}
+		for i, out := range tx.Outputs {
+			if len(out.Script) > 0 {
+				scriptHash := calcScriptHash(hex.EncodeToString(out.Script))
+				if _, ok := addressesByScriptHash[scriptHash]; ok {
+					var value uint64
+					var asset string
+					var nonce, valueCommit, assetCommit []byte
+					if out.IsConfidential() {
+						nonce, valueCommit, assetCommit = out.Nonce, out.Value, out.Asset
+					} else {
+						value, _ = elementsutil.ValueFromBytes(out.Value)
+						asset = elementsutil.AssetHashFromBytes(out.Asset)
+					}
+					utxosByScriptHash[scriptHash] = append(utxosByScriptHash[scriptHash], &domain.Utxo{
+						UtxoKey: domain.UtxoKey{
+							TxID: tx.TxHash().String(),
+							VOut: uint32(i),
+						},
+						Value:           value,
+						Asset:           asset,
+						ValueCommitment: valueCommit,
+						AssetCommitment: assetCommit,
+						Script:          out.Script,
+						Nonce:           nonce,
+						RangeProof:      out.RangeProof,
+						SurjectionProof: out.SurjectionProof,
+					})
+				}
+			}
+		}
+	}
+
+	// Loop over the list of all utxos to unblind'em if necessary.
+	// Last thing to do is to reconstruct the spent and confirmed statuses of
+	// the utxos. For this, we collect all blocks (height) for which we need to
+	// fetch info from electrum.
+	// We make use of 2 auxiliary maps to associate blocks to spent and confimed
+	// utxos.
+	spentUtxoBlocks := make(map[uint32][]domain.UtxoKey)
+	utxoBlocks := make(map[uint32][]domain.UtxoKey)
+	utxosByKey := make(map[domain.UtxoKey]*domain.Utxo)
+	for scriptHash, utxos := range utxosByScriptHash {
+		for _, utxo := range utxos {
+			if _, ok := spentUtxosByKey[utxo.Key()]; ok {
+				if txInfo, ok := allTxsById[utxo.TxID]; ok {
+					spentUtxoBlocks[uint32(txInfo.Height)] = append(
+						spentUtxoBlocks[uint32(txInfo.Height)], utxo.Key(),
+					)
+				} else {
+					continue
+				}
+			}
+
+			blockHeight := allTxsById[utxo.TxID].Height
+			if blockHeight > 0 {
+				utxoBlocks[uint32(blockHeight)] = append(
+					utxoBlocks[uint32(blockHeight)], utxo.Key(),
+				)
+			}
+
+			addr := addressesByScriptHash[scriptHash]
+			asset := utxo.AssetCommitment
+			if len(asset) == 0 {
+				asset, _ = elementsutil.AssetHashToBytes(utxo.Asset)
+			}
+			value := utxo.ValueCommitment
+			if len(value) == 0 {
+				value, _ = elementsutil.ValueToBytes(utxo.Value)
+			}
+			unblindedData, _ := confidential.UnblindOutputWithKey(&transaction.TxOutput{
+				Value:           value,
+				Asset:           asset,
+				Script:          utxo.Script,
+				Nonce:           utxo.Nonce,
+				RangeProof:      utxo.RangeProof,
+				SurjectionProof: utxo.SurjectionProof,
+			}, addr.BlindingKey)
+			utxo.Value = unblindedData.Value
+			utxo.Asset = elementsutil.TxIDFromBytes(unblindedData.Asset)
+			utxo.ValueBlinder = unblindedData.ValueBlindingFactor
+			utxo.AssetBlinder = unblindedData.AssetBlindingFactor
+			utxo.RangeProof, utxo.SurjectionProof = nil, nil
+			utxosByKey[utxo.Key()] = utxo
+		}
+	}
+
+	// Merge the 2 auxiliary maps into a single one to prevent duplicated keys
+	// and fetch info for all blocks.
+	allUtxoBlocks := make(map[uint32]struct{})
+	for height := range utxoBlocks {
+		allUtxoBlocks[height] = struct{}{}
+	}
+	for height := range spentUtxoBlocks {
+		allUtxoBlocks[height] = struct{}{}
+	}
+	blocks := make([]uint32, 0, len(allUtxoBlocks))
+	for height := range allUtxoBlocks {
+		blocks = append(blocks, height)
+	}
+	blocksInfo, err := s.client.getBlocksInfo(blocks)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reconstruct utxo statuses with the fetched blocks info and update the
+	// statuses of the spent and confirmed utxos.
+	for _, block := range blocksInfo {
+		status := domain.UtxoStatus{
+			BlockHeight: block.Height,
+			BlockHash:   block.hash().String(),
+			BlockTime:   block.timestamp(),
+		}
+		for _, key := range utxoBlocks[uint32(block.Height)] {
+			utxosByKey[key].ConfirmedStatus = status
+		}
+		for _, key := range spentUtxoBlocks[uint32(block.Height)] {
+			utxosByKey[key].SpentStatus = status
+		}
+	}
+
+	// Translate the auxiliary map into a list of utxos.
+	utxos := make([]*domain.Utxo, 0, len(utxosByKey))
+	for _, utxo := range utxosByKey {
+		utxos = append(utxos, utxo)
+	}
+	return utxos, nil
 }
 
 // BroadcastTransaction sends the given raw tx (in hex string) over the
@@ -222,26 +428,27 @@ func (s *service) listenToAccountChannel(chReports chan accountReport) {
 }
 
 func (s *service) dbEventHandler(event dbEvent) {
-	tx, err := s.client.getTx(event.tx.Txid)
+	txs, err := s.client.getTxs([]string{event.tx.Txid})
 	if err != nil {
 		s.warn(err, "failed to fetch tx for event %+v", event)
 		return
 	}
+	tx := txs[0]
 
 	newUtxos := make([]*domain.Utxo, 0)
 	spentUtxos := make([]*domain.Utxo, 0)
 	confirmedUtxos := make([]*domain.Utxo, 0)
-	var blockHash *chainhash.Hash
-	var blockTimestamp int64
+	var block *blockInfo
 
 	if event.tx.Height > 0 {
-		blockHash, blockTimestamp, err = s.client.getBlockInfo(
-			uint32(event.tx.Height),
+		blocks, err := s.client.getBlocksInfo(
+			[]uint32{uint32(event.tx.Height)},
 		)
 		if err != nil {
 			s.warn(err, "failed to fetch block %d", event.tx.Height)
 			return
 		}
+		block = &blocks[0]
 
 		for _, in := range tx.Inputs {
 			spentUtxos = append(spentUtxos, &domain.Utxo{
@@ -251,8 +458,8 @@ func (s *service) dbEventHandler(event dbEvent) {
 				},
 				SpentStatus: domain.UtxoStatus{
 					Txid:        event.tx.Txid,
-					BlockHash:   blockHash.String(),
-					BlockTime:   blockTimestamp,
+					BlockHash:   block.hash().String(),
+					BlockTime:   block.timestamp(),
 					BlockHeight: uint64(event.tx.Height),
 				},
 			})
@@ -271,8 +478,8 @@ func (s *service) dbEventHandler(event dbEvent) {
 							VOut: uint32(i),
 						},
 						ConfirmedStatus: domain.UtxoStatus{
-							BlockHash:   blockHash.String(),
-							BlockTime:   blockTimestamp,
+							BlockHash:   block.hash().String(),
+							BlockTime:   block.timestamp(),
 							BlockHeight: uint64(event.tx.Height),
 						},
 					})
@@ -299,8 +506,8 @@ func (s *service) dbEventHandler(event dbEvent) {
 					var confirmedStatus domain.UtxoStatus
 					if event.tx.Height > 0 {
 						confirmedStatus = domain.UtxoStatus{
-							BlockHash:   blockHash.String(),
-							BlockTime:   blockTimestamp,
+							BlockHash:   block.hash().String(),
+							BlockTime:   block.timestamp(),
 							BlockHeight: uint64(event.tx.Height),
 						}
 					}
@@ -331,8 +538,8 @@ func (s *service) dbEventHandler(event dbEvent) {
 
 	var hash string
 	var blockHeight uint64
-	if blockHash != nil {
-		hash = blockHash.String()
+	if block != nil {
+		hash = block.hash().String()
 		blockHeight = uint64(event.tx.Height)
 	}
 
@@ -360,7 +567,9 @@ func (s *service) dbEventHandler(event dbEvent) {
 	}
 }
 
-func (s *service) getAddressByScriptHash(account, scriptHash string) *domain.AddressInfo {
+func (s *service) getAddressByScriptHash(
+	account, scriptHash string,
+) *domain.AddressInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -371,7 +580,9 @@ func (s *service) getAddressByScriptHash(account, scriptHash string) *domain.Add
 	return &info
 }
 
-func (s *service) setAddressesByScriptHash(account string, addresses []domain.AddressInfo) {
+func (s *service) setAddressesByScriptHash(
+	account string, addresses []domain.AddressInfo,
+) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -382,4 +593,68 @@ func (s *service) setAddressesByScriptHash(account string, addresses []domain.Ad
 	for _, addr := range addresses {
 		s.accountAddressesByScriptHash[account][calcScriptHash(addr.Script)] = addr
 	}
+}
+
+func (s *service) restoreAddressesForAccount(
+	accountName string, accountIndex, chain uint32,
+	masterKey *hdkeychain.ExtendedKey, masterBlindKey *slip77.Slip77,
+	addressesThaddressesThreshold uint32,
+) []domain.AddressInfo {
+	batchSize := int(addressesThaddressesThreshold)
+	batchCounter := 0
+	unusedAddressesCounter := 0
+	hdNode, _ := masterKey.Derive(chain)
+	restoredAddresses := make([]domain.AddressInfo, 0)
+
+	for {
+		if unusedAddressesCounter >= batchSize {
+			break
+		}
+
+		scriptHashes := make([]string, 0, batchSize)
+		addressesByScriptHash := make(map[string]domain.AddressInfo)
+
+		for i := 0; i < batchSize; i++ {
+			index := uint32(i + batchSize*batchCounter)
+			key, _ := hdNode.Derive(index)
+			pubkey, _ := key.ECPubKey()
+			unconf := payment.FromPublicKey(pubkey, s.net, nil)
+			blindingPrvkey, blindingPubkey, _ := masterBlindKey.DeriveKey(
+				unconf.WitnessScript,
+			)
+			p2wpkh := payment.FromPublicKey(pubkey, s.net, blindingPubkey)
+			addr, _ := p2wpkh.ConfidentialWitnessPubKeyHash()
+			script := hex.EncodeToString(p2wpkh.WitnessScript)
+			scriptHash := calcScriptHash(script)
+
+			scriptHashes = append(scriptHashes, scriptHash)
+			addressesByScriptHash[scriptHash] = domain.AddressInfo{
+				Account:        accountName,
+				Address:        addr,
+				BlindingKey:    blindingPrvkey.Serialize(),
+				DerivationPath: fmt.Sprintf("%d'/%d/%d", accountIndex, chain, index),
+				Script:         script,
+			}
+		}
+
+		history, _ := s.client.getScriptHashesHistory(scriptHashes)
+		if len(history) <= 0 {
+			break
+		}
+
+		for _, scriptHash := range scriptHashes {
+			if txHistory := history[scriptHash]; len(txHistory) > 0 {
+				unusedAddressesCounter = 0
+				restoredAddresses = append(
+					restoredAddresses, addressesByScriptHash[scriptHash],
+				)
+				continue
+			}
+			unusedAddressesCounter++
+		}
+
+		batchCounter++
+	}
+
+	return restoredAddresses
 }

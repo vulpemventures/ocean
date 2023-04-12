@@ -310,6 +310,10 @@ func (r *walletRepository) publishEvent(event domain.WalletEvent) {
 	}
 }
 
+func (r *walletRepository) reset() {
+	r.store.Badger().DropAll()
+}
+
 func (r *walletRepository) close() {
 	r.store.Close()
 	close(r.chEvents)

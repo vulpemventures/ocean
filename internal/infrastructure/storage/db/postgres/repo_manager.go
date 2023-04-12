@@ -12,6 +12,7 @@ import (
 
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
+	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
@@ -24,9 +25,9 @@ const (
 type repoManager struct {
 	pgxPool *pgxpool.Pool
 
-	utxoRepository   domain.UtxoRepository
-	walletRepository domain.WalletRepository
-	txRepository     domain.TransactionRepository
+	utxoRepository   *utxoRepositoryPg
+	walletRepository *walletRepositoryPg
+	txRepository     *txRepositoryPg
 
 	walletEventHandlers *handlerMap
 	utxoEventHandlers   *handlerMap
@@ -45,9 +46,9 @@ func NewRepoManager(dbConfig DbConfig) (ports.RepoManager, error) {
 		return nil, err
 	}
 
-	utxoRepository := NewUtxoRepositoryPgImpl(pgxPool)
-	walletRepository := NewWalletRepositoryPgImpl(pgxPool)
-	txRepository := NewTxRepositoryPgImpl(pgxPool)
+	utxoRepository := newUtxoRepositoryPgImpl(pgxPool)
+	walletRepository := newWalletRepositoryPgImpl(pgxPool)
+	txRepository := newTxRepositoryPgImpl(pgxPool)
 
 	rm := &repoManager{
 		pgxPool:             pgxPool,
@@ -106,7 +107,7 @@ func (rm *repoManager) RegisterHandlerForTxEvent(
 }
 
 func (rm *repoManager) listenToWalletEvents() {
-	for event := range rm.walletRepository.(*walletRepositoryPg).chEvents {
+	for event := range rm.walletRepository.chEvents {
 		time.Sleep(time.Millisecond)
 
 		if handlers, ok := rm.walletEventHandlers.get(int(event.EventType)); ok {
@@ -119,7 +120,7 @@ func (rm *repoManager) listenToWalletEvents() {
 }
 
 func (rm *repoManager) listenToUtxoEvents() {
-	for event := range rm.utxoRepository.(*utxoRepositoryPg).chEvents {
+	for event := range rm.utxoRepository.chEvents {
 		time.Sleep(time.Millisecond)
 
 		if handlers, ok := rm.utxoEventHandlers.get(int(event.EventType)); ok {
@@ -132,7 +133,7 @@ func (rm *repoManager) listenToUtxoEvents() {
 }
 
 func (rm *repoManager) listenToTxEvents() {
-	for event := range rm.txRepository.(*txRepositoryPg).chEvents {
+	for event := range rm.txRepository.chEvents {
 		time.Sleep(time.Millisecond)
 
 		if handlers, ok := rm.txEventHandlers.get(int(event.EventType)); ok {
@@ -144,10 +145,33 @@ func (rm *repoManager) listenToTxEvents() {
 	}
 }
 
+func (rm *repoManager) Reset() {
+	ctx := context.Background()
+	conn, err := rm.pgxPool.Acquire(ctx)
+	if err != nil {
+		return
+	}
+	defer conn.Release()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	querier := new(queries.Queries)
+	querier = querier.WithTx(tx)
+	rm.walletRepository.reset(querier, ctx)
+	rm.utxoRepository.reset(querier, ctx)
+	rm.txRepository.reset(querier, ctx)
+
+	tx.Commit(ctx)
+}
+
 func (rm *repoManager) Close() {
-	rm.utxoRepository.(*utxoRepositoryPg).close()
-	rm.txRepository.(*txRepositoryPg).close()
-	rm.walletRepository.(*walletRepositoryPg).close()
+	rm.utxoRepository.close()
+	rm.txRepository.close()
+	rm.walletRepository.close()
 
 	rm.pgxPool.Close()
 }

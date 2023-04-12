@@ -2,14 +2,24 @@ package application
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"sort"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
+	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
 	"github.com/vulpemventures/ocean/pkg/wallet/mnemonic"
+	singlesig "github.com/vulpemventures/ocean/pkg/wallet/single-sig"
+)
+
+const (
+	defaultEmptyAccountThreshold    = 3
+	defaultUnusedAddressesThreshold = 100
 )
 
 // WalletService is responsible for operations related to the managment of the
@@ -36,12 +46,18 @@ type WalletService struct {
 	unlocked    bool
 	synced      bool
 	lock        *sync.RWMutex
+
+	log func(format string, a ...interface{})
 }
 
 func NewWalletService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
 	rootPath string, net *network.Network, buildInfo BuildInfo,
 ) *WalletService {
+	logFn := func(format string, a ...interface{}) {
+		format = fmt.Sprintf("wallet service: %s", format)
+		log.Debugf(format, a...)
+	}
 	ws := &WalletService{
 		repoManager: repoManager,
 		bcScanner:   bcScanner,
@@ -49,6 +65,7 @@ func NewWalletService(
 		network:     net,
 		buildInfo:   buildInfo,
 		lock:        &sync.RWMutex{},
+		log:         logFn,
 	}
 	w, _ := ws.repoManager.WalletRepository().GetWallet(context.Background())
 	if w != nil {
@@ -141,27 +158,269 @@ func (ws *WalletService) ChangePassword(
 }
 
 func (ws *WalletService) RestoreWallet(
-	ctx context.Context, mnemonic []string, passpharse string,
-	birthdayBlockHeight uint32,
-) (err error) {
-	defer func() {
-		if err == nil {
-			ws.setInitialized()
-			ws.setSynced()
+	ctx context.Context, chMessages chan WalletRestoreMessage,
+	mnemonic []string, rootPath, passpharse string,
+	birthdayBlockHeight, emptyAccountsThreshold, unusedAddressesThreshold uint32,
+) {
+	defer close(chMessages)
+
+	canceled := false
+	c, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func(c, ctx context.Context, b *bool) {
+		for {
+			select {
+			case <-ctx.Done():
+				*b = true
+				ws.log("process aborted")
+				ws.repoManager.Reset()
+				ws.setNotInitialized()
+				return
+			case <-c.Done():
+				return
+			}
 		}
-	}()
+	}(c, ctx, &canceled)
 
-	// TODO: implement restoration
-
-	newWallet, err := domain.NewWallet(
-		mnemonic, passpharse, ws.rootPath, ws.network.Name,
-		birthdayBlockHeight, nil,
-	)
-	if err != nil {
+	if ws.isInitialized() {
+		sendMessage(canceled, chMessages, WalletRestoreMessage{
+			Err: fmt.Errorf("wallet is already initialized"),
+		})
 		return
 	}
 
-	return ws.repoManager.WalletRepository().CreateWallet(ctx, newWallet)
+	walletRootPath := rootPath
+	if walletRootPath == "" {
+		walletRootPath = ws.rootPath
+	}
+	if emptyAccountsThreshold == 0 {
+		emptyAccountsThreshold = defaultEmptyAccountThreshold
+	}
+	if unusedAddressesThreshold == 0 {
+		unusedAddressesThreshold = defaultUnusedAddressesThreshold
+	}
+	accountIndex := uint32(0)
+	emptyAccountCounter := uint32(0)
+	accounts := make([]domain.Account, 0)
+	w, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
+		RootPath: walletRootPath,
+		Mnemonic: mnemonic,
+	})
+
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+		Message: "start restoring wallet accounts...",
+	}) {
+		return
+	}
+
+	addressesByAccount := make(map[uint32][]domain.AddressInfo)
+	accountByScript := make(map[string]string)
+	for {
+		if emptyAccountCounter == emptyAccountsThreshold {
+			break
+		}
+
+		accountName := domain.GetAccountNamespace(walletRootPath, accountIndex)
+
+		msg := fmt.Sprintf("restoring account %d...", accountIndex)
+		if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+			Message: msg,
+		}) {
+			return
+		}
+		ws.log(msg)
+		xpub, _ := w.AccountExtendedPublicKey(singlesig.ExtendedKeyArgs{
+			Account: accountIndex,
+		})
+		masterBlidningKeyStr, _ := w.MasterBlindingKey()
+		masterBlindingKey, _ := hex.DecodeString(masterBlidningKeyStr)
+		externalAddresses, internalAddresses, err := ws.bcScanner.RestoreAccount(
+			accountIndex, accountName, xpub, masterBlindingKey, birthdayBlockHeight,
+			unusedAddressesThreshold,
+		)
+		if err != nil {
+			sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
+			return
+		}
+
+		if len(externalAddresses) <= 0 && len(internalAddresses) <= 0 {
+			if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+				Message: fmt.Sprintf("account %d empty", accountIndex),
+			}) {
+				return
+			}
+			ws.log("account %d empty", accountIndex)
+			emptyAccountCounter++
+			accountIndex++
+			continue
+		}
+
+		msg = fmt.Sprintf(
+			"found %d external address(es) for account %d",
+			len(externalAddresses), accountIndex,
+		)
+		if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+			Message: msg,
+		}) {
+			return
+		}
+		ws.log(msg)
+
+		msg = fmt.Sprintf(
+			"found %d internal address(es) for account %d",
+			len(internalAddresses), accountIndex,
+		)
+		if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+			Message: msg,
+		}) {
+			return
+		}
+		ws.log(msg)
+
+		addressesByAccount[accountIndex] = append(
+			addressesByAccount[accountIndex], externalAddresses...,
+		)
+		addressesByAccount[accountIndex] = append(
+			addressesByAccount[accountIndex], internalAddresses...,
+		)
+
+		// sort addresses by derivation path (desc order) to facilitate retrieving
+		// the last derived index.
+		sort.SliceStable(externalAddresses, func(i, j int) bool {
+			path1, _ := path.ParseDerivationPath(externalAddresses[i].DerivationPath)
+			path2, _ := path.ParseDerivationPath(externalAddresses[j].DerivationPath)
+			return path1[len(path1)-1] > path2[len(path2)-1]
+		})
+		sort.SliceStable(internalAddresses, func(i, j int) bool {
+			path1, _ := path.ParseDerivationPath(internalAddresses[i].DerivationPath)
+			path2, _ := path.ParseDerivationPath(internalAddresses[j].DerivationPath)
+			return path1[len(path1)-1] > path2[len(path2)-1]
+		})
+
+		derivationPaths := make(map[string]string)
+		for _, i := range externalAddresses {
+			accountByScript[i.Script] = accountName
+			derivationPaths[i.Script] = i.DerivationPath
+		}
+		for _, i := range internalAddresses {
+			accountByScript[i.Script] = accountName
+			derivationPaths[i.Script] = i.DerivationPath
+		}
+
+		var nextExternalIndex, nextInternalIndex uint
+		if len(externalAddresses) > 0 {
+			p, _ := path.ParseDerivationPath(externalAddresses[0].DerivationPath)
+			nextExternalIndex = uint(p[len(p)-1] + 1)
+		}
+		if len(internalAddresses) > 0 {
+			p, _ := path.ParseDerivationPath(internalAddresses[0].DerivationPath)
+			nextInternalIndex = uint(p[len(p)-1] + 1)
+		}
+
+		accounts = append(accounts, domain.Account{
+			AccountInfo: domain.AccountInfo{
+				Namespace:      accountName,
+				Xpub:           xpub,
+				DerivationPath: fmt.Sprintf("%s/%d'", walletRootPath, accountIndex),
+			},
+			Index:                  accountIndex,
+			BirthdayBlock:          birthdayBlockHeight,
+			NextExternalIndex:      uint(nextExternalIndex),
+			NextInternalIndex:      uint(nextInternalIndex),
+			DerivationPathByScript: derivationPaths,
+		})
+		accountIndex++
+		emptyAccountCounter = 0
+	}
+
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+		Message: "wallet accounts restored",
+	}) {
+		return
+	}
+
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+		Message: "initializing wallet...",
+	}) {
+		return
+	}
+
+	newWallet, err := domain.NewWallet(
+		mnemonic, passpharse, walletRootPath, ws.network.Name,
+		birthdayBlockHeight, accounts,
+	)
+	if err != nil {
+		sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
+		return
+	}
+
+	if rootPath != "" {
+		ws.rootPath = rootPath
+	}
+
+	if err := ws.repoManager.WalletRepository().CreateWallet(
+		ctx, newWallet,
+	); err != nil {
+		sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
+		return
+	}
+
+	ws.setInitialized()
+
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+		Message: "wallet initialized",
+	}) {
+		return
+	}
+
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+		Message: "restoring wallet utxo pool...",
+	}) {
+		return
+	}
+
+	addresses := make([]domain.AddressInfo, 0)
+	for _, accountAddresses := range addressesByAccount {
+		addresses = append(addresses, accountAddresses...)
+	}
+	utxos, err := ws.bcScanner.GetUtxosForAddresses(addresses)
+	if err != nil {
+		sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
+		return
+	}
+
+	accountsBalance := make(map[string]map[string]uint64)
+	for i := range utxos {
+		utxo := utxos[i]
+		if utxo.IsSpent() {
+			continue
+		}
+		utxos[i].AccountName = accountByScript[hex.EncodeToString(utxo.Script)]
+		if _, ok := accountsBalance[utxos[i].AccountName]; !ok {
+			accountsBalance[utxos[i].AccountName] = make(map[string]uint64)
+		}
+		accountsBalance[utxos[i].AccountName][utxo.Asset] += utxo.Value
+	}
+
+	count, err := ws.repoManager.UtxoRepository().AddUtxos(context.Background(), utxos)
+	if err != nil {
+		sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
+		return
+	}
+	if count > 0 {
+		ws.log("added %d utxo(s)", count)
+	}
+	if !sendMessage(canceled, chMessages, WalletRestoreMessage{
+		Message: "restored wallet utxo pool",
+	}) {
+		return
+	}
+
+	ws.setSynced()
+
+	sendMessage(canceled, chMessages, WalletRestoreMessage{
+		Message: "wallet restored",
+	})
 }
 
 func (ws *WalletService) GetStatus(_ context.Context) WalletStatus {
@@ -224,6 +483,13 @@ func (ws *WalletService) setInitialized() {
 	ws.initialized = true
 }
 
+func (ws *WalletService) setNotInitialized() {
+	ws.lock.Lock()
+	defer ws.lock.Unlock()
+
+	ws.initialized = false
+}
+
 func (ws *WalletService) isInitialized() bool {
 	ws.lock.RLock()
 	defer ws.lock.RUnlock()
@@ -264,4 +530,14 @@ func (ws *WalletService) isSynced() bool {
 	defer ws.lock.RUnlock()
 
 	return ws.synced
+}
+
+func sendMessage(
+	canceled bool, ch chan WalletRestoreMessage, msg WalletRestoreMessage,
+) bool {
+	if canceled {
+		return false
+	}
+	ch <- msg
+	return true
 }

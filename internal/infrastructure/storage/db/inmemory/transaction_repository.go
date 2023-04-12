@@ -151,6 +151,13 @@ func (r *txRepository) publishEvent(event domain.TransactionEvent) {
 	}
 }
 
+func (r *txRepository) reset() {
+	r.store.lock.Lock()
+	defer r.store.lock.Unlock()
+
+	r.store.txs = make(map[string]*domain.Transaction)
+}
+
 func (r *txRepository) close() {
 	close(r.chEvents)
 	close(r.externalChEvents)

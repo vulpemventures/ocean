@@ -70,6 +70,25 @@ func (m *mockBcScanner) WatchForUtxos(
 	}
 }
 
+func (m *mockBcScanner) RestoreAccount(
+	accountIndex uint32, accountName, xpub string, masterBlindingKey []byte,
+	startingBlockHeight, addrThreshold uint32,
+) ([]domain.AddressInfo, []domain.AddressInfo, error) {
+	args := m.Called(
+		accountIndex, accountName, xpub, masterBlindingKey, startingBlockHeight,
+		addrThreshold,
+	)
+	var res []domain.AddressInfo
+	if a := args.Get(0); a != nil {
+		res = a.([]domain.AddressInfo)
+	}
+	var res1 []domain.AddressInfo
+	if a := args.Get(1); a != nil {
+		res1 = a.([]domain.AddressInfo)
+	}
+	return res, res1, args.Error(2)
+}
+
 func (m *mockBcScanner) StopWatchForAccount(accountName string) {
 	close(m.chTxs)
 	close(m.chUtxos)
@@ -119,6 +138,15 @@ func (m *mockBcScanner) GetUtxos(utxos []domain.Utxo) ([]domain.Utxo, error) {
 	var res []domain.Utxo
 	if a := args.Get(0); a != nil {
 		res = a.([]domain.Utxo)
+	}
+	return res, args.Error(1)
+}
+
+func (m *mockBcScanner) GetUtxosForAddresses(addresses []domain.AddressInfo) ([]*domain.Utxo, error) {
+	args := m.Called(addresses)
+	var res []*domain.Utxo
+	if a := args.Get(0); a != nil {
+		res = a.([]*domain.Utxo)
 	}
 	return res, args.Error(1)
 }

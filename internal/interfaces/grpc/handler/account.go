@@ -65,12 +65,15 @@ func (a *account) SetAccountLabel(
 	if err != nil {
 		return nil, err
 	}
+	masterBlindingKey, _ := accountInfo.GetMasterBlindingKey()
+
 	return &pb.SetAccountLabelResponse{
 		Info: &pb.AccountInfo{
-			Namespace:      accountInfo.Namespace,
-			Label:          accountInfo.Label,
-			Xpubs:          []string{accountInfo.Xpub},
-			DerivationPath: accountInfo.DerivationPath,
+			Namespace:         accountInfo.Namespace,
+			Label:             accountInfo.Label,
+			Xpubs:             []string{accountInfo.Xpub},
+			DerivationPath:    accountInfo.DerivationPath,
+			MasterBlindingKey: masterBlindingKey,
 		},
 	}, nil
 }

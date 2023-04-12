@@ -114,6 +114,13 @@ func (s *service) WatchForUtxos(
 	scannerSvc.watchUtxos(utxos)
 }
 
+func (s *service) RestoreAccount(
+	accountIndex uint32, accountName, xpub string, masterBlindingKey []byte,
+	startingBlockHeight, _ uint32,
+) ([]domain.AddressInfo, []domain.AddressInfo, error) {
+	return nil, nil, fmt.Errorf("not implemented")
+}
+
 func (s *service) StopWatchForAccount(accountName string) {
 	scannerSvc := s.getOrCreateScanner(accountName, 0)
 	scannerSvc.stop()
@@ -174,6 +181,12 @@ func (s *service) GetUtxos(utxoList []domain.Utxo) ([]domain.Utxo, error) {
 	}
 
 	return utxos, nil
+}
+
+func (s *service) GetUtxosForAddresses(
+	_ []domain.AddressInfo,
+) ([]*domain.Utxo, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (s *service) BroadcastTransaction(txHex string) (string, error) {

@@ -34,7 +34,7 @@ func (i blockInfo) hash() *chainhash.Hash {
 func (i blockInfo) timestamp() int64 {
 	header := i.header()
 	if header == nil {
-		return -1
+		return 0
 	}
 
 	return int64(header.Timestamp)

@@ -302,11 +302,6 @@ func (as *AccountService) listenToUtxoChannel(
 	for utxos := range chUtxos {
 		time.Sleep(time.Millisecond)
 
-		as.log(
-			"received %d utxo(s) from channel for account %s",
-			len(utxos), accountName,
-		)
-
 		utxoKeys := make([]domain.UtxoKey, 0, len(utxos))
 		for _, u := range utxos {
 			utxoKeys = append(utxoKeys, u.Key())

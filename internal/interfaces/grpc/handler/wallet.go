@@ -107,28 +107,44 @@ func (w *wallet) ChangePassword(
 }
 
 func (w *wallet) RestoreWallet(
-	ctx context.Context, req *pb.RestoreWalletRequest,
-) (*pb.RestoreWalletResponse, error) {
+	req *pb.RestoreWalletRequest, stream pb.WalletService_RestoreWalletServer,
+) error {
 	mnemonic, err := parseMnemonic(req.GetMnemonic())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 	password, err := parsePassword(req.GetPassword())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 	birthdayBlock, err := parseBlockHeight(req.GetBirthdayBlockHeight())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return status.Error(codes.InvalidArgument, err.Error())
+	}
+	rootPath, err := parseRootPath(req.GetRootPath())
+	if err != nil {
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := w.appSvc.RestoreWallet(
-		ctx, strings.Split(mnemonic, " "), password, birthdayBlock,
-	); err != nil {
-		return nil, err
+	chMessages := make(chan application.WalletRestoreMessage)
+	go w.appSvc.RestoreWallet(
+		stream.Context(), chMessages,
+		strings.Split(mnemonic, " "), rootPath, password, birthdayBlock,
+		req.GetEmptyAccountThreshold(), req.GetUnusedAddressThreshold(),
+	)
+
+	for msg := range chMessages {
+		if msg.Err != nil {
+			return msg.Err
+		}
+		if err := stream.Send(&pb.RestoreWalletResponse{
+			Message: msg.Message,
+		}); err != nil {
+			return err
+		}
 	}
 
-	return &pb.RestoreWalletResponse{}, nil
+	return nil
 }
 
 func (w *wallet) Status(ctx context.Context, _ *pb.StatusRequest) (*pb.StatusResponse, error) {

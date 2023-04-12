@@ -3,11 +3,12 @@ package postgresdb
 import (
 	"context"
 	"errors"
+	"sync"
+
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres/sqlc/queries"
-	"sync"
 )
 
 var (
@@ -23,6 +24,10 @@ type txRepositoryPg struct {
 }
 
 func NewTxRepositoryPgImpl(pgxPool *pgxpool.Pool) domain.TransactionRepository {
+	return newTxRepositoryPgImpl(pgxPool)
+}
+
+func newTxRepositoryPgImpl(pgxPool *pgxpool.Pool) *txRepositoryPg {
 	return &txRepositoryPg{
 		pgxPool:          pgxPool,
 		querier:          queries.New(pgxPool),
@@ -216,4 +221,10 @@ func (t *txRepositoryPg) getTx(
 		BlockHeight: uint64(tx[0].BlockHeight),
 		Accounts:    accounts,
 	}, nil
+}
+
+func (t *txRepositoryPg) reset(
+	querier *queries.Queries, ctx context.Context,
+) {
+	querier.ResetTransactions(ctx)
 }

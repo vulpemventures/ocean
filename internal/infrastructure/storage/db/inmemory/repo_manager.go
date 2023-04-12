@@ -69,6 +69,12 @@ func (rm *repoManager) RegisterHandlerForTxEvent(
 	rm.txEventHandlers.set(int(eventType), handler)
 }
 
+func (rm *repoManager) Reset() {
+	rm.walletRepository.reset()
+	rm.utxoRepository.reset()
+	rm.txRepository.reset()
+}
+
 func (rm *repoManager) listenToWalletEvents() {
 	for event := range rm.walletRepository.chEvents {
 		time.Sleep(time.Millisecond)

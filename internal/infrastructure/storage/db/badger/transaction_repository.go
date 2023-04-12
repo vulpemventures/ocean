@@ -175,6 +175,10 @@ func (r *transactionRepository) publishEvent(event domain.TransactionEvent) {
 	}
 }
 
+func (r *transactionRepository) reset() {
+	r.store.Badger().DropAll()
+}
+
 func (r *transactionRepository) close() {
 	r.store.Close()
 	close(r.chEvents)
