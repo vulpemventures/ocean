@@ -6,6 +6,8 @@ import (
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
+	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
+	singlesig "github.com/vulpemventures/ocean/pkg/wallet/single-sig"
 )
 
 // AccountKey holds the unique info of an account: name and HD index.
@@ -24,6 +26,17 @@ type AccountInfo struct {
 	Key            AccountKey
 	Xpub           string
 	DerivationPath string
+}
+
+func (i *AccountInfo) GetMasterBlindingKey() (string, error) {
+	mnemonic := MnemonicStore.Get()
+	rootPath, _ := path.ParseDerivationPath(i.DerivationPath)
+	rootPath = rootPath[:len(rootPath)-1]
+	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
+		RootPath: rootPath.String(),
+		Mnemonic: mnemonic,
+	})
+	return ww.MasterBlindingKey()
 }
 
 // Account defines the entity data struture for a derived account of the

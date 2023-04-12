@@ -41,11 +41,13 @@ func parseNetwork(network string) pb.GetInfoResponse_Network {
 func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 	list := make([]*pb.AccountInfo, 0, len(accounts))
 	for _, a := range accounts {
+		masterBlindingKey, _ := a.GetMasterBlindingKey()
 		list = append(list, &pb.AccountInfo{
-			Name:           a.Key.Name,
-			Index:          a.Key.Index,
-			Xpubs:          []string{a.Xpub},
-			DerivationPath: a.DerivationPath,
+			Name:              a.Key.Name,
+			Index:             a.Key.Index,
+			Xpubs:             []string{a.Xpub},
+			DerivationPath:    a.DerivationPath,
+			MasterBlindingKey: masterBlindingKey,
 		})
 	}
 	return list

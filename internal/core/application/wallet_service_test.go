@@ -78,8 +78,8 @@ func testInitWalletFromScratch(t *testing.T) {
 		require.Condition(t, func() bool {
 			return info.Network != "" && info.NativeAsset != "" &&
 				info.BuildInfo != application.BuildInfo{} && info.RootPath == "" &&
-				info.MasterBlindingKey == "" && info.BirthdayBlockHash == "" &&
-				info.BirthdayBlockHeight == 0 && len(info.Accounts) == 0
+				info.BirthdayBlockHash == "" && info.BirthdayBlockHeight == 0 &&
+				len(info.Accounts) == 0
 		})
 
 		newMnemonic, err := svc.GenSeed(ctx)
@@ -99,7 +99,6 @@ func testInitWalletFromScratch(t *testing.T) {
 		require.Equal(t, regtest.Name, info.Network)
 		require.Equal(t, regtest.AssetID, info.NativeAsset)
 		require.Empty(t, info.RootPath)
-		require.Empty(t, info.MasterBlindingKey)
 		require.Empty(t, info.Accounts)
 
 		err = svc.Unlock(ctx, password)
@@ -116,7 +115,6 @@ func testInitWalletFromScratch(t *testing.T) {
 		require.Equal(t, regtest.Name, info.Network)
 		require.Equal(t, regtest.AssetID, info.NativeAsset)
 		require.Equal(t, rootPath, info.RootPath)
-		require.NotEmpty(t, info.MasterBlindingKey)
 		require.Empty(t, info.Accounts)
 	})
 }
@@ -145,7 +143,6 @@ func testInitWalletFromRestart(t *testing.T) {
 		require.Equal(t, regtest.Name, info.Network)
 		require.Equal(t, regtest.AssetID, info.NativeAsset)
 		require.Empty(t, info.RootPath)
-		require.Empty(t, info.MasterBlindingKey)
 		require.Empty(t, info.Accounts)
 
 		err = svc.ChangePassword(ctx, password, newPassword)
@@ -165,7 +162,6 @@ func testInitWalletFromRestart(t *testing.T) {
 		require.Equal(t, regtest.Name, info.Network)
 		require.Equal(t, regtest.AssetID, info.NativeAsset)
 		require.Equal(t, rootPath, info.RootPath)
-		require.NotEmpty(t, info.MasterBlindingKey)
 		require.NotEmpty(t, info.Accounts)
 	})
 }
