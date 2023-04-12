@@ -3,6 +3,10 @@ package db_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+	"testing"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/go-elements/network"
@@ -12,9 +16,6 @@ import (
 	dbbadger "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/badger"
 	"github.com/vulpemventures/ocean/internal/infrastructure/storage/db/inmemory"
 	postgresdb "github.com/vulpemventures/ocean/internal/infrastructure/storage/db/postgres"
-	"os"
-	"strings"
-	"testing"
 )
 
 var (
@@ -160,7 +161,7 @@ func testManageWalletAccount(t *testing.T, repo domain.WalletRepository) {
 		require.NoError(t, err)
 		require.NotNil(t, account)
 
-		account, err = repo.CreateAccount(ctx, account.Key.Name, 0)
+		account, err = repo.CreateAccount(ctx, account.Label, 0)
 		require.Error(t, err)
 		require.Nil(t, account)
 	})

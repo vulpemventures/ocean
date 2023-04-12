@@ -4,11 +4,14 @@
 
 package queries
 
-import ()
+import (
+	"database/sql"
+)
 
 type Account struct {
-	Name              string
+	Namespace         string
 	Index             int32
+	Label             sql.NullString
 	Xpub              string
 	DerivationPath    string
 	NextExternalIndex int32

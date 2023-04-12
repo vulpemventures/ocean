@@ -10,16 +10,22 @@ import (
 )
 
 var (
-	accountName     string
-	numOfAddresses  uint64
-	changeAddresses bool
+	accountName, accountLabel string
+	numOfAddresses            uint64
+	changeAddresses           bool
 
 	accountCreateCmd = &cobra.Command{
 		Use:   "create",
 		Short: "create new wallet account",
-		Long: "this command lets you create a new wallet account uniquely " +
-			"identified by your choosen name",
-		RunE: accountCreate,
+		Long:  "this command lets you create a new wallet account",
+		RunE:  accountCreate,
+	}
+	accountLabelCmd = &cobra.Command{
+		Use:   "label",
+		Short: "set label for a wallet account",
+		Long: "this command lets you set a label for a wallet account " +
+			"that you can then use to refer to it",
+		RunE: accountSetLabel,
 	}
 	accountDeriveAddressesCmd = &cobra.Command{
 		Use:   "derive",
@@ -66,6 +72,10 @@ var (
 )
 
 func init() {
+	accountCreateCmd.Flags().StringVarP(
+		&accountLabel, "label", "l", "", "label for wallet account",
+	)
+
 	accountDeriveAddressesCmd.Flags().Uint64VarP(
 		&numOfAddresses, "num-addresses", "n", 0, "number of addresses to derive",
 	)
@@ -74,12 +84,21 @@ func init() {
 		"whether derive change (internal) addresses",
 	)
 
-	accountCmd.PersistentFlags().StringVar(&accountName, "account-name", "", "account name")
-	accountCmd.MarkPersistentFlagRequired("account-name")
+	accountCmd.PersistentFlags().StringVar(
+		&accountName, "account-name", "", "account namespace or label",
+	)
+
+	accountDeriveAddressesCmd.MarkPersistentFlagRequired("account-name")
+	accountBalanceCmd.MarkPersistentFlagRequired("account-name")
+	accountListAddressesCmd.MarkPersistentFlagRequired("account-name")
+	accountListUtxosCmd.MarkPersistentFlagRequired("account-name")
+	accountDeleteCmd.MarkPersistentFlagRequired("account-name")
+	accountLabelCmd.MarkPersistentFlagRequired("account-name")
 
 	accountCmd.AddCommand(
 		accountCreateCmd, accountDeriveAddressesCmd, accountBalanceCmd,
 		accountListAddressesCmd, accountListUtxosCmd, accountDeleteCmd,
+		accountLabelCmd,
 	)
 }
 
@@ -92,7 +111,41 @@ func accountCreate(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.CreateAccountBIP44(
 		context.Background(), &pb.CreateAccountBIP44Request{
-			Name: accountName,
+			Label: accountLabel,
+		},
+	)
+	if err != nil {
+		printErr(err)
+		return nil
+	}
+
+	jsonReply, err := jsonResponse(reply)
+	if err != nil {
+		printErr(err)
+		return nil
+	}
+
+	fmt.Println(jsonReply)
+	return nil
+}
+
+func accountSetLabel(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("missing label")
+	}
+
+	client, cleanup, err := getAccountClient()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	label := args[0]
+
+	reply, err := client.SetAccountLabel(
+		context.Background(), &pb.SetAccountLabelRequest{
+			AccountName: accountName,
+			Label:       label,
 		},
 	)
 	if err != nil {

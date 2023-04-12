@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -31,6 +32,7 @@ import (
 type AccountService struct {
 	repoManager ports.RepoManager
 	bcScanner   ports.BlockchainScanner
+	txQueue     *transactionQueue
 
 	log  func(format string, a ...interface{})
 	warn func(err error, format string, a ...interface{})
@@ -39,6 +41,7 @@ type AccountService struct {
 func NewAccountService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
 ) *AccountService {
+	txQueue := newTransactionQueue()
 	logFn := func(format string, a ...interface{}) {
 		format = fmt.Sprintf("account service: %s", format)
 		log.Debugf(format, a...)
@@ -48,25 +51,49 @@ func NewAccountService(
 		log.WithError(err).Warnf(format, a...)
 	}
 
-	svc := &AccountService{repoManager, bcScanner, logFn, warnFn}
+	svc := &AccountService{repoManager, bcScanner, txQueue, logFn, warnFn}
 	svc.registerHandlerForWalletEvents()
 	return svc
 }
 
 func (as *AccountService) CreateAccountBIP44(
-	ctx context.Context, accountName string,
+	ctx context.Context, label string,
 ) (*AccountInfo, error) {
 	_, birthdayBlockHeight, err := as.bcScanner.GetLatestBlock()
 	if err != nil {
 		return nil, err
 	}
 	accountInfo, err := as.repoManager.WalletRepository().CreateAccount(
-		ctx, accountName, birthdayBlockHeight,
+		ctx, label, birthdayBlockHeight,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return (*AccountInfo)(accountInfo), nil
+	return &AccountInfo{*accountInfo}, nil
+}
+
+func (as *AccountService) SetAccountLabel(
+	ctx context.Context, accountName, label string,
+) (*AccountInfo, error) {
+	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := w.SetLabelForAccount(accountName, label); err != nil {
+		return nil, err
+	}
+
+	if err := as.repoManager.WalletRepository().UpdateWallet(
+		ctx, func(_ *domain.Wallet) (*domain.Wallet, error) {
+			return w, nil
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	account, _ := w.GetAccount(label)
+	return &AccountInfo{account.AccountInfo}, nil
 }
 
 func (as *AccountService) DeriveAddressesForAccount(
@@ -128,7 +155,7 @@ func (as *AccountService) GetBalanceForAccount(
 	}
 
 	return as.repoManager.UtxoRepository().GetBalanceForAccount(
-		ctx, account.Info.Key.Name,
+		ctx, account.Namespace,
 	)
 }
 
@@ -146,14 +173,14 @@ func (as *AccountService) ListUtxosForAccount(
 	}
 
 	spendableUtxos, err := as.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
-		ctx, account.Info.Key.Name,
+		ctx, account.Namespace,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	lockedUtxos, err := as.repoManager.UtxoRepository().GetLockedUtxosForAccount(
-		ctx, account.Info.Key.Name,
+		ctx, account.Namespace,
 	)
 	if err != nil {
 		return nil, err
@@ -199,16 +226,20 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 		domain.WalletUnlocked, func(event domain.WalletEvent) {
 			w, _ := as.repoManager.WalletRepository().GetWallet(context.Background())
 
-			for accountName := range w.AccountKeysByName {
-				accountKey := w.AccountKeysByName[accountName]
-				account := w.AccountsByKey[accountKey]
-				addressesInfo, _ := w.AllDerivedAddressesForAccount(accountName)
+			for _, account := range w.Accounts {
+				addressesInfo, _ := w.AllDerivedAddressesForAccount(account.Namespace)
 				if len(addressesInfo) > 0 {
-					as.log("start watching addresses for account %s", accountName)
-					as.bcScanner.WatchForAccount(accountName, account.BirthdayBlock, addressesInfo)
+					as.log("start watching addresses for account %s", account.Namespace)
+					as.bcScanner.WatchForAccount(
+						account.Namespace, account.BirthdayBlock, addressesInfo,
+					)
 				}
-				go as.listenToUtxoChannel(accountName, as.bcScanner.GetUtxoChannel(accountName))
-				go as.listenToTxChannel(accountName, as.bcScanner.GetTxChannel(accountName))
+				go as.listenToUtxoChannel(
+					account.Namespace, as.bcScanner.GetUtxoChannel(account.Namespace),
+				)
+				go as.listenToTxChannel(
+					account.Namespace, as.bcScanner.GetTxChannel(account.Namespace),
+				)
 			}
 		},
 	)
@@ -324,48 +355,55 @@ func (as *AccountService) listenToTxChannel(
 ) {
 	as.log("start listening to tx channel for account %s", accountName)
 
+	// Every tx received from the blockchain scanner is pushed to a queue that is
+	// emptied 1 second after the first elem is added. All the queued txs are
+	// then persisted in the repository. This because it can happen to receive
+	// here the same tx on 2 different channels in case the user moves
+	// funds from one account to another.
+	// In such cases, the queue takes care of updating a tx if it's already
+	// queued, instead of doing this operation against the repo (can be slower).
+	for tx := range chTxs {
+		if as.txQueue.len() <= 0 {
+			go func() {
+				time.Sleep(time.Second)
+				as.storeQueuedTransactions()
+			}()
+		}
+		as.txQueue.pushBack(tx)
+	}
+}
+
+func (as *AccountService) storeQueuedTransactions() {
+	txs := as.txQueue.pop()
 	ctx := context.Background()
 	txRepo := as.repoManager.TransactionRepository()
-	for tx := range chTxs {
-		time.Sleep(time.Millisecond)
-
+	for _, tx := range txs {
 		gotTx, _ := txRepo.GetTransaction(ctx, tx.TxID)
+		accounts := strings.Join(tx.GetAccounts(), ", ")
 		if gotTx == nil {
+			as.log("received new tx %s from channel", tx.TxID)
+
 			if _, err := txRepo.AddTransaction(ctx, tx); err != nil {
-				as.warn(
-					err, "error while adding new transaction %s for account %s",
-					tx.TxID, accountName,
-				)
+				as.warn(err, "error while adding new transaction %s", tx.TxID)
 				continue
 			}
-			as.log("added new transaction %s for account %s", tx.TxID, accountName)
+			as.log("added new transaction %s for account(s) %s", tx.TxID, accounts)
 			continue
 		}
+
 		if !gotTx.IsConfirmed() && tx.IsConfirmed() {
+			as.log("received confirmed tx %s from channel", tx.TxID)
+
 			if _, err := txRepo.ConfirmTransaction(
 				ctx, tx.TxID, tx.BlockHash, tx.BlockHeight,
 			); err != nil {
 				as.warn(
-					err, "error while confirming transaction %s for account %s",
-					tx.TxID, accountName,
+					err, "error while confirming transaction %s for account(s) %s",
+					tx.TxID, accounts,
 				)
-			}
-			as.log("confirmed transaction %s for account %s", tx.TxID, accountName)
-		}
-
-		if !gotTx.HasAccounts(tx) {
-			if err := txRepo.UpdateTransaction(
-				ctx, tx.TxID, func(t *domain.Transaction) (*domain.Transaction, error) {
-					for _, account := range tx.GetAccounts() {
-						t.AddAccount(account)
-					}
-					return t, nil
-				},
-			); err != nil {
-				as.warn(err, "error while updating accounts to transaction %s", tx.TxID)
 				continue
 			}
-			as.log("updated accounts for transaction %s", tx.TxID)
+			as.log("confirmed transaction %s for account(s) %s", tx.TxID, accounts)
 		}
 	}
 }

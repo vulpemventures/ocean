@@ -131,17 +131,14 @@ message GetInfoResponse{
   string native_asset = 2;
   // The root derivation path of the HD wallet.
   string root_path = 3;
-  // The master blinding key derived from the blinding seed from where derive
-  // blidning key pairs.
-  string master_blinding_key = 4;
   // The hash of the block at wallet creation time.
-  string birthday_block_hash = 5;
+  string birthday_block_hash = 4;
   // The height of the block at wallet creation time.
-  uint32 birthday_block_height = 6;
+  uint32 birthday_block_height = 5;
   // List containing info about the wallet accounts.
-  repeated AccountInfo accounts = 7;
+  repeated AccountInfo accounts = 6;
   // Info about the current version of the ocean wallet.
-  BuildInfo build_info = 8;
+  BuildInfo build_info = 7;
 }
 message AuthRequest {
   string password = 1;
