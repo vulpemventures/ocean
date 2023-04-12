@@ -184,7 +184,6 @@ func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
 	}
 
 	birthdayBlock, _ := ws.bcScanner.GetBlockHash(w.BirthdayBlockHeight)
-	masterBlingingKey, _ := w.GetMasterBlindingKey()
 	accounts := make([]AccountInfo, 0, len(w.AccountsByKey))
 	for _, a := range w.AccountsByKey {
 		accounts = append(accounts, AccountInfo(a.Info))
@@ -193,7 +192,6 @@ func (ws *WalletService) GetInfo(ctx context.Context) (*WalletInfo, error) {
 		Network:             w.NetworkName,
 		NativeAsset:         ws.network.AssetID,
 		RootPath:            w.RootPath,
-		MasterBlindingKey:   masterBlingingKey,
 		BirthdayBlockHash:   elementsutil.TxIDFromBytes(birthdayBlock),
 		BirthdayBlockHeight: w.BirthdayBlockHeight,
 		Accounts:            accounts,

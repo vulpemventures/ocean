@@ -238,6 +238,7 @@ func (w *Wallet) CreateAccount(name string, birthdayBlock uint32) (*Account, err
 		Mnemonic: mnemonic,
 	})
 	xpub, _ := ww.AccountExtendedPublicKey(singlesig.ExtendedKeyArgs{Account: w.NextAccountIndex})
+	masterBlindingKey, _ := ww.MasterBlindingKey()
 
 	accountKey := AccountKey{name, w.NextAccountIndex}
 	derivationPath, _ := path.ParseDerivationPath(w.RootPath)
@@ -246,7 +247,9 @@ func (w *Wallet) CreateAccount(name string, birthdayBlock uint32) (*Account, err
 	if birthdayBlock > bdayBlock {
 		bdayBlock = birthdayBlock
 	}
-	accountInfo := AccountInfo{accountKey, xpub, derivationPath.String()}
+	accountInfo := AccountInfo{
+		accountKey, xpub, derivationPath.String(), masterBlindingKey,
+	}
 	account := &Account{
 		Info:                   accountInfo,
 		DerivationPathByScript: make(map[string]string),

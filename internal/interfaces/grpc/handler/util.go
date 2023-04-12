@@ -42,10 +42,11 @@ func parseAccounts(accounts []application.AccountInfo) []*pb.AccountInfo {
 	list := make([]*pb.AccountInfo, 0, len(accounts))
 	for _, a := range accounts {
 		list = append(list, &pb.AccountInfo{
-			Name:           a.Key.Name,
-			Index:          a.Key.Index,
-			Xpubs:          []string{a.Xpub},
-			DerivationPath: a.DerivationPath,
+			Name:              a.Key.Name,
+			Index:             a.Key.Index,
+			Xpubs:             []string{a.Xpub},
+			DerivationPath:    a.DerivationPath,
+			MasterBlindingKey: a.MasterBlindingKey,
 		})
 	}
 	return list

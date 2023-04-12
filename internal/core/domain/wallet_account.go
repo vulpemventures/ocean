@@ -21,9 +21,10 @@ func (ak *AccountKey) String() string {
 
 // AccountInfo holds basic info about an account.
 type AccountInfo struct {
-	Key            AccountKey
-	Xpub           string
-	DerivationPath string
+	Key               AccountKey
+	Xpub              string
+	DerivationPath    string
+	MasterBlindingKey string
 }
 
 // Account defines the entity data struture for a derived account of the

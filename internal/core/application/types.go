@@ -37,7 +37,6 @@ type WalletInfo struct {
 	Network             string
 	NativeAsset         string
 	RootPath            string
-	MasterBlindingKey   string
 	BirthdayBlockHash   string
 	BirthdayBlockHeight uint32
 	Accounts            []AccountInfo
