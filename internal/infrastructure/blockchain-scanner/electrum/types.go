@@ -233,9 +233,6 @@ func (h *reportHandler) unlock() {
 }
 
 func (h *reportHandler) sendReport(report accountReport) {
-	h.locker.Lock()
-	defer h.locker.Unlock()
-
 	if h.isLocked {
 		h.reportQueue = append(h.reportQueue, report)
 		return
