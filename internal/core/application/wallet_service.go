@@ -220,7 +220,7 @@ func (ws *WalletService) RestoreWallet(
 			break
 		}
 
-		accountName := fmt.Sprintf("account%d", accountIndex)
+		accountName := domain.GetAccountNamespace(walletRootPath, accountIndex)
 
 		msg := fmt.Sprintf("restoring account %d...", accountIndex)
 		if !sendMessage(canceled, chMessages, WalletRestoreMessage{
@@ -233,9 +233,10 @@ func (ws *WalletService) RestoreWallet(
 			Account: accountIndex,
 		})
 		masterBlidningKeyStr, _ := w.MasterBlindingKey()
-		masterBlidningKey, _ := hex.DecodeString(masterBlidningKeyStr)
+		masterBlindingKey, _ := hex.DecodeString(masterBlidningKeyStr)
 		externalAddresses, internalAddresses, err := ws.bcScanner.RestoreAccount(
-			accountIndex, xpub, masterBlidningKey, birthdayBlockHeight, unusedAddressesThreshold,
+			accountIndex, accountName, xpub, masterBlindingKey, birthdayBlockHeight,
+			unusedAddressesThreshold,
 		)
 		if err != nil {
 			sendMessage(canceled, chMessages, WalletRestoreMessage{Err: err})
@@ -316,16 +317,13 @@ func (ws *WalletService) RestoreWallet(
 			nextInternalIndex = uint(p[len(p)-1] + 1)
 		}
 
-		// TODO: maybe take name from function args? Something like a mapping <index, name>
 		accounts = append(accounts, domain.Account{
-			Info: domain.AccountInfo{
-				Key: domain.AccountKey{
-					Index: accountIndex,
-					Name:  accountName,
-				},
+			AccountInfo: domain.AccountInfo{
+				Namespace:      accountName,
 				Xpub:           xpub,
 				DerivationPath: fmt.Sprintf("%s/%d'", walletRootPath, accountIndex),
 			},
+			Index:                  accountIndex,
 			BirthdayBlock:          birthdayBlockHeight,
 			NextExternalIndex:      uint(nextExternalIndex),
 			NextInternalIndex:      uint(nextInternalIndex),

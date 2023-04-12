@@ -137,7 +137,7 @@ func (s *service) WatchForUtxos(
 }
 
 func (s *service) RestoreAccount(
-	accountIndex uint32, xpub string, masterBlindingKey []byte,
+	accountIndex uint32, accountName, xpub string, masterBlindingKey []byte,
 	startingBlockHeight, _ uint32,
 ) ([]domain.AddressInfo, []domain.AddressInfo, error) {
 	return nil, nil, fmt.Errorf("not implemented")

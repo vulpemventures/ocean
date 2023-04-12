@@ -444,7 +444,7 @@ func (w *walletRepositoryPg) createWallet(
 		NextAccountIndex:    int32(wallet.NextAccountIndex),
 	}
 
-	if len(wallet.AccountsByKey) <= 0 {
+	if len(wallet.Accounts) <= 0 {
 		if _, err := w.querier.InsertWallet(ctx, params); err != nil {
 			if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok && pqErr.Code == uniqueViolation {
 				return ErrWalletAlreadyCreated
@@ -477,15 +477,19 @@ func (w *walletRepositoryPg) createWallet(
 		}
 	}
 
-	for _, account := range wallet.AccountsByKey {
+	for _, account := range wallet.Accounts {
 		if _, err := querierWithTx.InsertAccount(ctx, queries.InsertAccountParams{
-			Name:              account.Info.Key.Name,
-			Index:             int32(account.Info.Key.Index),
-			Xpub:              account.Info.Xpub,
-			DerivationPath:    account.Info.DerivationPath,
+			Namespace:         account.AccountInfo.Namespace,
+			Index:             int32(account.Index),
+			Xpub:              account.AccountInfo.Xpub,
+			DerivationPath:    account.AccountInfo.DerivationPath,
 			NextExternalIndex: int32(account.NextExternalIndex),
 			NextInternalIndex: int32(account.NextInternalIndex),
 			FkWalletID:        walletKey,
+			Label: sql.NullString{
+				String: account.AccountInfo.Label,
+				Valid:  true,
+			},
 		}); err != nil {
 			return err
 		}
@@ -495,7 +499,7 @@ func (w *walletRepositoryPg) createWallet(
 			req = append(req, queries.InsertAccountScriptsParams{
 				Script:         k,
 				DerivationPath: v,
-				FkAccountName:  account.Info.Key.Name,
+				FkAccountName:  account.AccountInfo.Namespace,
 			})
 		}
 		if len(req) > 0 {

@@ -140,7 +140,7 @@ func (s *service) WatchForUtxos(
 }
 
 func (s *service) RestoreAccount(
-	accountIndex uint32, xpub string, masterBlindingKey []byte,
+	accountIndex uint32, accountName, xpub string, masterBlindingKey []byte,
 	_, addressesThreshold uint32,
 ) ([]domain.AddressInfo, []domain.AddressInfo, error) {
 	masterKey, err := hdkeychain.NewKeyFromString(xpub)
@@ -154,10 +154,10 @@ func (s *service) RestoreAccount(
 	}
 
 	externalAddresses := s.restoreAddressesForAccount(
-		accountIndex, 0, masterKey, masterBlindKey, addressesThreshold,
+		accountName, accountIndex, 0, masterKey, masterBlindKey, addressesThreshold,
 	)
 	internalAddresses := s.restoreAddressesForAccount(
-		accountIndex, 1, masterKey, masterBlindKey, addressesThreshold,
+		accountName, accountIndex, 1, masterKey, masterBlindKey, addressesThreshold,
 	)
 
 	return externalAddresses, internalAddresses, nil
@@ -596,7 +596,7 @@ func (s *service) setAddressesByScriptHash(
 }
 
 func (s *service) restoreAddressesForAccount(
-	accountIndex, chain uint32,
+	accountName string, accountIndex, chain uint32,
 	masterKey *hdkeychain.ExtendedKey, masterBlindKey *slip77.Slip77,
 	addressesThaddressesThreshold uint32,
 ) []domain.AddressInfo {
@@ -629,9 +629,7 @@ func (s *service) restoreAddressesForAccount(
 
 			scriptHashes = append(scriptHashes, scriptHash)
 			addressesByScriptHash[scriptHash] = domain.AddressInfo{
-				AccountKey: domain.AccountKey{
-					Index: accountIndex,
-				},
+				Account:        accountName,
 				Address:        addr,
 				BlindingKey:    blindingPrvkey.Serialize(),
 				DerivationPath: fmt.Sprintf("%d'/%d/%d", accountIndex, chain, index),

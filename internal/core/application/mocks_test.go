@@ -71,11 +71,12 @@ func (m *mockBcScanner) WatchForUtxos(
 }
 
 func (m *mockBcScanner) RestoreAccount(
-	accountIndex uint32, xpub string, masterBlindingKey []byte,
+	accountIndex uint32, accountName, xpub string, masterBlindingKey []byte,
 	startingBlockHeight, addrThreshold uint32,
 ) ([]domain.AddressInfo, []domain.AddressInfo, error) {
 	args := m.Called(
-		accountIndex, xpub, masterBlindingKey, startingBlockHeight, addrThreshold,
+		accountIndex, accountName, xpub, masterBlindingKey, startingBlockHeight,
+		addrThreshold,
 	)
 	var res []domain.AddressInfo
 	if a := args.Get(0); a != nil {
