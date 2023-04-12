@@ -144,20 +144,6 @@ func (w *Wallet) GetMnemonic() ([]string, error) {
 	return MnemonicStore.Get(), nil
 }
 
-// GetMnemonic safely returns the master blinding key.
-func (w *Wallet) GetMasterBlindingKey() (string, error) {
-	if w.IsLocked() {
-		return "", ErrWalletLocked
-	}
-
-	mnemonic := MnemonicStore.Get()
-	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
-		RootPath: w.RootPath,
-		Mnemonic: mnemonic,
-	})
-	return ww.MasterBlindingKey()
-}
-
 // Lock locks the Wallet by wiping the plaintext mnemonic from its store.
 func (w *Wallet) Lock(password string) error {
 	if w.IsLocked() {
@@ -238,7 +224,6 @@ func (w *Wallet) CreateAccount(name string, birthdayBlock uint32) (*Account, err
 		Mnemonic: mnemonic,
 	})
 	xpub, _ := ww.AccountExtendedPublicKey(singlesig.ExtendedKeyArgs{Account: w.NextAccountIndex})
-	masterBlindingKey, _ := ww.MasterBlindingKey()
 
 	accountKey := AccountKey{name, w.NextAccountIndex}
 	derivationPath, _ := path.ParseDerivationPath(w.RootPath)
@@ -248,7 +233,7 @@ func (w *Wallet) CreateAccount(name string, birthdayBlock uint32) (*Account, err
 		bdayBlock = birthdayBlock
 	}
 	accountInfo := AccountInfo{
-		accountKey, xpub, derivationPath.String(), masterBlindingKey,
+		accountKey, xpub, derivationPath.String(),
 	}
 	account := &Account{
 		Info:                   accountInfo,

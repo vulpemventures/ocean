@@ -69,7 +69,7 @@ func (as *AccountService) CreateAccountBIP44(
 	if err != nil {
 		return nil, err
 	}
-	return (*AccountInfo)(accountInfo), nil
+	return &AccountInfo{*accountInfo}, nil
 }
 
 func (as *AccountService) DeriveAddressesForAccount(

@@ -62,7 +62,9 @@ type BlockInfo struct {
 	Timestamp int64
 }
 
-type AccountInfo domain.AccountInfo
+type AccountInfo struct {
+	domain.AccountInfo
+}
 
 type AddressesInfo []domain.AddressInfo
 

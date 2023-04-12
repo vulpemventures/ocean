@@ -67,10 +67,6 @@ func TestNewWallet(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, mnemonic, m)
 
-		masterKey, err := w.GetMasterBlindingKey()
-		require.NoError(t, err)
-		require.Equal(t, masterBlingingKey, masterKey)
-
 		err = w.Lock("wrong password")
 		require.EqualError(t, err, domain.ErrWalletInvalidPassword.Error())
 		require.False(t, w.IsLocked())
@@ -82,10 +78,6 @@ func TestNewWallet(t *testing.T) {
 		m, err = w.GetMnemonic()
 		require.EqualError(t, domain.ErrWalletLocked, err.Error())
 		require.Empty(t, m)
-
-		masterKey, err = w.GetMasterBlindingKey()
-		require.EqualError(t, domain.ErrWalletLocked, err.Error())
-		require.Empty(t, masterKey)
 	})
 
 	t.Run("invalid", func(t *testing.T) {
@@ -174,6 +166,10 @@ func TestWalletAccount(t *testing.T) {
 	require.Equal(t, accountName, account.Info.Key.Name)
 	require.Equal(t, "m/84'/1'/0'", account.Info.DerivationPath)
 	require.NotEmpty(t, account.Info.Xpub)
+
+	masterKey, err := account.Info.GetMasterBlindingKey()
+	require.NoError(t, err)
+	require.Equal(t, masterBlingingKey, masterKey)
 
 	err = w.Lock(password)
 	require.NoError(t, err)
