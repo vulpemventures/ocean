@@ -144,20 +144,6 @@ func (w *Wallet) GetMnemonic() ([]string, error) {
 	return MnemonicStore.Get(), nil
 }
 
-// GetMnemonic safely returns the master blinding key.
-func (w *Wallet) GetMasterBlindingKey() (string, error) {
-	if w.IsLocked() {
-		return "", ErrWalletLocked
-	}
-
-	mnemonic := MnemonicStore.Get()
-	ww, _ := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
-		RootPath: w.RootPath,
-		Mnemonic: mnemonic,
-	})
-	return ww.MasterBlindingKey()
-}
-
 // Lock locks the Wallet by wiping the plaintext mnemonic from its store.
 func (w *Wallet) Lock(password string) error {
 	if w.IsLocked() {

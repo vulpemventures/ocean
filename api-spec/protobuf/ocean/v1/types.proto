@@ -20,6 +20,8 @@ message AccountInfo {
   string derivation_path = 3;
   // Xpubs.
   repeated string xpubs = 4;
+  // The master blinding key of the account to derive blinding keypairs from.
+  string master_blinding_key = 5;
 }
 
 message BalanceInfo {

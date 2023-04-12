@@ -10,6 +10,7 @@ import (
 	"net"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -78,7 +79,8 @@ func (c *tcpClient) listen() {
 		var resp response
 		bytes, err := conn.ReadBytes(delim)
 		if err != nil {
-			if errors.Is(err, net.ErrClosed) || errors.Is(err, io.EOF) {
+			if errors.Is(err, net.ErrClosed) || errors.Is(err, io.EOF) ||
+				errors.Is(err, syscall.ECONNRESET) {
 				c.log("connection with server dropped, attempting to reconnect...")
 				c.reconnect()
 				return

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/vulpemventures/go-elements/address"
@@ -36,7 +37,6 @@ type WalletInfo struct {
 	Network             string
 	NativeAsset         string
 	RootPath            string
-	MasterBlindingKey   string
 	BirthdayBlockHash   string
 	BirthdayBlockHeight uint32
 	Accounts            []AccountInfo
@@ -62,7 +62,9 @@ type BlockInfo struct {
 	Timestamp int64
 }
 
-type AccountInfo domain.AccountInfo
+type AccountInfo struct {
+	domain.AccountInfo
+}
 
 type AddressesInfo []domain.AddressInfo
 
@@ -186,6 +188,58 @@ func (o Outputs) toWalletOutputs() []wallet.Output {
 		outs = append(outs, wallet.Output(out))
 	}
 	return outs
+}
+
+type transactionQueue struct {
+	lock                *sync.RWMutex
+	transactions        []*domain.Transaction
+	indexedTransactions map[string]struct{}
+}
+
+func newTransactionQueue() *transactionQueue {
+	return &transactionQueue{
+		&sync.RWMutex{}, make([]*domain.Transaction, 0), make(map[string]struct{}),
+	}
+}
+
+func (q *transactionQueue) len() int {
+	q.lock.RLock()
+	defer q.lock.RUnlock()
+
+	return len(q.transactions)
+}
+
+func (q *transactionQueue) pushBack(newTx *domain.Transaction) {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+
+	if _, ok := q.indexedTransactions[newTx.TxID]; !ok {
+		q.transactions = append(q.transactions, newTx)
+		q.indexedTransactions[newTx.TxID] = struct{}{}
+		return
+	}
+
+	for i, tx := range q.transactions {
+		if tx.TxID == newTx.TxID {
+			for _, account := range newTx.GetAccounts() {
+				q.transactions[i].AddAccount(account)
+				q.transactions[i].BlockHash = newTx.BlockHash
+				q.transactions[i].BlockHeight = newTx.BlockHeight
+			}
+		}
+	}
+}
+
+func (q *transactionQueue) pop() []*domain.Transaction {
+	q.lock.RLock()
+	defer q.lock.RUnlock()
+
+	txs := make([]*domain.Transaction, len(q.transactions))
+	copy(txs, q.transactions)
+
+	q.transactions = make([]*domain.Transaction, 0)
+	q.indexedTransactions = make(map[string]struct{})
+	return txs
 }
 
 func validateAsset(asset string) error {

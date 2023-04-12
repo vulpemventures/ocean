@@ -151,7 +151,6 @@ func (w *wallet) GetInfo(ctx context.Context, _ *pb.GetInfoRequest) (*pb.GetInfo
 		Network:             network,
 		NativeAsset:         info.NativeAsset,
 		RootPath:            info.RootPath,
-		MasterBlindingKey:   info.MasterBlindingKey,
 		BirthdayBlockHash:   info.BirthdayBlockHash,
 		BirthdayBlockHeight: info.BirthdayBlockHeight,
 		Accounts:            accounts,

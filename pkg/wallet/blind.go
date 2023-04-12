@@ -95,7 +95,7 @@ func BlindPsetWithOwnedInputs(
 		return "", err
 	}
 	outBlindArgs, err := blindingGenerator.BlindOutputs(
-		ptx, outputIndexesToBlind, nil,
+		ptx, outputIndexesToBlind,
 	)
 	if err != nil {
 		return "", err
@@ -205,7 +205,7 @@ func BlindPsetWithMasterKey(
 	)
 
 	outBlindArgs, err := blindingGenerator.BlindOutputs(
-		ptx, outputIndexesToBlind, nil,
+		ptx, outputIndexesToBlind,
 	)
 	if err != nil {
 		return "", err

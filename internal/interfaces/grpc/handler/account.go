@@ -25,12 +25,14 @@ func (a *account) CreateAccountBIP44(
 	if err != nil {
 		return nil, err
 	}
+	masterBlindingKey, _ := accountInfo.GetMasterBlindingKey()
 	return &pb.CreateAccountBIP44Response{
 		Info: &pb.AccountInfo{
-			Namespace:      accountInfo.Namespace,
-			Label:          accountInfo.Label,
-			Xpubs:          []string{accountInfo.Xpub},
-			DerivationPath: accountInfo.DerivationPath,
+			Namespace:         accountInfo.Namespace,
+			Label:             accountInfo.Label,
+			Xpubs:             []string{accountInfo.Xpub},
+			DerivationPath:    accountInfo.DerivationPath,
+			MasterBlindingKey: masterBlindingKey,
 		},
 	}, nil
 }
