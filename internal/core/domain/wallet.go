@@ -126,7 +126,7 @@ func NewWallet(
 	var nextAccountIndex uint32
 	if len(accounts) > 0 {
 		p, _ := path.ParseDerivationPath(accounts[0].AccountInfo.DerivationPath)
-		nextAccountIndex = p[len(p)-1] - hdkeychain.HardenedKeyStart
+		nextAccountIndex = p[len(p)-1] - hdkeychain.HardenedKeyStart + 1
 	}
 
 	return &Wallet{
