@@ -79,23 +79,17 @@ func main() {
 		ExtraIPs:     tlsExtraIPs,
 		ExtraDomains: tlsExtraDomains,
 	}
+	repoManagerConfig := dbConfigFromType()
 	appCfg := &appconfig.AppConfig{
-		Version:               version,
-		Commit:                commit,
-		Date:                  date,
-		RootPath:              rootPath,
-		Network:               network,
-		UtxoExpiryDuration:    utxoExpiryDuration * time.Second,
-		RepoManagerType:       dbType,
-		BlockchainScannerType: bcScannerType,
-		RepoManagerConfig: postgresdb.DbConfig{
-			DbUser:             dbUser,
-			DbPassword:         dbPassword,
-			DbHost:             dbHost,
-			DbPort:             dbPort,
-			DbName:             dbName,
-			MigrationSourceURL: migrationSourceURL,
-		},
+		Version:                 version,
+		Commit:                  commit,
+		Date:                    date,
+		RootPath:                rootPath,
+		Network:                 network,
+		UtxoExpiryDuration:      utxoExpiryDuration * time.Second,
+		RepoManagerType:         dbType,
+		BlockchainScannerType:   bcScannerType,
+		RepoManagerConfig:       repoManagerConfig,
 		BlockchainScannerConfig: bcScannerConfig,
 	}
 
@@ -112,4 +106,24 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
 	<-sigChan
+}
+
+func dbConfigFromType() interface{} {
+	switch dbType {
+	case "postgres":
+		return postgresdb.DbConfig{
+			DbUser:             dbUser,
+			DbPassword:         dbPassword,
+			DbHost:             dbHost,
+			DbPort:             dbPort,
+			DbName:             dbName,
+			MigrationSourceURL: migrationSourceURL,
+		}
+	case "badger":
+		return filepath.Join(datadir, "db")
+	case "inmemory":
+		fallthrough
+	default:
+		return nil
+	}
 }
