@@ -54,7 +54,7 @@ type Balance struct {
 }
 
 func (b *Balance) Total() uint64 {
-	return b.Confirmed + b.Unconfirmed + b.Locked
+	return b.Confirmed + b.Unconfirmed
 }
 
 type UtxoStatus struct {
