@@ -201,6 +201,10 @@ func (s *service) BroadcastTransaction(txHex string) (string, error) {
 	return txid, nil
 }
 
+func (s *service) GetTransactions(txids []string) ([]domain.Transaction, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (s *service) GetLatestBlock() ([]byte, uint32, error) {
 	block, err := s.headersRepo.ChainTip(context.Background())
 	if err != nil {

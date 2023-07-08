@@ -81,7 +81,11 @@ func (ts *TransactionService) GetTransactionInfo(
 ) (*TransactionInfo, error) {
 	tx, err := ts.repoManager.TransactionRepository().GetTransaction(ctx, txid)
 	if err != nil {
-		return nil, err
+		res, err := ts.bcScanner.GetTransactions([]string{txid})
+		if err != nil {
+			return nil, err
+		}
+		tx = &res[0]
 	}
 	return (*TransactionInfo)(tx), nil
 }

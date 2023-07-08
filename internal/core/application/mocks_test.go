@@ -160,6 +160,15 @@ func (m *mockBcScanner) BroadcastTransaction(txHex string) (string, error) {
 	return res, args.Error(1)
 }
 
+func (m *mockBcScanner) GetTransactions(txids []string) ([]domain.Transaction, error) {
+	args := m.Called(txids)
+	var res []domain.Transaction
+	if a := args.Get(0); a != nil {
+		res = a.([]domain.Transaction)
+	}
+	return res, args.Error(1)
+}
+
 // domain.MnemonicStore
 type inMemoryMnemonicStore struct {
 	mnemonic []string

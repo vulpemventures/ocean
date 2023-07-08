@@ -55,4 +55,6 @@ type BlockchainScanner interface {
 	// BroadcastTransaction sends the given raw tx (in hex string) over the
 	// network in order to be included in a later block of the Liquid blockchain.
 	BroadcastTransaction(txHex string) (string, error)
+	// GetTransactions returns info about the given txids.
+	GetTransactions(txids []string) ([]domain.Transaction, error)
 }

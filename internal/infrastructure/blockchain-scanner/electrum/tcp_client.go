@@ -267,19 +267,6 @@ func (c *tcpClient) subscribeForScripts(
 	return nil
 }
 
-// Not supported by common ElectrumX servers
-// func (c *tcpClient) unsubscribeForScript(accountName, scriptHash string) {
-// 	req := c.newJSONRequest("blockchain.scripthash.unsubscribe", scriptHash)
-// 	reqBytes, _ := json.Marshal(req)
-// 	if _, err := c.conn.Write(reqBytes); err != nil {
-// 		c.warn(
-// 			err, "failed to unsubscribe for script %s of account %s",
-// 			scriptHash, accountName,
-// 		)
-// 		return
-// 	}
-// }
-
 func (c *tcpClient) getScriptHashesHistory(scriptHashes []string) (map[string][]txInfo, error) {
 	reqs := make([]request, 0, len(scriptHashes))
 	scriptHashById := make(map[uint64]string)

@@ -374,6 +374,23 @@ func (s *service) BroadcastTransaction(txHex string) (string, error) {
 	return s.client.broadcastTx(txHex)
 }
 
+// GetTransactions returns info about the given txids.
+func (s *service) GetTransactions(txids []string) ([]domain.Transaction, error) {
+	res, err := s.client.getTxs(txids)
+	if err != nil {
+		return nil, err
+	}
+	txs := make([]domain.Transaction, 0, len(res))
+	for _, tx := range res {
+		txHex, _ := tx.ToHex()
+		txs = append(txs, domain.Transaction{
+			TxID:  tx.TxHash().String(),
+			TxHex: txHex,
+		})
+	}
+	return txs, nil
+}
+
 func (s *service) getAccountChannel(
 	account string,
 ) (chan accountReport, bool) {
