@@ -93,7 +93,7 @@ func (d *db) updateAccountTxHistory(account, scriptHash string, newHistory []txI
 func (d *db) listen() {
 	for event := range d.chEvents {
 		if d.eventHandler != nil {
-			d.eventHandler(event)
+			go d.eventHandler(event)
 		}
 	}
 }
