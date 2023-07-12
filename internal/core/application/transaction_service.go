@@ -185,7 +185,10 @@ func (ts *TransactionService) SignTransaction(
 func (ts *TransactionService) BroadcastTransaction(
 	ctx context.Context, txHex string,
 ) (string, error) {
-	keys := utxoKeysFromRawTx(txHex)
+	keys, err := utxoKeysFromRawTx(txHex)
+	if err != nil {
+		return "", fmt.Errorf("invalid tx: %s", err)
+	}
 	utxos, err := ts.repoManager.UtxoRepository().GetUtxosByKey(ctx, keys)
 	if err != nil {
 		return "", err
@@ -807,9 +810,13 @@ func (ts *TransactionService) findLockedInputs(
 	rawTx, _ := transaction.NewTxFromHex(tx)
 	var keys = make([]domain.UtxoKey, 0)
 	if rawTx != nil {
-		keys = utxoKeysFromRawTx(tx)
+		keys, _ = utxoKeysFromRawTx(tx)
 	} else {
-		keys = utxoKeysFromPartialTx(tx)
+		var err error
+		keys, err = utxoKeysFromPartialTx(tx)
+		if err != nil {
+			return nil, fmt.Errorf("invalid partial transaction: %s", err)
+		}
 	}
 
 	utxos, err := ts.repoManager.UtxoRepository().GetUtxosByKey(ctx, keys)
@@ -894,8 +901,12 @@ func (ts *TransactionService) getExternalInputs(
 	return externalInputs, nil
 }
 
-func utxoKeysFromRawTx(txHex string) []domain.UtxoKey {
-	tx, _ := transaction.NewTxFromHex(txHex)
+func utxoKeysFromRawTx(txHex string) ([]domain.UtxoKey, error) {
+	tx, err := transaction.NewTxFromHex(txHex)
+	if err != nil {
+		return nil, err
+	}
+
 	keys := make([]domain.UtxoKey, 0, len(tx.Inputs))
 	for _, in := range tx.Inputs {
 		keys = append(keys, domain.UtxoKey{
@@ -903,11 +914,15 @@ func utxoKeysFromRawTx(txHex string) []domain.UtxoKey {
 			VOut: in.Index,
 		})
 	}
-	return keys
+	return keys, nil
 }
 
-func utxoKeysFromPartialTx(psetBase64 string) []domain.UtxoKey {
-	tx, _ := psetv2.NewPsetFromBase64(psetBase64)
+func utxoKeysFromPartialTx(psetBase64 string) ([]domain.UtxoKey, error) {
+	tx, err := psetv2.NewPsetFromBase64(psetBase64)
+	if err != nil {
+		return nil, err
+	}
+
 	keys := make([]domain.UtxoKey, 0, len(tx.Inputs))
 	for _, in := range tx.Inputs {
 		keys = append(keys, domain.UtxoKey{
@@ -915,7 +930,7 @@ func utxoKeysFromPartialTx(psetBase64 string) []domain.UtxoKey {
 			VOut: in.PreviousTxIndex,
 		})
 	}
-	return keys
+	return keys, nil
 }
 
 func findUtxoIndexInTx(tx string, utxo *domain.Utxo) uint32 {
