@@ -252,7 +252,7 @@ func (c *AppConfig) transactionService() *application.TransactionService {
 	rm, _ := c.repoManager()
 	bcs, _ := c.bcScanner()
 	c.txSvc = application.NewTransactionService(
-		rm, bcs, c.Network, c.RootPath, c.UtxoExpiryDuration,
+		rm, bcs, c.Network, c.UtxoExpiryDuration,
 	)
 	return c.txSvc
 }

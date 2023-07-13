@@ -53,7 +53,6 @@ type TransactionService struct {
 	repoManager        ports.RepoManager
 	bcScanner          ports.BlockchainScanner
 	network            *network.Network
-	rootPath           string
 	utxoExpiryDuration time.Duration
 
 	log func(format string, a ...interface{})
@@ -61,14 +60,14 @@ type TransactionService struct {
 
 func NewTransactionService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
-	net *network.Network, rootPath string, utxoExpiryDuration time.Duration,
+	net *network.Network, utxoExpiryDuration time.Duration,
 ) *TransactionService {
 	logFn := func(format string, a ...interface{}) {
 		format = fmt.Sprintf("transaction service: %s", format)
 		log.Debugf(format, a...)
 	}
 	svc := &TransactionService{
-		repoManager, bcScanner, net, rootPath, utxoExpiryDuration, logFn,
+		repoManager, bcScanner, net, utxoExpiryDuration, logFn,
 	}
 	svc.registerHandlerForUtxoEvents()
 	svc.registerHandlerForWalletEvents()
@@ -746,7 +745,7 @@ func (ts *TransactionService) getWallet(
 	}
 
 	return singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
-		RootPath: ts.rootPath,
+		RootPath: w.RootPath,
 		Mnemonic: mnemonic,
 	})
 }
