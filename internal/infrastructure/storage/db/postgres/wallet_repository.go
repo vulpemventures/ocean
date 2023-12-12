@@ -232,14 +232,12 @@ func (w *walletRepositoryPg) UpdateWallet(
 }
 
 func (w *walletRepositoryPg) CreateAccount(
-	ctx context.Context,
-	accountName string,
-	birthdayBlock uint32,
+	ctx context.Context, accountName string, birthdayBlock uint32, unconf bool,
 ) (*domain.AccountInfo, error) {
 	var accountInfo *domain.AccountInfo
 	if err := w.UpdateWallet(
 		ctx, func(wallet *domain.Wallet) (*domain.Wallet, error) {
-			account, err := wallet.CreateAccount(accountName, birthdayBlock)
+			account, err := wallet.CreateAccount(accountName, birthdayBlock, unconf)
 			if err != nil {
 				return nil, err
 			}

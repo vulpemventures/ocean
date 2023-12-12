@@ -148,14 +148,14 @@ func TestWalletAccount(t *testing.T) {
 	require.NoError(t, err)
 
 	accountName := "test1"
-	account, err := w.CreateAccount(accountName, 0)
+	account, err := w.CreateAccount(accountName, 0, false)
 	require.EqualError(t, domain.ErrWalletLocked, err.Error())
 	require.Nil(t, account)
 
 	err = w.Unlock(password)
 	require.NoError(t, err)
 
-	account, err = w.CreateAccount(accountName, 0)
+	account, err = w.CreateAccount(accountName, 0, false)
 	require.NoError(t, err)
 	require.NotNil(t, account)
 	require.Empty(t, account.NextExternalIndex)

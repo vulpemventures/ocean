@@ -133,7 +133,7 @@ func newRepoManagerForNotificationService() (ports.RepoManager, error) {
 	if err := rm.WalletRepository().UpdateWallet(
 		ctx, func(w *domain.Wallet) (*domain.Wallet, error) {
 			w.Unlock(password)
-			w.CreateAccount(accountName, 0)
+			w.CreateAccount(accountName, 0, false)
 			return w, nil
 		},
 	); err != nil {

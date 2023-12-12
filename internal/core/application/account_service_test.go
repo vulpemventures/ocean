@@ -25,7 +25,7 @@ func TestAccountService(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, addresses)
 
-	accountInfo, err := svc.CreateAccountBIP44(ctx, accountName)
+	accountInfo, err := svc.CreateAccountBIP44(ctx, accountName, false)
 	require.NoError(t, err)
 	require.NotNil(t, accountInfo)
 	require.Equal(t, accountName, accountInfo.Label)

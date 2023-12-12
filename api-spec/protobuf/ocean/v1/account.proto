@@ -48,6 +48,8 @@ service AccountService {
 message CreateAccountBIP44Request{
   // Optional label for the new account.
   string label = 1;
+  // Optional flag for full unconfidential account.
+  bool unconf = 2;
 }
 message CreateAccountBIP44Response{
   // Info about the new account.
@@ -57,6 +59,8 @@ message CreateAccountBIP44Response{
 message CreateAccountMultiSigRequest{
   // Optional label for the new account.
   string label = 1;
+  // Optional flag for full unconfidential account.
+  bool unconf = 2;
 }
 message CreateAccountMultiSigResponse{
   // Info about the new account.
@@ -66,6 +70,8 @@ message CreateAccountMultiSigResponse{
 message CreateAccountCustomRequest{
   // Optional label for the new account.
   string label = 1;
+  // Optional flag for full unconfidential account.
+  bool unconf = 2;
 }
 message CreateAccountCustomResponse{
   // Info about the new account.

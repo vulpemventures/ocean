@@ -164,12 +164,13 @@ func (w *Wallet) DeriveBlindingKeyPair(
 	return slip77Node.DeriveKey(args.Script)
 }
 
-type DeriveConfidentialAddressArgs struct {
+type DeriveAddressArgs struct {
 	DerivationPath string
 	Network        *network.Network
+	Unconf         bool
 }
 
-func (a DeriveConfidentialAddressArgs) validate() error {
+func (a DeriveAddressArgs) validate() error {
 	derivationPath, err := path.ParseDerivationPath(a.DerivationPath)
 	if err != nil {
 		return err
@@ -187,10 +188,10 @@ func (a DeriveConfidentialAddressArgs) validate() error {
 	return nil
 }
 
-// DeriveConfidentialAddress derives both the HD signing and the SLIP-77
-// blinding key-pairs to generate a confidential address.
-func (w *Wallet) DeriveConfidentialAddress(
-	args DeriveConfidentialAddressArgs,
+// DeriveAddress derives either a confidential or unconfidential
+// address for the given derivation path.
+func (w *Wallet) DeriveAddress(
+	args DeriveAddressArgs,
 ) (string, []byte, error) {
 	if err := args.validate(); err != nil {
 		return "", nil, err
@@ -206,16 +207,23 @@ func (w *Wallet) DeriveConfidentialAddress(
 		return "", nil, err
 	}
 
-	script := payment.FromPublicKey(pubkey, args.Network, nil).WitnessScript
+	p2wpkh := payment.FromPublicKey(pubkey, args.Network, nil)
+	if args.Unconf {
+		addr, err := p2wpkh.WitnessPubKeyHash()
+		if err != nil {
+			return "", nil, err
+		}
+		return addr, p2wpkh.WitnessScript, nil
+	}
 
 	_, blindingPubkey, err := w.DeriveBlindingKeyPair(DeriveBlindingKeyPairArgs{
-		Script: script,
+		Script: p2wpkh.WitnessScript,
 	})
 	if err != nil {
 		return "", nil, err
 	}
 
-	p2wpkh := payment.FromPublicKey(pubkey, args.Network, blindingPubkey)
+	p2wpkh = payment.FromPublicKey(pubkey, args.Network, blindingPubkey)
 	addr, err := p2wpkh.ConfidentialWitnessPubKeyHash()
 	if err != nil {
 		return "", nil, err
