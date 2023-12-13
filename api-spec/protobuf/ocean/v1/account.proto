@@ -49,7 +49,7 @@ message CreateAccountBIP44Request{
   // Optional label for the new account.
   string label = 1;
   // Optional flag for full unconfidential account.
-  bool unconf = 2;
+  bool unconfidential = 2;
 }
 message CreateAccountBIP44Response{
   // Info about the new account.

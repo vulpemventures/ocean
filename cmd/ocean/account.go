@@ -114,8 +114,8 @@ func accountCreate(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.CreateAccountBIP44(
 		context.Background(), &pb.CreateAccountBIP44Request{
-			Label:  accountLabel,
-			Unconf: accountUnconf,
+			Label:          accountLabel,
+			Unconfidential: accountUnconf,
 		},
 	)
 	if err != nil {
