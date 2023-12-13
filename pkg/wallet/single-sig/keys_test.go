@@ -155,7 +155,7 @@ func TestDeriveBlindingKeyPair(t *testing.T) {
 	})
 }
 
-func TestDeriveConfidentialAddress(t *testing.T) {
+func TestDeriveAddress(t *testing.T) {
 	t.Parallel()
 
 	t.Run("valid", func(t *testing.T) {
@@ -164,11 +164,11 @@ func TestDeriveConfidentialAddress(t *testing.T) {
 		w, err := wallet.NewWallet(wallet.NewWalletArgs{RootPath: testRootPath})
 		require.NoError(t, err)
 
-		args := wallet.DeriveConfidentialAddressArgs{
+		args := wallet.DeriveAddressArgs{
 			DerivationPath: "0'/0/0",
 			Network:        &network.Liquid,
 		}
-		ctAddress, script, err := w.DeriveConfidentialAddress(args)
+		ctAddress, script, err := w.DeriveAddress(args)
 		require.NoError(t, err)
 		require.NotNil(t, ctAddress)
 		require.NotNil(t, script)
@@ -181,18 +181,18 @@ func TestDeriveConfidentialAddress(t *testing.T) {
 		require.NoError(t, err)
 
 		tests := []struct {
-			args wallet.DeriveConfidentialAddressArgs
+			args wallet.DeriveAddressArgs
 			err  error
 		}{
 			{
-				args: wallet.DeriveConfidentialAddressArgs{
+				args: wallet.DeriveAddressArgs{
 					DerivationPath: "",
 					Network:        &network.Liquid,
 				},
 				err: wallet.ErrMissingDerivationPath,
 			},
 			{
-				args: wallet.DeriveConfidentialAddressArgs{
+				args: wallet.DeriveAddressArgs{
 					DerivationPath: "0'/0/0",
 					Network:        nil,
 				},
@@ -201,7 +201,7 @@ func TestDeriveConfidentialAddress(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			_, _, err := w.DeriveConfidentialAddress(tt.args)
+			_, _, err := w.DeriveAddress(tt.args)
 			require.EqualError(t, tt.err, err.Error())
 		}
 	})

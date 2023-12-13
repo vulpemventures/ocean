@@ -34,6 +34,7 @@ type Account struct {
 	NextExternalIndex      uint
 	NextInternalIndex      uint
 	DerivationPathByScript map[string]string
+	Unconf                 bool
 }
 
 func (a *Account) incrementExternalIndex() (next uint) {

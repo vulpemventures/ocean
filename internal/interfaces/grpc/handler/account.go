@@ -21,7 +21,7 @@ func NewAccountHandler(appSvc *application.AccountService) pb.AccountServiceServ
 func (a *account) CreateAccountBIP44(
 	ctx context.Context, req *pb.CreateAccountBIP44Request,
 ) (*pb.CreateAccountBIP44Response, error) {
-	accountInfo, err := a.appSvc.CreateAccountBIP44(ctx, req.GetLabel())
+	accountInfo, err := a.appSvc.CreateAccountBIP44(ctx, req.GetLabel(), req.GetUnconfidential())
 	if err != nil {
 		return nil, err
 	}

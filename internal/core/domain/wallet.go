@@ -224,7 +224,7 @@ func (w *Wallet) ChangePassword(currentPassword, newPassword string) error {
 
 // CreateAccount creates a new account with the given name by preventing
 // collisions with existing ones. If successful, returns the Account created.
-func (w *Wallet) CreateAccount(label string, birthdayBlock uint32) (*Account, error) {
+func (w *Wallet) CreateAccount(label string, birthdayBlock uint32, unconf bool) (*Account, error) {
 	account, err := w.getAccount(label)
 	if err != nil && err != ErrAccountNotFound {
 		return nil, err
@@ -261,6 +261,7 @@ func (w *Wallet) CreateAccount(label string, birthdayBlock uint32) (*Account, er
 		Index:                  w.NextAccountIndex,
 		DerivationPathByScript: make(map[string]string),
 		BirthdayBlock:          bdayBlock,
+		Unconf:                 unconf,
 	}
 
 	w.Accounts[namespace] = newAccount
@@ -380,9 +381,10 @@ func (w *Wallet) deriveNextAddressForAccount(
 		"%d'/%d/%d", account.Index, chainIndex, addressIndex,
 	)
 	net := networkFromName(w.NetworkName)
-	addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
+	addr, script, err := ww.DeriveAddress(singlesig.DeriveAddressArgs{
 		DerivationPath: derivationPath,
 		Network:        net,
+		Unconf:         account.Unconf,
 	})
 	if err != nil {
 		return nil, err
@@ -432,9 +434,10 @@ func (w *Wallet) allDerivedAddressesForAccount(
 		derivationPath := fmt.Sprintf(
 			"%d'/%d/%d", account.Index, externalChain, i,
 		)
-		addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
+		addr, script, err := ww.DeriveAddress(singlesig.DeriveAddressArgs{
 			DerivationPath: derivationPath,
 			Network:        net,
+			Unconf:         account.Unconf,
 		})
 		if err != nil {
 			return nil, err
@@ -455,9 +458,10 @@ func (w *Wallet) allDerivedAddressesForAccount(
 			derivationPath := fmt.Sprintf(
 				"%d'/%d/%d", account.Index, internalChain, i,
 			)
-			addr, script, err := ww.DeriveConfidentialAddress(singlesig.DeriveConfidentialAddressArgs{
+			addr, script, err := ww.DeriveAddress(singlesig.DeriveAddressArgs{
 				DerivationPath: derivationPath,
 				Network:        net,
+				Unconf:         account.Unconf,
 			})
 			if err != nil {
 				return nil, err

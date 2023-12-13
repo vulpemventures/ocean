@@ -157,11 +157,11 @@ func testManageWalletAccount(t *testing.T, repo domain.WalletRepository) {
 		err := repo.DeleteAccount(ctx, accountName)
 		require.Error(t, err)
 
-		account, err := repo.CreateAccount(ctx, accountName, 0)
+		account, err := repo.CreateAccount(ctx, accountName, 0, false)
 		require.NoError(t, err)
 		require.NotNil(t, account)
 
-		account, err = repo.CreateAccount(ctx, account.Label, 0)
+		account, err = repo.CreateAccount(ctx, account.Label, 0, false)
 		require.Error(t, err)
 		require.Nil(t, account)
 	})

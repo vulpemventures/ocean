@@ -10,7 +10,6 @@ ARG TARGETARCH
 WORKDIR /app
 
 COPY . .
-RUN go mod download
 
 RUN CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="-X 'main.Version=${COMMIT}' -X 'main.Commit=${COMMIT}' -X 'main.Date=${COMMIT}'" -o bin/oceand cmd/oceand/main.go
 RUN go build -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${COMMIT}' -X 'main.date=${DATE}'" -o bin/ocean cmd/ocean/*

@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	accountName, accountLabel string
-	numOfAddresses            uint64
-	changeAddresses           bool
+	accountName, accountLabel      string
+	numOfAddresses                 uint64
+	accountUnconf, changeAddresses bool
 
 	accountCreateCmd = &cobra.Command{
 		Use:   "create",
@@ -75,6 +75,9 @@ func init() {
 	accountCreateCmd.Flags().StringVarP(
 		&accountLabel, "label", "l", "", "label for wallet account",
 	)
+	accountCreateCmd.Flags().BoolVarP(
+		&accountUnconf, "unconf", "u", false, "generate unconfidential addresses only for this account",
+	)
 
 	accountDeriveAddressesCmd.Flags().Uint64VarP(
 		&numOfAddresses, "num-addresses", "n", 0, "number of addresses to derive",
@@ -111,7 +114,8 @@ func accountCreate(cmd *cobra.Command, _ []string) error {
 
 	reply, err := client.CreateAccountBIP44(
 		context.Background(), &pb.CreateAccountBIP44Request{
-			Label: accountLabel,
+			Label:          accountLabel,
+			Unconfidential: accountUnconf,
 		},
 	)
 	if err != nil {

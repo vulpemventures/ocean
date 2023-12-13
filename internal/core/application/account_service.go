@@ -57,14 +57,14 @@ func NewAccountService(
 }
 
 func (as *AccountService) CreateAccountBIP44(
-	ctx context.Context, label string,
+	ctx context.Context, label string, unconf bool,
 ) (*AccountInfo, error) {
 	_, birthdayBlockHeight, err := as.bcScanner.GetLatestBlock()
 	if err != nil {
 		return nil, err
 	}
 	accountInfo, err := as.repoManager.WalletRepository().CreateAccount(
-		ctx, label, birthdayBlockHeight,
+		ctx, label, birthdayBlockHeight, unconf,
 	)
 	if err != nil {
 		return nil, err
