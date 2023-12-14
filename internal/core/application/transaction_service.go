@@ -403,12 +403,16 @@ func (ts *TransactionService) Transfer(
 		i := 0
 		for asset, amount := range changeByAsset {
 			script, _ := hex.DecodeString(addressesInfo[i].Script)
-			addr, _ := address.FromConfidential(addressesInfo[i].Address)
+			var blindingKey []byte
+			if !account.Unconf {
+				addr, _ := address.FromConfidential(addressesInfo[i].Address)
+				blindingKey = addr.BlindingKey
+			}
 			changeOutputs = append(changeOutputs, wallet.Output{
 				Asset:       asset,
 				Amount:      amount,
 				Script:      script,
-				BlindingKey: addr.BlindingKey,
+				BlindingKey: blindingKey,
 			})
 			i++
 		}
