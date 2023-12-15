@@ -49,7 +49,6 @@ service TransactionService {
 
   // Transfer returns a transaction to send funds to some receiver.
   rpc Transfer(TransferRequest) returns (TransferResponse);
-
   
   // PegInAddress returns what's necessary to peg funds of the Bitcoin 
   // main-chain and have them available on the Liquid side-chain.
@@ -61,6 +60,10 @@ service TransactionService {
   // ClaimPegIn returns a transaction to claim funds pegged on the Bitcoin 
   // main-chain to have them available on the Liquid side-chain.
   rpc ClaimPegIn(ClaimPegInRequest) returns (ClaimPegInResponse);
+
+  // SignPsetWithSchnorrKey signs all taproot inputs of the provided tx with
+  // the key at the given derivation path.
+  rpc SignPsetWithSchnorrKey(SignPsetWithSchnorrKeyRequest) returns (SignPsetWithSchnorrKeyResponse);
 }
 
 message GetTransactionRequest{
@@ -261,4 +264,15 @@ message ClaimPegInRequest{
 message ClaimPegInResponse{
   // Signed tx in hex format.
   string tx_hex = 1;
+}
+
+message SignPsetWithSchnorrKeyRequest {
+  // The partial transaction to sign in base64 format.
+  string tx = 1;
+  // The sighash type. SIGHASH_DEFAULT is used for any input that does not specify one.
+  uint32 sighash_type = 2;
+}
+
+message SignPsetWithSchnorrKeyResponse {
+  string signed_tx = 1;
 }
