@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/timshannon/badgerhold/v4 v4.0.2
 	github.com/vulpemventures/go-bip39 v1.0.2
-	github.com/vulpemventures/go-elements v0.4.5
+	github.com/vulpemventures/go-elements v0.4.8
 	github.com/vulpemventures/neutrino-elements v0.1.3
 	golang.org/x/crypto v0.1.0
 	golang.org/x/net v0.7.0
@@ -31,9 +31,12 @@ require (
 	github.com/jackc/pgconn v1.12.1
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/tyler-smith/go-bip39 v1.1.0
+	github.com/vulpemventures/go-bip32 v0.0.0-20200624192635-867c159da4d7
 )
 
 require (
+	github.com/FactomProject/basen v0.0.0-20150613233007-fe3947df716e // indirect
+	github.com/FactomProject/btcutilecc v0.0.0-20130527213604-d3a63a5752ec // indirect
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcutil/psbt v1.1.4 // indirect
@@ -83,7 +86,7 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
 	github.com/vulpemventures/fastsha256 v0.0.0-20160815193821-637e65642941 // indirect
-	github.com/vulpemventures/go-secp256k1-zkp v1.1.5 // indirect
+	github.com/vulpemventures/go-secp256k1-zkp v1.1.6 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
