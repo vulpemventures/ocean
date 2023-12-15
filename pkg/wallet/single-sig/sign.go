@@ -4,11 +4,15 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/payment"
 	"github.com/vulpemventures/go-elements/psetv2"
+	"github.com/vulpemventures/go-elements/taproot"
 	"github.com/vulpemventures/go-elements/transaction"
 	"github.com/vulpemventures/ocean/pkg/wallet"
 	path "github.com/vulpemventures/ocean/pkg/wallet/derivation-path"
@@ -147,6 +151,74 @@ func (w *Wallet) SignPset(args SignPsetArgs) (string, error) {
 	return ptx.ToBase64()
 }
 
+type SignTaprootArgs struct {
+	PsetBase64        string
+	DerivationPathMap map[string]string
+	GenesisBlockHash  string
+	SighashType       txscript.SigHashType
+}
+
+func (a SignTaprootArgs) validate() error {
+	if _, err := psetv2.NewPsetFromBase64(a.PsetBase64); err != nil {
+		return err
+	}
+	if len(a.DerivationPathMap) <= 0 {
+		return ErrMissingDerivationPaths
+	}
+	if len(a.GenesisBlockHash) <= 0 {
+		return fmt.Errorf("missing genesis block hash")
+	}
+	if _, err := chainhash.NewHashFromStr(a.GenesisBlockHash); err != nil {
+		return fmt.Errorf("invalid genesis block hash: %s", err)
+	}
+
+	for script, pathStr := range a.DerivationPathMap {
+		derivationPath, err := path.ParseDerivationPath(pathStr)
+		if err != nil {
+			return fmt.Errorf(
+				"invalid derivation path '%s' for script '%s': %v",
+				pathStr, script, err,
+			)
+		}
+		err = checkDerivationPath(derivationPath)
+		if err != nil {
+			return fmt.Errorf(
+				"invalid derivation path '%s' for script '%s': %v",
+				pathStr, script, err,
+			)
+		}
+	}
+
+	return nil
+}
+
+func (a SignTaprootArgs) genesisBlockHash() *chainhash.Hash {
+	hash, _ := chainhash.NewHashFromStr(a.GenesisBlockHash)
+	return hash
+}
+
+func (w *Wallet) SignTaproot(args SignTaprootArgs) (string, error) {
+	if err := args.validate(); err != nil {
+		return "", err
+	}
+	if err := w.validate(); err != nil {
+		return "", err
+	}
+
+	ptx, _ := psetv2.NewPsetFromBase64(args.PsetBase64)
+	for i, in := range ptx.Inputs {
+		path, ok := args.DerivationPathMap[hex.EncodeToString(in.GetUtxo().Script)]
+		if ok {
+			err := w.signTaprootInput(ptx, i, path, args.SighashType, args.genesisBlockHash())
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
+	return ptx.ToBase64()
+}
+
 func (w *Wallet) signTxInput(
 	tx *transaction.Transaction, inIndex uint32, input wallet.Input,
 	sighashType txscript.SigHashType,
@@ -251,4 +323,99 @@ func (w *Wallet) signInput(
 	return signer.SignInput(
 		inIndex, sigWithSigHashType, pubkey.SerializeCompressed(), nil, nil,
 	)
+}
+
+func (w *Wallet) signTaprootInput(
+	ptx *psetv2.Pset, inIndex int, derivationPath string,
+	sighashType txscript.SigHashType, genesisBlockHash *chainhash.Hash,
+) error {
+	signer, err := psetv2.NewSigner(ptx)
+	if err != nil {
+		return err
+	}
+	input := ptx.Inputs[inIndex]
+	if input.SigHashType == 0 {
+		if err := signer.AddInSighashType(inIndex, sighashType); err != nil {
+			return err
+		}
+	}
+
+	prvkey, pubkey, err := w.DeriveSigningKeyPair(DeriveSigningKeyPairArgs{
+		DerivationPath: derivationPath,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, derivation := range input.TapBip32Derivation {
+		for _, hash := range derivation.LeafHashes {
+			leafHash, err := chainhash.NewHash(hash)
+			if err != nil {
+				return err
+			}
+
+			tapScriptSig, err := signTaproot(
+				ptx, inIndex, prvkey, pubkey, sighashType, genesisBlockHash, leafHash,
+			)
+			if err != nil {
+				return err
+			}
+
+			if err := signer.SignTaprootInputTapscriptSig(inIndex, *tapScriptSig); err != nil {
+				return err
+			}
+		}
+		// If there are no leaf hashes, sign as keypath
+		if len(derivation.LeafHashes) <= 0 {
+			tweakedPrvKey := taproot.TweakTaprootPrivKey(prvkey, input.TapMerkleRoot)
+			tweakedPubKey := taproot.ComputeTaprootOutputKey(pubkey, input.TapMerkleRoot)
+
+			tapScriptSig, err := signTaproot(
+				ptx, inIndex, tweakedPrvKey, tweakedPubKey, sighashType, genesisBlockHash, nil,
+			)
+			if err != nil {
+				return err
+			}
+			if err := signer.SignTaprootInputTapscriptSig(inIndex, *tapScriptSig); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func signTaproot(
+	ptx *psetv2.Pset, inIndex int,
+	prvkey *btcec.PrivateKey, pubkey *btcec.PublicKey,
+	sighashType txscript.SigHashType, genesisBlockHash, leafHash *chainhash.Hash,
+) (*psetv2.TapScriptSig, error) {
+	unsignedTx, err := ptx.UnsignedTx()
+	if err != nil {
+		return nil, err
+	}
+
+	input := ptx.Inputs[inIndex]
+	prevoutScripts := [][]byte{input.GetUtxo().Script}
+	prevoutAssets := [][]byte{input.ExplicitAsset}
+	value, _ := elementsutil.ValueToBytes(input.ExplicitValue)
+	prevoutValues := [][]byte{value}
+
+	hashForSignature := unsignedTx.HashForWitnessV1(
+		inIndex, prevoutScripts, prevoutAssets, prevoutValues, sighashType, genesisBlockHash, nil, nil,
+	)
+	signature, err := schnorr.Sign(prvkey, hashForSignature[:])
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign with schnorr: %s", err)
+	}
+	if !signature.Verify(hashForSignature[:], pubkey) {
+		return nil, fmt.Errorf("signature verification failed for input %d", inIndex)
+	}
+
+	return &psetv2.TapScriptSig{
+		PartialSig: psetv2.PartialSig{
+			PubKey:    schnorr.SerializePubKey(pubkey),
+			Signature: signature.Serialize(),
+		},
+	}, nil
 }
