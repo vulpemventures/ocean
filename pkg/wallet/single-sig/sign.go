@@ -334,10 +334,8 @@ func (w *Wallet) signTaprootInput(
 		return err
 	}
 	input := ptx.Inputs[inIndex]
-	if input.SigHashType == 0 {
-		if err := signer.AddInSighashType(inIndex, sighashType); err != nil {
-			return err
-		}
+	if err := signer.AddInSighashType(inIndex, sighashType); err != nil {
+		return err
 	}
 
 	prvkey, pubkey, err := w.DeriveSigningKeyPair(DeriveSigningKeyPairArgs{
@@ -412,10 +410,15 @@ func signTaproot(
 		return nil, fmt.Errorf("signature verification failed for input %d", inIndex)
 	}
 
+	sig := signature.Serialize()
+	if sighashType != txscript.SigHashDefault {
+		sig = append(sig, byte(sighashType))
+	}
+
 	return &psetv2.TapScriptSig{
 		PartialSig: psetv2.PartialSig{
 			PubKey:    schnorr.SerializePubKey(pubkey),
-			Signature: signature.Serialize(),
+			Signature: sig,
 		},
 	}, nil
 }
