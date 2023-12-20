@@ -635,15 +635,20 @@ func (ts *TransactionService) SignPsetWithSchnorrKey(
 	}, 0, len(ptx.Global.Xpubs))
 	for _, xpub := range ptx.Global.Xpubs {
 		for _, account := range wallet.Accounts {
-			accountXpub, err := bip32.B58Deserialize(account.Xpub)
+			hdNode, err := bip32.B58Deserialize(account.Xpub)
 			if err != nil {
 				return "", err
 			}
-			if bytes.Equal(xpub.ExtendedKey, accountXpub.Key) {
+			accountXpub, err := hdNode.Serialize()
+			if err != nil {
+				return "", err
+			}
+
+			if bytes.Equal(xpub.ExtendedKey, accountXpub[:len(accountXpub)-4]) {
 				xpubsInfo = append(xpubsInfo, struct {
 					account *domain.Account
 					xpub    *bip32.Key
-				}{account, accountXpub})
+				}{account, hdNode})
 				break
 			}
 		}
