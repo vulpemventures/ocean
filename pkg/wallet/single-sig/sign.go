@@ -393,10 +393,10 @@ func signTaproot(
 		return nil, err
 	}
 
-	input := ptx.Inputs[inIndex]
-	prevoutScripts := [][]byte{input.GetUtxo().Script}
-	prevoutAssets := [][]byte{input.GetUtxo().Asset}
-	prevoutValues := [][]byte{input.GetUtxo().Value}
+	prevout := ptx.Inputs[inIndex].GetUtxo()
+	prevoutScripts := [][]byte{prevout.Script}
+	prevoutAssets := [][]byte{prevout.Asset}
+	prevoutValues := [][]byte{prevout.Value}
 
 	hashForSignature := unsignedTx.HashForWitnessV1(
 		inIndex, prevoutScripts, prevoutAssets, prevoutValues, sighashType, genesisBlockHash, leafHash, nil,
@@ -414,11 +414,16 @@ func signTaproot(
 		sig = append(sig, byte(sighashType))
 	}
 
+	var leafHashBytes []byte
+	if leafHash != nil {
+		leafHashBytes = leafHash[:]
+	}
+
 	return &psetv2.TapScriptSig{
 		PartialSig: psetv2.PartialSig{
 			PubKey:    schnorr.SerializePubKey(pubkey),
 			Signature: sig,
 		},
-		LeafHash: leafHash[:],
+		LeafHash: leafHashBytes,
 	}, nil
 }
