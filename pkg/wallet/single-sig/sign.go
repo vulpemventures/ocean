@@ -135,6 +135,12 @@ func (w *Wallet) SignPset(args SignPsetArgs) (string, error) {
 
 	ptx, _ := psetv2.NewPsetFromBase64(args.PsetBase64)
 	for i, in := range ptx.Inputs {
+		// GetUtxo() is unsafe if the partial transaction is not complete
+		// It handles gracefully by skipping the signature
+		// TODO: consider lifting the information to the way up
+		if in.WitnessUtxo == nil && in.NonWitnessUtxo == nil {
+			continue
+		}
 		path, ok := args.DerivationPathMap[hex.EncodeToString(in.GetUtxo().Script)]
 		if ok {
 			err := w.signInput(ptx, i, path, args.sighashType())
