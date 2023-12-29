@@ -40,6 +40,7 @@ run: clean
 	export OCEAN_STATS_INTERVAL=120; \
 	export OCEAN_ELECTRUM_URL=tcp://localhost:50001; \
 	export OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS=60; \
+	export OCEAN_DB_TYPE=badger; \
 	go run ./cmd/oceand
 
 test: fmt

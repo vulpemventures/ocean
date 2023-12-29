@@ -28,6 +28,7 @@ var (
 		},
 	}
 	utxoExpiryDuration = 2 * time.Minute
+	dustAmount         = uint64(450)
 )
 
 func TestTransactionService(t *testing.T) {
@@ -46,7 +47,7 @@ func testExternalTransaction(t *testing.T) {
 		require.NotNil(t, repoManager)
 
 		svc := application.NewTransactionService(
-			repoManager, mockedBcScanner, regtest, utxoExpiryDuration,
+			repoManager, mockedBcScanner, regtest, utxoExpiryDuration, dustAmount,
 		)
 
 		selectedUtxos, change, expirationDate, err := svc.SelectUtxos(
@@ -127,7 +128,7 @@ func testInternalTransaction(t *testing.T) {
 		require.NotNil(t, repoManager)
 
 		svc := application.NewTransactionService(
-			repoManager, mockedBcScanner, regtest, utxoExpiryDuration,
+			repoManager, mockedBcScanner, regtest, utxoExpiryDuration, dustAmount,
 		)
 
 		txid, err := svc.Transfer(ctx, accountName, outputs, 0)

@@ -54,20 +54,21 @@ type TransactionService struct {
 	bcScanner          ports.BlockchainScanner
 	network            *network.Network
 	utxoExpiryDuration time.Duration
+	dustAmount         uint64
 
 	log func(format string, a ...interface{})
 }
 
 func NewTransactionService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
-	net *network.Network, utxoExpiryDuration time.Duration,
+	net *network.Network, utxoExpiryDuration time.Duration, dustAmount uint64,
 ) *TransactionService {
 	logFn := func(format string, a ...interface{}) {
 		format = fmt.Sprintf("transaction service: %s", format)
 		log.Debugf(format, a...)
 	}
 	svc := &TransactionService{
-		repoManager, bcScanner, net, utxoExpiryDuration, logFn,
+		repoManager, bcScanner, net, utxoExpiryDuration, dustAmount, logFn,
 	}
 	svc.registerHandlerForUtxoEvents()
 	svc.registerHandlerForWalletEvents()
@@ -328,6 +329,15 @@ func (ts *TransactionService) Transfer(
 	ctx context.Context, accountName string, outputs Outputs,
 	millisatsPerByte uint64,
 ) (string, error) {
+	// Ensure lbtc outs are not dust.
+	for _, out := range outputs {
+		if out.Asset == ts.network.AssetID {
+			if out.Amount < ts.dustAmount {
+				return "", fmt.Errorf("lbtc output amount must not be dust")
+			}
+		}
+	}
+
 	w, err := ts.getWallet(ctx)
 	if err != nil {
 		return "", err
@@ -361,6 +371,7 @@ func (ts *TransactionService) Transfer(
 	changeByAsset := make(map[string]uint64)
 	selectedUtxos := make([]*domain.Utxo, 0)
 	lbtc := ts.network.AssetID
+	dust := uint64(0)
 	for targetAsset, targetAmount := range outputs.totalAmountByAsset() {
 		utxos, change, err := DefaultCoinSelector.SelectUtxos(utxos, targetAmount, targetAsset)
 		if err != nil {
@@ -368,7 +379,12 @@ func (ts *TransactionService) Transfer(
 		}
 		selectedUtxos = append(selectedUtxos, utxos...)
 		if change > 0 {
-			changeByAsset[targetAsset] = change
+			// If the lbtc change is dust, it is added as fee amount.
+			if targetAsset == lbtc && change < ts.dustAmount {
+				dust = change
+			} else {
+				changeByAsset[targetAsset] = change
+			}
 		}
 	}
 
@@ -422,116 +438,133 @@ func (ts *TransactionService) Transfer(
 	feeAmount := wallet.EstimateFees(
 		inputs, append(outs, changeOutputs...), millisatsPerByte,
 	)
-
-	// If feeAmount is lower than the lbtc change, it's enough to deduct it
-	// from the change amount.
-	if feeAmount < changeByAsset[lbtc] {
-		for i, out := range changeOutputs {
-			if out.Asset == lbtc {
-				changeOutputs[i].Amount -= feeAmount
-				break
-			}
-		}
-	}
-	// If feeAmount is exactly the lbtc change, it's enough to remove the
-	// change output.
-	if feeAmount == changeByAsset[lbtc] {
-		var outIndex int
-		for i, out := range changeOutputs {
-			if out.Asset == lbtc {
-				outIndex = i
-				break
-			}
-		}
-		changeOutputs = append(
-			changeOutputs[:outIndex], changeOutputs[outIndex+1:]...,
-		)
-	}
-	// If feeAmount is greater than the lbtc change, another coin-selection round
-	// is required only in case the user is not trasferring the whole balance.
-	// In that case the fee amount is deducted from the lbtc output with biggest.
-	if feeAmount > changeByAsset[lbtc] {
-		if changeByAsset[lbtc] == 0 {
-			outIndex := 0
-			for i, out := range outputs {
+	if dust >= feeAmount {
+		// If the dust amount covers the fee amount we are done as the dust
+		// just pays for the tx fees.
+		feeAmount = dust
+	} else {
+		// If lbtc change covers the fee amount, we subtract the latter from the
+		// former. The remaining lbtc change can be become fees if it end up being
+		// dust.
+		if feeAmount <= changeByAsset[lbtc] {
+			var outIndex int
+			for i, out := range changeOutputs {
 				if out.Asset == lbtc {
-					if out.Amount > outputs[outIndex].Amount {
-						outIndex = i
-					}
+					outIndex = i
+					changeOutputs[i].Amount -= feeAmount
+					break
 				}
 			}
-			outs[outIndex] = wallet.Output{
-				Asset:        outs[outIndex].Asset,
-				Amount:       outs[outIndex].Amount - feeAmount,
-				Script:       outs[outIndex].Script,
-				BlindingKey:  outs[outIndex].BlindingKey,
-				BlinderIndex: outs[outIndex].BlinderIndex,
+			changeAmount := changeOutputs[outIndex].Amount
+			if changeAmount < ts.dustAmount {
+				changeOutputs = append(
+					changeOutputs[:outIndex], changeOutputs[outIndex+1:]...,
+				)
+				feeAmount += changeAmount
 			}
-		} else {
-			targetAsset := lbtc
-			targetAmount := wallet.DummyFeeAmount
-			if feeAmount > targetAmount {
-				targetAmount = roundUpAmount(feeAmount)
-			}
+		}
 
-			// Coin-selection must be done over remaining utxos.
-			remainingUtxos := getRemainingUtxos(utxos, selectedUtxos)
-			selectedUtxos, change, err := DefaultCoinSelector.SelectUtxos(
-				remainingUtxos, targetAmount, targetAsset,
-			)
-			if err != nil {
-				return "", err
-			}
-
-			for _, u := range selectedUtxos {
-				input := wallet.Input{
-					TxID:            u.TxID,
-					TxIndex:         u.VOut,
-					Value:           u.Value,
-					Asset:           u.Asset,
-					Script:          u.Script,
-					ValueBlinder:    u.ValueBlinder,
-					AssetBlinder:    u.AssetBlinder,
-					ValueCommitment: u.ValueCommitment,
-					AssetCommitment: u.AssetCommitment,
-					Nonce:           u.Nonce,
-				}
-				inputs = append(inputs, input)
-				inputsByIndex[uint32(len(inputs))] = input
-			}
-
-			if change > 0 {
-				// For the eventual change amount, it might be necessary to add a lbtc
-				// change output to the list if it's still not in the list.
-				if _, ok := changeByAsset[targetAsset]; !ok {
-					addrInfo, err := walletRepo.DeriveNextInternalAddressesForAccount(
-						ctx, account.Namespace, 1,
-					)
-					if err != nil {
-						return "", err
+		// If feeAmount is greater than the lbtc change, another coin-selection
+		// round is required, but only in case the user is not trasferring the
+		// whole balance.
+		if feeAmount > changeByAsset[lbtc] {
+			if changeByAsset[lbtc] == 0 {
+				// If there's no dust it means no change was actually produced during
+				// the first coin selection. In this case, the fee amount is subtracted
+				// from the output of the same asset with the biggest amount.
+				if dust == 0 {
+					outIndex := 0
+					outAmount := uint64(0)
+					for i, out := range outputs {
+						if out.Asset == lbtc {
+							if out.Amount >= outAmount {
+								outIndex = i
+								outAmount = out.Amount
+							}
+						}
 					}
-					script, _ := hex.DecodeString(addrInfo[0].Script)
-					changeOutputs = append(changeOutputs, wallet.Output{
-						Amount:      change,
-						Asset:       targetAsset,
-						Script:      script,
-						BlindingKey: addrInfo[0].BlindingKey,
-					})
+					if outs[outIndex].Amount-feeAmount >= ts.dustAmount {
+						outs[outIndex] = wallet.Output{
+							Asset:        outs[outIndex].Asset,
+							Amount:       outs[outIndex].Amount - feeAmount,
+							Script:       outs[outIndex].Script,
+							BlindingKey:  outs[outIndex].BlindingKey,
+							BlinderIndex: outs[outIndex].BlinderIndex,
+						}
+					} else {
+						// Otherwise the target output becomes fees.
+						feeAmount = outs[outIndex].Amount
+						outs = append(
+							outs[:outIndex], outs[outIndex+1:]...,
+						)
+					}
+				}
+			} else {
+				targetAsset := lbtc
+				targetAmount := changeByAsset[lbtc] - feeAmount
+
+				// Coin-selection must be done over remaining utxos.
+				remainingUtxos := getRemainingUtxos(utxos, selectedUtxos)
+				selectedUtxos, _, err := DefaultCoinSelector.SelectUtxos(
+					remainingUtxos, targetAmount, targetAsset,
+				)
+				if err != nil {
+					return "", err
+				}
+
+				for _, u := range selectedUtxos {
+					input := wallet.Input{
+						TxID:            u.TxID,
+						TxIndex:         u.VOut,
+						Value:           u.Value,
+						Asset:           u.Asset,
+						Script:          u.Script,
+						ValueBlinder:    u.ValueBlinder,
+						AssetBlinder:    u.AssetBlinder,
+						ValueCommitment: u.ValueCommitment,
+						AssetCommitment: u.AssetCommitment,
+						Nonce:           u.Nonce,
+					}
+					inputs = append(inputs, input)
+					inputsByIndex[uint32(len(inputs))] = input
 				}
 
 				// Now that we have all inputs and outputs, estimate the real fee amount.
-				feeAmount = wallet.EstimateFees(
+				feeAmount := wallet.EstimateFees(
 					inputs, append(outs, changeOutputs...), millisatsPerByte,
 				)
 
-				// Update the change amount by adding the delta
-				// delta = targetAmount - feeAmount.
+				outAmount := uint64(0)
+				for _, out := range outs {
+					if out.Asset == lbtc {
+						outAmount += out.Amount
+					}
+				}
+				inAmount := uint64(0)
+				for _, in := range inputs {
+					if in.Asset == lbtc {
+						inAmount += in.Value
+					}
+				}
+
+				// The change is calculated as:
+				// total in amount - (total out amount + fee amount)
+				changeAmount := inAmount - outAmount - feeAmount
+				changeIndex := 0
 				for i, out := range changeOutputs {
-					if out.Asset == targetAsset {
-						// This way the delta is subtracted in case it's negative.
-						changeOutputs[i].Amount = uint64(int(out.Amount) + int(targetAmount) - int(feeAmount))
+					if out.Asset == lbtc {
+						changeIndex = i
 						break
 					}
+				}
+
+				// The change output is updated and eventually removed if became dust,
+				changeOutputs[changeIndex].Amount = changeAmount
+				if changeAmount < ts.dustAmount {
+					feeAmount += changeAmount
+					changeOutputs = append(
+						changeOutputs[:changeIndex], changeOutputs[changeIndex+1:]...,
+					)
 				}
 			}
 		}

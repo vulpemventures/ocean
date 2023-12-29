@@ -49,6 +49,7 @@ var (
 	dbPort             = config.GetInt(config.DbPortKey)
 	dbName             = config.GetString(config.DbNameKey)
 	migrationSourceURL = config.GetString(config.DbMigrationPath)
+	dustAmount         = uint64(config.GetInt(config.DustAmountKey))
 )
 
 func main() {
@@ -87,6 +88,7 @@ func main() {
 		RootPath:                rootPath,
 		Network:                 network,
 		UtxoExpiryDuration:      utxoExpiryDuration * time.Second,
+		DustAmount:              dustAmount,
 		RepoManagerType:         dbType,
 		BlockchainScannerType:   bcScannerType,
 		RepoManagerConfig:       repoManagerConfig,
