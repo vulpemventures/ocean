@@ -135,7 +135,11 @@ func (w *Wallet) SignPset(args SignPsetArgs) (string, error) {
 
 	ptx, _ := psetv2.NewPsetFromBase64(args.PsetBase64)
 	for i, in := range ptx.Inputs {
-		path, ok := args.DerivationPathMap[hex.EncodeToString(in.GetUtxo().Script)]
+		prevout := in.GetUtxo()
+		if prevout == nil {
+			continue
+		}
+		path, ok := args.DerivationPathMap[hex.EncodeToString(prevout.Script)]
 		if ok {
 			err := w.signInput(ptx, i, path, args.sighashType())
 			if err != nil {
