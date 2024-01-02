@@ -27,7 +27,7 @@ func (s *selector) SelectUtxos(
 	})
 
 	targetUtxos := make([]*domain.Utxo, 0)
-	totalAmount := uint64(0)
+	balance := uint64(0)
 	for i := range utxos {
 		utxo := utxos[i]
 		if utxo.IsConfidential() && !utxo.IsRevealed() {
@@ -35,7 +35,12 @@ func (s *selector) SelectUtxos(
 		}
 		if utxo.Asset == targetAsset {
 			targetUtxos = append(targetUtxos, utxo)
+			balance += utxo.Value
 		}
+	}
+
+	if targetAmount == balance {
+		return targetUtxos, 0, nil
 	}
 
 	indexes := selectUtxos(targetAmount, targetUtxos)
@@ -44,6 +49,7 @@ func (s *selector) SelectUtxos(
 	}
 
 	selectedUtxos := make([]*domain.Utxo, 0)
+	totalAmount := uint64(0)
 	for _, v := range indexes {
 		totalAmount += targetUtxos[v].Value
 		selectedUtxos = append(selectedUtxos, targetUtxos[v])
