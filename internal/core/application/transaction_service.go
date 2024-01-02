@@ -357,6 +357,13 @@ func (ts *TransactionService) Transfer(
 	if len(balance) <= 0 {
 		return "", fmt.Errorf("account %s has 0 balance", accountName)
 	}
+	for asset, amount := range outputs.totalAmountByAsset() {
+		if (balance[asset].Confirmed + balance[asset].Unconfirmed) < amount {
+			return "", fmt.Errorf(
+				"not enough funds to cover amount %d of asset %s", amount, asset,
+			)
+		}
+	}
 
 	utxos, err := utxoRepo.GetSpendableUtxosForAccount(
 		ctx, account.Namespace,
