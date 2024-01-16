@@ -12,10 +12,12 @@ type repoManager struct {
 	utxoRepository   *utxoRepository
 	walletRepository *walletRepository
 	txRepository     *txRepository
+	scriptRepository *scriptRepository
 
 	walletEventHandlers *handlerMap
 	utxoEventHandlers   *handlerMap
 	txEventHandlers     *handlerMap
+	scriptEventHandlers *handlerMap
 }
 
 func NewRepoManager() ports.RepoManager {
@@ -30,11 +32,13 @@ func NewRepoManager() ports.RepoManager {
 		walletEventHandlers: newHandlerMap(),
 		utxoEventHandlers:   newHandlerMap(),
 		txEventHandlers:     newHandlerMap(),
+		scriptEventHandlers: newHandlerMap(),
 	}
 
 	go rm.listenToWalletEvents()
 	go rm.listenToUtxoEvents()
 	go rm.listenToTxEvents()
+	go rm.listenToScriptEvents()
 
 	return rm
 }
@@ -49,6 +53,10 @@ func (rm *repoManager) WalletRepository() domain.WalletRepository {
 
 func (rm *repoManager) TransactionRepository() domain.TransactionRepository {
 	return rm.txRepository
+}
+
+func (rm *repoManager) ExternalScriptRepository() domain.ExternalScriptRepository {
+	return rm.scriptRepository
 }
 
 func (rm *repoManager) RegisterHandlerForWalletEvent(
@@ -69,10 +77,17 @@ func (rm *repoManager) RegisterHandlerForTxEvent(
 	rm.txEventHandlers.set(int(eventType), handler)
 }
 
+func (rm *repoManager) RegisterHandlerForExternalScriptEvent(
+	eventType domain.ExternalScriptEventType, handler ports.ScriptEventHandler,
+) {
+	rm.scriptEventHandlers.set(int(eventType), handler)
+}
+
 func (rm *repoManager) Reset() {
 	rm.walletRepository.reset()
 	rm.utxoRepository.reset()
 	rm.txRepository.reset()
+	rm.scriptRepository.reset()
 }
 
 func (rm *repoManager) listenToWalletEvents() {
@@ -114,10 +129,24 @@ func (rm *repoManager) listenToTxEvents() {
 	}
 }
 
+func (rm *repoManager) listenToScriptEvents() {
+	for event := range rm.scriptRepository.chEvents {
+		time.Sleep(time.Millisecond)
+
+		if handlers, ok := rm.scriptEventHandlers.get(int(event.EventType)); ok {
+			for i := range handlers {
+				handler := handlers[i]
+				go handler.(ports.ScriptEventHandler)(event)
+			}
+		}
+	}
+}
+
 func (rm *repoManager) Close() {
 	rm.walletRepository.close()
 	rm.utxoRepository.close()
 	rm.txRepository.close()
+	rm.scriptRepository.close()
 }
 
 // handlerMap is a util type to prevent race conditions when registering
