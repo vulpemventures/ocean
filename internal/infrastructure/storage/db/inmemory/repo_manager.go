@@ -24,11 +24,13 @@ func NewRepoManager() ports.RepoManager {
 	utxoRepo := newUtxoRepository()
 	walletRepo := newWalletRepository()
 	txRepo := newTransactionRepository()
+	scriptRepo := newExternalScriptRepository()
 
 	rm := &repoManager{
 		utxoRepository:      utxoRepo,
 		walletRepository:    walletRepo,
 		txRepository:        txRepo,
+		scriptRepository:    scriptRepo,
 		walletEventHandlers: newHandlerMap(),
 		utxoEventHandlers:   newHandlerMap(),
 		txEventHandlers:     newHandlerMap(),

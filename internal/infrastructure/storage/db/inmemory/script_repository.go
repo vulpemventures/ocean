@@ -28,6 +28,8 @@ func newExternalScriptRepository() *scriptRepository {
 			scripts: make(map[string]domain.AddressInfo),
 			lock:    &sync.RWMutex{},
 		},
+		chEvents: make(chan domain.ExternalScriptEvent),
+		chLock:   &sync.Mutex{},
 	}
 }
 

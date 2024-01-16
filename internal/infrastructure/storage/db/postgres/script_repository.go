@@ -33,20 +33,7 @@ func newExternalScriptRepositoryPgImpl(pgxPool *pgxpool.Pool) *scriptRepositoryP
 func (r *scriptRepositoryPg) AddScript(
 	ctx context.Context, info domain.AddressInfo,
 ) (bool, error) {
-	conn, err := r.pgxPool.Acquire(ctx)
-	if err != nil {
-		return false, err
-	}
-	defer conn.Release()
-
-	tx, err := conn.Begin(ctx)
-	if err != nil {
-		return false, err
-	}
-	defer tx.Rollback(ctx)
-
-	querierWithTx := r.querier.WithTx(tx)
-	if err := querierWithTx.InsertScript(ctx, queries.InsertScriptParams{
+	if err := r.querier.InsertScript(ctx, queries.InsertScriptParams{
 		Account:     info.Account,
 		Script:      info.Script,
 		BlindingKey: info.BlindingKey,
@@ -56,10 +43,6 @@ func (r *scriptRepositoryPg) AddScript(
 		} else {
 			return false, err
 		}
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return false, err
 	}
 
 	go r.publishEvent(domain.ExternalScriptEvent{
@@ -79,28 +62,15 @@ func (r *scriptRepositoryPg) GetAllScripts(
 func (r *scriptRepositoryPg) DeleteScript(
 	ctx context.Context, scriptHash string,
 ) (bool, error) {
-	conn, err := r.pgxPool.Acquire(ctx)
+	_, err := r.querier.GetScript(ctx, scriptHash)
 	if err != nil {
-		return false, err
-	}
-	defer conn.Release()
-
-	tx, err := conn.Begin(ctx)
-	if err != nil {
-		return false, err
-	}
-	defer tx.Rollback(ctx)
-
-	querierWithTx := r.querier.WithTx(tx)
-	if err := querierWithTx.DeleteScript(ctx, scriptHash); err != nil {
-		if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok && pqErr.Code == uniqueViolation {
+		if err.Error() == pgxNoRows {
 			return false, nil
-		} else {
-			return false, err
 		}
+		return false, err
 	}
 
-	if err := tx.Commit(ctx); err != nil {
+	if err := r.querier.DeleteScript(ctx, scriptHash); err != nil {
 		return false, err
 	}
 

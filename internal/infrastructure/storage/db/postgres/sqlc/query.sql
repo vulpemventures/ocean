@@ -88,6 +88,9 @@ INSERT INTO external_script(account,script,blinding_key) VALUES($1,$2,$3);
 -- name: GetAllScripts :many
 SELECT * FROM external_script;
 
+-- name: GetScript :one
+SELECT * FROM external_script WHERE account = $1;
+
 -- name: DeleteScript :exec
 DELETE FROM external_script WHERE account = $1;
 

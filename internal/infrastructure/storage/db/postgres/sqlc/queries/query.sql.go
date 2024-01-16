@@ -181,6 +181,17 @@ func (q *Queries) GetAllUtxos(ctx context.Context) ([]GetAllUtxosRow, error) {
 	return items, nil
 }
 
+const getScript = `-- name: GetScript :one
+SELECT account, script, blinding_key FROM external_script WHERE account = $1
+`
+
+func (q *Queries) GetScript(ctx context.Context, account string) (ExternalScript, error) {
+	row := q.db.QueryRow(ctx, getScript, account)
+	var i ExternalScript
+	err := row.Scan(&i.Account, &i.Script, &i.BlindingKey)
+	return i, err
+}
+
 const getTransaction = `-- name: GetTransaction :many
 SELECT tx_id, tx_hex, block_hash, block_height, id, account_name, fk_tx_id FROM transaction t left join tx_input_account tia on t.tx_id = tia.fk_tx_id WHERE tx_id=$1
 `
