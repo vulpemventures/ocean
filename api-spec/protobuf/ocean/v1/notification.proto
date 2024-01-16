@@ -10,6 +10,15 @@ import "ocean/v1/types.proto";
 // server-side stream or by subscribing webhooks invoked whenever an event 
 // occurs.
 service NotificationService {
+  // WatchExternalScript allows to get notified about utxos/txs related to the given
+  // external script, ie. not derived from a wallet account.
+  // The service answers with the label assigned to the given script.
+  // The label is used as identifier of the utxos/txs received from the streams.
+  rpc WatchExternalScript(WatchExternalScriptRequest) returns(WatchExternalScriptResponse);
+  // UnwatchExternalScript allows to stop watching for the script identified with
+  // the given label.
+  rpc UnwatchExternalScript(UnwatchExternalScriptRequest) returns(UnwatchExternalScriptResponse);
+
   //**************//
   //   STREAMS    //
   //**************//
@@ -24,14 +33,29 @@ service NotificationService {
   //***************//
 
   // Adds a webhook registered for some kind of event.
-  rpc AddWebhook(AddWebhookRequest) returns(AddWebhookResponse){}
+  rpc AddWebhook(AddWebhookRequest) returns(AddWebhookResponse);
 
   // Removes some previously added webhook.
-  rpc RemoveWebhook(RemoveWebhookRequest) returns(RemoveWebhookResponse){}
+  rpc RemoveWebhook(RemoveWebhookRequest) returns(RemoveWebhookResponse);
 
   // Returns registered webhooks.
-  rpc ListWebhooks(ListWebhooksRequest) returns(ListWebhooksResponse){}
+  rpc ListWebhooks(ListWebhooksRequest) returns(ListWebhooksResponse);
 }
+
+message WatchExternalScriptRequest {
+  // The script to watch.
+  string script = 1;
+  // Optional: the private blinding key in case the script locks confidential utxos to unblind.
+  string blinding_key = 2;
+}
+message WatchExternalScriptResponse {
+  string label = 1;
+}
+
+message UnwatchExternalScriptRequest {
+  string label = 1;
+}
+message UnwatchExternalScriptResponse {}
 
 message TransactionNotificationsRequest{}
 message TransactionNotificationsResponse{
