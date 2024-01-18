@@ -20,10 +20,12 @@ type repoManager struct {
 	utxoRepository   *utxoRepository
 	walletRepository *walletRepository
 	txRepository     *transactionRepository
+	scriptRepository *scriptRepository
 
 	walletEventHandlers *handlerMap
 	utxoEventHandlers   *handlerMap
 	txEventHandlers     *handlerMap
+	scriptEventHandlers *handlerMap
 }
 
 // NewRepoManager is the factory for creating a new badger implementation
@@ -32,11 +34,12 @@ type repoManager struct {
 // is provided - to be used only for testing purposes), and opening and closing
 // the connection to them.
 func NewRepoManager(baseDbDir string, logger badger.Logger) (ports.RepoManager, error) {
-	var walletdbDir, utxoDir, txDir string
+	var walletdbDir, utxoDir, txDir, scriptDir string
 	if len(baseDbDir) > 0 {
 		walletdbDir = filepath.Join(baseDbDir, "wallet")
 		utxoDir = filepath.Join(baseDbDir, "utxos")
 		txDir = filepath.Join(baseDbDir, "txs")
+		scriptDir = filepath.Join(baseDbDir, "scripts")
 	}
 
 	walletDb, err := createDb(walletdbDir, logger)
@@ -53,23 +56,31 @@ func NewRepoManager(baseDbDir string, logger badger.Logger) (ports.RepoManager, 
 	if err != nil {
 		return nil, fmt.Errorf("opening tx db: %w", err)
 	}
+	scriptDb, err := createDb(scriptDir, logger)
+	if err != nil {
+		return nil, fmt.Errorf("opening external scripts db: %w", err)
+	}
 
 	utxoRepo := newUtxoRepository(utxoDb)
 	walletRepo := newWalletRepository(walletDb)
 	txRepo := newTransactionRepository(txDb)
+	scriptRepo := newExternalScriptRepository(scriptDb)
 
 	rm := &repoManager{
 		utxoRepository:      utxoRepo,
 		walletRepository:    walletRepo,
 		txRepository:        txRepo,
-		walletEventHandlers: newHandlerMap(), //make(map[domain.WalletEventType]ports.WalletEventHandler),
-		utxoEventHandlers:   newHandlerMap(), // make(map[domain.UtxoEventType]ports.UtxoEventHandler),
-		txEventHandlers:     newHandlerMap(), // make(map[domain.TransactionEventType]ports.TxEventHandler),
+		scriptRepository:    scriptRepo,
+		walletEventHandlers: newHandlerMap(),
+		utxoEventHandlers:   newHandlerMap(),
+		txEventHandlers:     newHandlerMap(),
+		scriptEventHandlers: newHandlerMap(),
 	}
 
 	go rm.listenToWalletEvents()
 	go rm.listenToUtxoEvents()
 	go rm.listenToTxEvents()
+	go rm.listenToScriptEvents()
 
 	return rm, nil
 }
@@ -84,6 +95,10 @@ func (d *repoManager) WalletRepository() domain.WalletRepository {
 
 func (d *repoManager) TransactionRepository() domain.TransactionRepository {
 	return d.txRepository
+}
+
+func (d *repoManager) ExternalScriptRepository() domain.ExternalScriptRepository {
+	return d.scriptRepository
 }
 
 func (rm *repoManager) RegisterHandlerForWalletEvent(
@@ -104,16 +119,24 @@ func (rm *repoManager) RegisterHandlerForTxEvent(
 	rm.txEventHandlers.set(int(eventType), handler)
 }
 
+func (rm *repoManager) RegisterHandlerForExternalScriptEvent(
+	eventType domain.ExternalScriptEventType, handler ports.ScriptEventHandler,
+) {
+	rm.scriptEventHandlers.set(int(eventType), handler)
+}
+
 func (d *repoManager) Reset() {
 	d.walletRepository.reset()
 	d.utxoRepository.reset()
 	d.txRepository.reset()
+	d.scriptRepository.reset()
 }
 
 func (d *repoManager) Close() {
 	d.walletRepository.close()
 	d.utxoRepository.close()
 	d.txRepository.close()
+	d.scriptRepository.close()
 }
 
 func (rm *repoManager) listenToWalletEvents() {
@@ -144,6 +167,17 @@ func (rm *repoManager) listenToTxEvents() {
 			for i := range handlers {
 				handler := handlers[i]
 				go handler.(ports.TxEventHandler)(event)
+			}
+		}
+	}
+}
+
+func (rm *repoManager) listenToScriptEvents() {
+	for event := range rm.scriptRepository.chEvents {
+		if handlers, ok := rm.scriptEventHandlers.get(int(event.EventType)); ok {
+			for i := range handlers {
+				handler := handlers[i]
+				go handler.(ports.ScriptEventHandler)(event)
 			}
 		}
 	}

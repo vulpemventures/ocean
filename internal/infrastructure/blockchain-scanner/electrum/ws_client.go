@@ -103,8 +103,10 @@ func (c *wsClient) listen() {
 				case "blockchain.scripthash.subscribe":
 					scriptHash := resp.Params.([]interface{})[0].(string)
 					account := c.chHandler.getAccountByScriptHash(scriptHash)
-					report := accountReport{account, scriptHash}
-					c.reportHandlers[account].sendReport(report)
+					if len(account) > 0 {
+						report := accountReport{account, scriptHash}
+						c.reportHandlers[account].sendReport(report)
+					}
 					continue
 				case "blockchain.headers.subscribe":
 					buf, _ := json.Marshal(resp.Params.([]interface{})[0])
@@ -180,10 +182,15 @@ func (c *wsClient) subscribeForAccount(
 
 	for _, info := range addresses {
 		scriptHashes = append(scriptHashes, calcScriptHash(info.Script))
-		c.log(
-			"start watching address %s for account %s",
-			info.DerivationPath, accountName,
+		str := fmt.Sprintf(
+			"start watching address %s for account %s", info.DerivationPath, accountName,
 		)
+		if len(info.DerivationPath) <= 0 {
+			str = fmt.Sprintf(
+				"start watching script %s with label %s", info.Script, info.Account,
+			)
+		}
+		c.log(str)
 	}
 
 	if err := c.subscribeForScripts(accountName, scriptHashes); err != nil {

@@ -269,29 +269,6 @@ func (as *AccountService) registerHandlerForWalletEvents() {
 			as.bcScanner.StopWatchForAccount(event.AccountName)
 		},
 	)
-	// Start watching for when utxos are spent as soon as they are added to the storage.
-	as.repoManager.RegisterHandlerForUtxoEvent(
-		domain.UtxoAdded, func(event domain.UtxoEvent) {
-			accountName := event.Utxos[0].AccountName
-			as.bcScanner.WatchForUtxos(accountName, event.Utxos)
-		},
-	)
-
-	// In background, make sure to watch for all utxos to get notified when they are spent.
-	go func() {
-		utxos, err := as.repoManager.UtxoRepository().GetAllUtxos(
-			context.Background(),
-		)
-		if err != nil {
-			as.warn(err, "account service: error while getting all utxos")
-			return
-		}
-		for _, u := range utxos {
-			if !u.IsSpent() {
-				as.bcScanner.WatchForUtxos(u.AccountName, []domain.UtxoInfo{u.Info()})
-			}
-		}
-	}()
 }
 
 func (as *AccountService) listenToUtxoChannel(

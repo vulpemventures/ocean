@@ -7,16 +7,19 @@ import (
 type WalletEventHandler func(event domain.WalletEvent)
 type UtxoEventHandler func(event domain.UtxoEvent)
 type TxEventHandler func(event domain.TransactionEvent)
+type ScriptEventHandler func(event domain.ExternalScriptEvent)
 
 // RepoManager is the abstraction for any kind of service intended to manage
 // domain repositories implementations of the same concrete type.
 type RepoManager interface {
-	// WalletRepository returns the concrete implentation as domain interface.
+	// WalletRepository returns the wallet repository.
 	WalletRepository() domain.WalletRepository
-	// UtxoRepository returns the concrete implentation as domain interface.
+	// UtxoRepository returns the utxo repository.
 	UtxoRepository() domain.UtxoRepository
-	// TransactionRepository returns the concrete implentation as domain interface.
+	// TransactionRepository returns the tx repository.
 	TransactionRepository() domain.TransactionRepository
+	// ExternalScriptRepository returns the external scripts repository.
+	ExternalScriptRepository() domain.ExternalScriptRepository
 
 	// RegisterHandlerForWalletEvent registers an handler function, executed
 	// whenever the given event type occurs.
@@ -32,6 +35,11 @@ type RepoManager interface {
 	// whenever the given event type occurs.
 	RegisterHandlerForTxEvent(
 		eventType domain.TransactionEventType, handler TxEventHandler,
+	)
+	// RegisterHandlerForExternalScriptEvent registers an handler function,
+	// executed whenever the given event type occurs.
+	RegisterHandlerForExternalScriptEvent(
+		eventType domain.ExternalScriptEventType, handler ScriptEventHandler,
 	)
 
 	// Reset brings all the repos to their initial state by deleting any persisted data.

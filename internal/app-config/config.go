@@ -267,7 +267,8 @@ func (c *AppConfig) notificationService() *application.NotificationService {
 	}
 
 	rm, _ := c.repoManager()
-	c.notifySvc = application.NewNotificationService(rm)
+	bcs, _ := c.bcScanner()
+	c.notifySvc = application.NewNotificationService(rm, bcs)
 	return c.notifySvc
 }
 

@@ -28,10 +28,12 @@ type repoManager struct {
 	utxoRepository   *utxoRepositoryPg
 	walletRepository *walletRepositoryPg
 	txRepository     *txRepositoryPg
+	scriptRepository *scriptRepositoryPg
 
 	walletEventHandlers *handlerMap
 	utxoEventHandlers   *handlerMap
 	txEventHandlers     *handlerMap
+	scriptEventHandlers *handlerMap
 }
 
 func NewRepoManager(dbConfig DbConfig) (ports.RepoManager, error) {
@@ -49,20 +51,24 @@ func NewRepoManager(dbConfig DbConfig) (ports.RepoManager, error) {
 	utxoRepository := newUtxoRepositoryPgImpl(pgxPool)
 	walletRepository := newWalletRepositoryPgImpl(pgxPool)
 	txRepository := newTxRepositoryPgImpl(pgxPool)
+	scriptRepository := newExternalScriptRepositoryPgImpl(pgxPool)
 
 	rm := &repoManager{
 		pgxPool:             pgxPool,
 		utxoRepository:      utxoRepository,
 		walletRepository:    walletRepository,
 		txRepository:        txRepository,
+		scriptRepository:    scriptRepository,
 		walletEventHandlers: newHandlerMap(),
 		utxoEventHandlers:   newHandlerMap(),
 		txEventHandlers:     newHandlerMap(),
+		scriptEventHandlers: newHandlerMap(),
 	}
 
 	go rm.listenToWalletEvents()
 	go rm.listenToUtxoEvents()
 	go rm.listenToTxEvents()
+	go rm.listenToScriptEvents()
 
 	return rm, nil
 }
@@ -88,6 +94,10 @@ func (rm *repoManager) TransactionRepository() domain.TransactionRepository {
 	return rm.txRepository
 }
 
+func (rm *repoManager) ExternalScriptRepository() domain.ExternalScriptRepository {
+	return rm.scriptRepository
+}
+
 func (rm *repoManager) RegisterHandlerForWalletEvent(
 	eventType domain.WalletEventType, handler ports.WalletEventHandler,
 ) {
@@ -104,6 +114,12 @@ func (rm *repoManager) RegisterHandlerForTxEvent(
 	eventType domain.TransactionEventType, handler ports.TxEventHandler,
 ) {
 	rm.txEventHandlers.set(int(eventType), handler)
+}
+
+func (rm *repoManager) RegisterHandlerForExternalScriptEvent(
+	eventType domain.ExternalScriptEventType, handler ports.ScriptEventHandler,
+) {
+	rm.scriptEventHandlers.set(int(eventType), handler)
 }
 
 func (rm *repoManager) listenToWalletEvents() {
@@ -145,6 +161,19 @@ func (rm *repoManager) listenToTxEvents() {
 	}
 }
 
+func (rm *repoManager) listenToScriptEvents() {
+	for event := range rm.scriptRepository.chEvents {
+		time.Sleep(time.Millisecond)
+
+		if handlers, ok := rm.scriptEventHandlers.get(int(event.EventType)); ok {
+			for i := range handlers {
+				handler := handlers[i]
+				go handler.(ports.ScriptEventHandler)(event)
+			}
+		}
+	}
+}
+
 func (rm *repoManager) Reset() {
 	ctx := context.Background()
 	conn, err := rm.pgxPool.Acquire(ctx)
@@ -164,6 +193,7 @@ func (rm *repoManager) Reset() {
 	rm.walletRepository.reset(querier, ctx)
 	rm.utxoRepository.reset(querier, ctx)
 	rm.txRepository.reset(querier, ctx)
+	rm.scriptRepository.reset(querier, ctx)
 
 	tx.Commit(ctx)
 }
@@ -172,6 +202,7 @@ func (rm *repoManager) Close() {
 	rm.utxoRepository.close()
 	rm.txRepository.close()
 	rm.walletRepository.close()
+	rm.scriptRepository.close()
 
 	rm.pgxPool.Close()
 }

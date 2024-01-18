@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
@@ -290,4 +291,28 @@ func parseRootPath(p string) (string, error) {
 		return "", fmt.Errorf("invalid root path: %s", err)
 	}
 	return p, nil
+}
+
+func parseScript(script string) (string, error) {
+	if len(script) <= 0 {
+		return "", fmt.Errorf("missing script")
+	}
+	buf, err := hex.DecodeString(script)
+	if err != nil {
+		return "", fmt.Errorf("invalid script: must be in hex format")
+	}
+	if _, err := txscript.ParsePkScript(buf); err != nil {
+		return "", fmt.Errorf("invalid script: %s", err)
+	}
+	return script, nil
+}
+
+func parsePrvkey(key string) (string, error) {
+	if len(key) <= 0 {
+		return "", nil
+	}
+	if _, err := hex.DecodeString(key); err != nil {
+		return "", fmt.Errorf("invalid key: must be in hex format")
+	}
+	return key, nil
 }

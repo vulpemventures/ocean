@@ -81,6 +81,19 @@ DELETE FROM tx_input_account WHERE fk_tx_id=$1;
 -- name: GetTransaction :many
 SELECT * FROM transaction t left join tx_input_account tia on t.tx_id = tia.fk_tx_id WHERE tx_id=$1;
 
+/* EXTERNAL SCRIPT */
+-- name: InsertScript :exec
+INSERT INTO external_script(account,script,blinding_key) VALUES($1,$2,$3);
+
+-- name: GetAllScripts :many
+SELECT * FROM external_script;
+
+-- name: GetScript :one
+SELECT * FROM external_script WHERE account = $1;
+
+-- name: DeleteScript :exec
+DELETE FROM external_script WHERE account = $1;
+
 -- name: ResetUtxos :exec
 DELETE FROM utxo;
 
@@ -89,3 +102,6 @@ DELETE FROM wallet;
 
 -- name: ResetTransactions :exec
 DELETE FROM transaction;
+
+-- name: ResetScripts :exec
+DELETE FROM external_script;

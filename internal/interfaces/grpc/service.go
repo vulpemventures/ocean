@@ -53,13 +53,13 @@ func NewService(config ServiceConfig, appConfig *appconfig.AppConfig) (*service,
 }
 
 func (s *service) Start() error {
+	s.appConfig.BlockchainScanner().Start()
+	s.log("started blockchain scanner")
+
 	srv, err := s.start()
 	if err != nil {
 		return err
 	}
-
-	s.appConfig.BlockchainScanner().Start()
-	s.log("started blockchain scanner")
 
 	s.log("start listening on %s", s.config.address())
 
