@@ -6,6 +6,8 @@ import (
 
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/vulpemventures/ocean/internal/core/application"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var ErrStreamConnectionClosed = fmt.Errorf("connection closed on by server")
@@ -81,6 +83,39 @@ func (n notification) UtxosNotifications(
 			return ErrStreamConnectionClosed
 		}
 	}
+}
+
+func (n notification) WatchExternalScript(
+	ctx context.Context, req *pb.WatchExternalScriptRequest,
+) (*pb.WatchExternalScriptResponse, error) {
+	script, err := parseScript(req.GetScript())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	blindingKey, err := parsePrvkey(req.GetBlindingKey())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	label, err := n.appSvc.WatchScript(ctx, script, blindingKey)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.WatchExternalScriptResponse{
+		Label: label,
+	}, nil
+}
+
+func (n notification) UnwatchExternalScript(
+	ctx context.Context, req *pb.UnwatchExternalScriptRequest,
+) (*pb.UnwatchExternalScriptResponse, error) {
+	label, err := parseAccountName(req.GetLabel())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if err := n.appSvc.StopWatchingScript(ctx, label); err != nil {
+		return nil, err
+	}
+	return &pb.UnwatchExternalScriptResponse{}, nil
 }
 
 func (n notification) AddWebhook(

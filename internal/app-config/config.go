@@ -38,6 +38,7 @@ type AppConfig struct {
 	RootPath           string
 	Network            *network.Network
 	UtxoExpiryDuration time.Duration
+	DustAmount         uint64
 
 	RepoManagerType         string
 	BlockchainScannerType   string
@@ -58,6 +59,9 @@ func (c *AppConfig) Validate() error {
 	}
 	if c.UtxoExpiryDuration == 0 {
 		return fmt.Errorf("missing utxo expiry duration")
+	}
+	if c.DustAmount == 0 {
+		return fmt.Errorf("missing dust amount threshold")
 	}
 	if len(c.RepoManagerType) == 0 {
 		return fmt.Errorf("missing repo manager type")
@@ -252,7 +256,7 @@ func (c *AppConfig) transactionService() *application.TransactionService {
 	rm, _ := c.repoManager()
 	bcs, _ := c.bcScanner()
 	c.txSvc = application.NewTransactionService(
-		rm, bcs, c.Network, c.UtxoExpiryDuration,
+		rm, bcs, c.Network, c.UtxoExpiryDuration, c.DustAmount,
 	)
 	return c.txSvc
 }
@@ -263,7 +267,8 @@ func (c *AppConfig) notificationService() *application.NotificationService {
 	}
 
 	rm, _ := c.repoManager()
-	c.notifySvc = application.NewNotificationService(rm)
+	bcs, _ := c.bcScanner()
+	c.notifySvc = application.NewNotificationService(rm, bcs)
 	return c.notifySvc
 }
 

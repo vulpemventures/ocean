@@ -180,6 +180,10 @@ func (h *chHandler) clearAccount(account string) {
 		close(chReports)
 	}
 	delete(h.chReportsByAccount, account)
+	scripts := h.scriptsByAccount[account]
+	for _, script := range scripts {
+		delete(h.accountByScript, script)
+	}
 	delete(h.scriptsByAccount, account)
 }
 

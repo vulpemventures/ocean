@@ -77,6 +77,8 @@ const (
 	DbNameKey = "DB_NAME"
 	// DbMigrationPath is the path to migration files
 	DbMigrationPath = "DB_MIGRATION_PATH"
+	// DustAmountKey is the key to customize the dust amount threshold
+	DustAmountKey = "DUST_AMOUNT"
 
 	// DbLocation is the folder inside the datadir containing db files.
 	DbLocation = "db"
@@ -105,6 +107,7 @@ var (
 	defaultUtxoExpiryDuration = 360 // 6 minutes (3 blocks)
 	defaultEsploraUrl         = "https://blockstream.info/liquid/api"
 	defaultElectrumUrl        = "ssl://blockstream.info:995"
+	defaultDustAmount         = uint64(450)
 
 	supportedNetworks = map[string]*network.Network{
 		network.Liquid.Name:  &network.Liquid,
@@ -152,6 +155,7 @@ func init() {
 	vip.SetDefault(DbNameKey, "oceand-db")
 	vip.SetDefault(DbMigrationPath, "file://internal/infrastructure/storage/db/postgres/migration")
 	vip.SetDefault(ElectrumUrlKey, defaultElectrumUrl)
+	vip.SetDefault(DustAmountKey, defaultDustAmount)
 
 	if err := validate(); err != nil {
 		log.Fatalf("invalid config: %s", err)

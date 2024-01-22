@@ -31,7 +31,7 @@ func testGetUtxoChannel(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, repoManager)
 
-	svc := application.NewNotificationService(repoManager)
+	svc := application.NewNotificationService(repoManager, nil)
 
 	chEvents, err := svc.GetUtxoChannel(ctx)
 	require.NoError(t, err)
@@ -66,7 +66,7 @@ func testGetTxChannel(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, repoManager)
 
-	svc := application.NewNotificationService(repoManager)
+	svc := application.NewNotificationService(repoManager, nil)
 
 	chEvents, err := svc.GetTxChannel(ctx)
 	require.NoError(t, err)
