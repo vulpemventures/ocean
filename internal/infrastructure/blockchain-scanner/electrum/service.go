@@ -479,6 +479,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 					BlockTime:   block.timestamp(),
 					BlockHeight: uint64(event.tx.Height),
 				},
+				AccountName: event.account,
 			})
 		}
 	}
@@ -499,6 +500,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 							BlockTime:   block.timestamp(),
 							BlockHeight: uint64(event.tx.Height),
 						},
+						AccountName: event.account,
 					})
 				}
 			}
