@@ -133,8 +133,8 @@ func (ns *NotificationService) publishUtxo(event domain.UtxoEvent) {
 }
 
 func (ns *NotificationService) publishTx(event domain.TransactionEvent) {
-	ns.utxoLock.Lock()
-	defer ns.utxoLock.Unlock()
+	ns.txLock.Lock()
+	defer ns.txLock.Unlock()
 
 	ns.chTxs <- event
 }
