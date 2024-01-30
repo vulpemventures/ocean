@@ -216,6 +216,7 @@ func (c *wsClient) unsubscribeForAccount(accountName string) {
 	// 	c.unsubscribeForScript(accountName, scriptHash)
 	// }
 	c.chHandler.clearAccount(accountName)
+	delete(c.reportHandlers, accountName)
 }
 
 func (c *wsClient) getScriptHashesHistory(scriptHashes []string) (map[string][]txInfo, error) {

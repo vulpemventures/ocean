@@ -1,14 +1,18 @@
 package application
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/btcsuite/btcd/txscript"
 	log "github.com/sirupsen/logrus"
+	"github.com/vulpemventures/go-bip32"
 	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/go-elements/elementsutil"
 	"github.com/vulpemventures/go-elements/network"
@@ -634,6 +638,87 @@ func (ts *TransactionService) Transfer(
 	}
 
 	return txHex, nil
+}
+
+func (ts *TransactionService) SignPsetWithSchnorrKey(
+	ctx context.Context, tx string, sighashType uint32,
+) (string, error) {
+	wallet, err := ts.repoManager.WalletRepository().GetWallet(ctx)
+	if err != nil {
+		return "", err
+	}
+	mnemonic, err := wallet.GetMnemonic()
+	if err != nil {
+		return "", err
+	}
+	ssWallet, err := singlesig.NewWalletFromMnemonic(singlesig.NewWalletFromMnemonicArgs{
+		RootPath: wallet.RootPath,
+		Mnemonic: mnemonic,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	ptx, err := psetv2.NewPsetFromBase64(tx)
+	if err != nil {
+		return "", err
+	}
+	if len(ptx.Global.Xpubs) < 1 {
+		return "", fmt.Errorf("missing pset global xpubs")
+	}
+
+	// For each global xpub, retrieve account info if it belongs to the wallet.
+	// Account info are required to know its derivation index, used later.
+	xpubsInfo := make([]struct {
+		account *domain.Account
+		xpub    *bip32.Key
+	}, 0, len(ptx.Global.Xpubs))
+	for _, xpub := range ptx.Global.Xpubs {
+		for _, account := range wallet.Accounts {
+			hdNode, err := bip32.B58Deserialize(account.Xpub)
+			if err != nil {
+				return "", err
+			}
+			accountXpub, err := hdNode.Serialize()
+			if err != nil {
+				return "", err
+			}
+
+			if bytes.Equal(xpub.ExtendedKey, accountXpub[:len(accountXpub)-4]) {
+				xpubsInfo = append(xpubsInfo, struct {
+					account *domain.Account
+					xpub    *bip32.Key
+				}{account, hdNode})
+				break
+			}
+		}
+	}
+
+	// For each input that has a taproot bip32 derivation field,
+	// construct the derivation path by attaching the bip32 derivation to the
+	// account's index. This derivation path format is needed by the signing wallet.
+	derivationPathMap := make(map[string]string)
+	for _, in := range ptx.Inputs {
+		for _, derivation := range in.TapBip32Derivation {
+			for _, info := range xpubsInfo {
+				if derivation.MasterKeyFingerprint == binary.LittleEndian.Uint32(info.xpub.FingerPrint) {
+					derivationPath := []string{fmt.Sprintf("%d'", info.account.Index)}
+					for _, step := range derivation.Bip32Path {
+						derivationPath = append(derivationPath, fmt.Sprintf("%d", step))
+					}
+					derivationPathMap[hex.EncodeToString(in.GetUtxo().Script)] = strings.Join(derivationPath, "/")
+					break
+				}
+			}
+		}
+	}
+
+	return ssWallet.SignTaproot(singlesig.SignTaprootArgs{
+		PsetBase64:        tx,
+		DerivationPathMap: derivationPathMap,
+		GenesisBlockHash:  ts.network.GenesisBlockHash,
+		SighashType:       txscript.SigHashType(sighashType),
+	})
 }
 
 func (ts *TransactionService) registerHandlerForWalletEvents() {

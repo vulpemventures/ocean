@@ -245,6 +245,7 @@ func (c *tcpClient) unsubscribeForAccount(accountName string) {
 	// 	c.unsubscribeForScript(accountName, scriptHash)
 	// }
 	c.chHandler.clearAccount(accountName)
+	delete(c.reportHandlers, accountName)
 }
 
 func (c *tcpClient) subscribeForScripts(

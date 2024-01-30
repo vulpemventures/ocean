@@ -262,6 +262,26 @@ func (t *transaction) ClaimPegIn(
 	return nil, fmt.Errorf("to be implemented")
 }
 
+func (t *transaction) SignPsetWithSchnorrKey(
+	ctx context.Context, req *pb.SignPsetWithSchnorrKeyRequest,
+) (*pb.SignPsetWithSchnorrKeyResponse, error) {
+	tx, err := parsePset(req.GetTx())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	signedTx, err := t.appSvc.SignPsetWithSchnorrKey(
+		ctx, tx, req.GetSighashType(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.SignPsetWithSchnorrKeyResponse{
+		SignedTx: signedTx,
+	}, nil
+}
+
 func validateTxid(txid string) error {
 	if txid == "" {
 		return fmt.Errorf("missing txid")

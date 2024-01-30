@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/timshannon/badgerhold/v4 v4.0.2
 	github.com/vulpemventures/go-bip39 v1.0.2
-	github.com/vulpemventures/go-elements v0.5.1
+	github.com/vulpemventures/go-elements v0.5.3
 	github.com/vulpemventures/neutrino-elements v0.1.3
 	golang.org/x/crypto v0.1.0
 	golang.org/x/net v0.7.0
@@ -31,9 +31,12 @@ require (
 	github.com/jackc/pgconn v1.12.1
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/tyler-smith/go-bip39 v1.1.0
+	github.com/vulpemventures/go-bip32 v0.0.0-20200624192635-867c159da4d7
 )
 
 require (
+	github.com/FactomProject/basen v0.0.0-20150613233007-fe3947df716e // indirect
+	github.com/FactomProject/btcutilecc v0.0.0-20130527213604-d3a63a5752ec // indirect
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcutil/psbt v1.1.4 // indirect
