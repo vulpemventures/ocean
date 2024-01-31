@@ -65,15 +65,15 @@ SELECT * FROM utxo WHERE account_name=$1;
 
 /* TRANSACTION */
 -- name: InsertTransaction :one
-INSERT INTO transaction(tx_id,tx_hex,block_hash,block_height)
-VALUES($1,$2,$3,$4) RETURNING *;
+INSERT INTO transaction(tx_id,tx_hex,block_hash,block_height,block_time)
+VALUES($1,$2,$3,$4,$5) RETURNING *;
 
 -- name: InsertTransactionInputAccount :one
 INSERT INTO tx_input_account(account_name, fk_tx_id)
 VALUES($1,$2) RETURNING *;
 
 -- name: UpdateTransaction :one
-UPDATE transaction SET tx_hex=$1,block_hash=$2,block_height=$3 WHERE tx_id=$4 RETURNING *;
+UPDATE transaction SET tx_hex=$1,block_hash=$2,block_height=$3,block_time=$4 WHERE tx_id=$5 RETURNING *;
 
 -- name: DeleteTransactionInputAccounts :exec
 DELETE FROM tx_input_account WHERE fk_tx_id=$1;

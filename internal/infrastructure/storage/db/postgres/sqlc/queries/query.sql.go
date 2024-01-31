@@ -193,7 +193,7 @@ func (q *Queries) GetScript(ctx context.Context, account string) (ExternalScript
 }
 
 const getTransaction = `-- name: GetTransaction :many
-SELECT tx_id, tx_hex, block_hash, block_height, id, account_name, fk_tx_id FROM transaction t left join tx_input_account tia on t.tx_id = tia.fk_tx_id WHERE tx_id=$1
+SELECT tx_id, tx_hex, block_hash, block_height, block_time, id, account_name, fk_tx_id FROM transaction t left join tx_input_account tia on t.tx_id = tia.fk_tx_id WHERE tx_id=$1
 `
 
 type GetTransactionRow struct {
@@ -201,6 +201,7 @@ type GetTransactionRow struct {
 	TxHex       string
 	BlockHash   string
 	BlockHeight int32
+	BlockTime   sql.NullInt64
 	ID          sql.NullInt32
 	AccountName sql.NullString
 	FkTxID      sql.NullString
@@ -220,6 +221,7 @@ func (q *Queries) GetTransaction(ctx context.Context, txID string) ([]GetTransac
 			&i.TxHex,
 			&i.BlockHash,
 			&i.BlockHeight,
+			&i.BlockTime,
 			&i.ID,
 			&i.AccountName,
 			&i.FkTxID,
@@ -558,8 +560,8 @@ func (q *Queries) InsertScript(ctx context.Context, arg InsertScriptParams) erro
 }
 
 const insertTransaction = `-- name: InsertTransaction :one
-INSERT INTO transaction(tx_id,tx_hex,block_hash,block_height)
-VALUES($1,$2,$3,$4) RETURNING tx_id, tx_hex, block_hash, block_height
+INSERT INTO transaction(tx_id,tx_hex,block_hash,block_height,block_time)
+VALUES($1,$2,$3,$4,$5) RETURNING tx_id, tx_hex, block_hash, block_height, block_time
 `
 
 type InsertTransactionParams struct {
@@ -567,6 +569,7 @@ type InsertTransactionParams struct {
 	TxHex       string
 	BlockHash   string
 	BlockHeight int32
+	BlockTime   sql.NullInt64
 }
 
 // TRANSACTION
@@ -576,6 +579,7 @@ func (q *Queries) InsertTransaction(ctx context.Context, arg InsertTransactionPa
 		arg.TxHex,
 		arg.BlockHash,
 		arg.BlockHeight,
+		arg.BlockTime,
 	)
 	var i Transaction
 	err := row.Scan(
@@ -583,6 +587,7 @@ func (q *Queries) InsertTransaction(ctx context.Context, arg InsertTransactionPa
 		&i.TxHex,
 		&i.BlockHash,
 		&i.BlockHeight,
+		&i.BlockTime,
 	)
 	return i, err
 }
@@ -810,13 +815,14 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (A
 }
 
 const updateTransaction = `-- name: UpdateTransaction :one
-UPDATE transaction SET tx_hex=$1,block_hash=$2,block_height=$3 WHERE tx_id=$4 RETURNING tx_id, tx_hex, block_hash, block_height
+UPDATE transaction SET tx_hex=$1,block_hash=$2,block_height=$3,block_time=$4 WHERE tx_id=$5 RETURNING tx_id, tx_hex, block_hash, block_height, block_time
 `
 
 type UpdateTransactionParams struct {
 	TxHex       string
 	BlockHash   string
 	BlockHeight int32
+	BlockTime   sql.NullInt64
 	TxID        string
 }
 
@@ -825,6 +831,7 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		arg.TxHex,
 		arg.BlockHash,
 		arg.BlockHeight,
+		arg.BlockTime,
 		arg.TxID,
 	)
 	var i Transaction
@@ -833,6 +840,7 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		&i.TxHex,
 		&i.BlockHash,
 		&i.BlockHeight,
+		&i.BlockTime,
 	)
 	return i, err
 }

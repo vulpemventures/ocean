@@ -555,19 +555,22 @@ func (s *service) dbEventHandler(event dbEvent) {
 	chTx := s.getTxChannelByAccount(event.account)
 	txHex, _ := tx.ToHex()
 
-	var hash string
-	var blockHeight uint64
+	var blockhash string
+	var blockheight uint64
+	var blocktime int64
 	if block != nil {
-		hash = block.hash().String()
-		blockHeight = uint64(event.tx.Height)
+		blockhash = block.hash().String()
+		blockheight = uint64(event.tx.Height)
+		blocktime = block.timestamp()
 	}
 
 	go func() {
 		chTx <- &domain.Transaction{
 			TxID:        event.tx.Txid,
 			TxHex:       txHex,
-			BlockHash:   hash,
-			BlockHeight: blockHeight,
+			BlockHash:   blockhash,
+			BlockHeight: blockheight,
+			BlockTime:   blocktime,
 			Accounts:    map[string]struct{}{event.account: {}},
 		}
 	}()

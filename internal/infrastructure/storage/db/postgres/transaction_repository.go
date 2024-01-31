@@ -2,6 +2,7 @@ package postgresdb
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"sync"
 
@@ -23,7 +24,9 @@ type txRepositoryPg struct {
 	externalChEvents chan domain.TransactionEvent
 }
 
-func NewTxRepositoryPgImpl(pgxPool *pgxpool.Pool) domain.TransactionRepository {
+func NewTxRepositoryPgImpl(
+	pgxPool *pgxpool.Pool,
+) domain.TransactionRepository {
 	return newTxRepositoryPgImpl(pgxPool)
 }
 
@@ -38,8 +41,7 @@ func newTxRepositoryPgImpl(pgxPool *pgxpool.Pool) *txRepositoryPg {
 }
 
 func (t *txRepositoryPg) AddTransaction(
-	ctx context.Context,
-	trx *domain.Transaction,
+	ctx context.Context, trx *domain.Transaction,
 ) (bool, error) {
 	conn, err := t.pgxPool.Acquire(ctx)
 	if err != nil {
@@ -55,14 +57,18 @@ func (t *txRepositoryPg) AddTransaction(
 
 	querierWithTx := t.querier.WithTx(tx)
 
-	txPg, err := querierWithTx.InsertTransaction(ctx, queries.InsertTransactionParams{
-		TxID:        trx.TxID,
-		TxHex:       trx.TxHex,
-		BlockHash:   trx.BlockHash,
-		BlockHeight: int32(trx.BlockHeight),
-	})
+	txPg, err := querierWithTx.InsertTransaction(
+		ctx, queries.InsertTransactionParams{
+			TxID:        trx.TxID,
+			TxHex:       trx.TxHex,
+			BlockHash:   trx.BlockHash,
+			BlockHeight: int32(trx.BlockHeight),
+			BlockTime:   sql.NullInt64{Int64: trx.BlockTime, Valid: true},
+		},
+	)
 	if err != nil {
-		if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok && pqErr.Code == uniqueViolation {
+		if pqErr, ok := err.(*pgconn.PgError); pqErr != nil && ok &&
+			pqErr.Code == uniqueViolation {
 			return false, nil
 		} else {
 			return false, err
@@ -70,10 +76,12 @@ func (t *txRepositoryPg) AddTransaction(
 	}
 
 	for k := range trx.Accounts {
-		if _, err := querierWithTx.InsertTransactionInputAccount(ctx, queries.InsertTransactionInputAccountParams{
-			AccountName: k,
-			FkTxID:      txPg.TxID,
-		}); err != nil {
+		if _, err := querierWithTx.InsertTransactionInputAccount(
+			ctx, queries.InsertTransactionInputAccountParams{
+				AccountName: k,
+				FkTxID:      txPg.TxID,
+			},
+		); err != nil {
 			return false, err
 		}
 	}
@@ -92,9 +100,7 @@ func (t *txRepositoryPg) AddTransaction(
 
 func (t *txRepositoryPg) ConfirmTransaction(
 	ctx context.Context,
-	txid string,
-	blockHash string,
-	blockHeight uint64,
+	txid, blockhash string, blockheight uint64, blocktime int64,
 ) (bool, error) {
 	tx, err := t.getTx(ctx, txid)
 	if err != nil {
@@ -105,7 +111,7 @@ func (t *txRepositoryPg) ConfirmTransaction(
 		return false, nil
 	}
 
-	tx.Confirm(blockHash, blockHeight)
+	tx.Confirm(blockhash, blockheight, blocktime)
 
 	if err := t.updateTx(ctx, t.querier, *tx); err != nil {
 		return false, err
@@ -120,15 +126,13 @@ func (t *txRepositoryPg) ConfirmTransaction(
 }
 
 func (t *txRepositoryPg) GetTransaction(
-	ctx context.Context,
-	txid string,
+	ctx context.Context, txid string,
 ) (*domain.Transaction, error) {
 	return t.getTx(ctx, txid)
 }
 
 func (t *txRepositoryPg) UpdateTransaction(
-	ctx context.Context,
-	txid string,
+	ctx context.Context, txid string,
 	updateFn func(tx *domain.Transaction) (*domain.Transaction, error),
 ) error {
 	tx, err := t.getTx(ctx, txid)
@@ -166,14 +170,13 @@ func (t *txRepositoryPg) close() {
 }
 
 func (t *txRepositoryPg) updateTx(
-	ctx context.Context,
-	querier *queries.Queries,
-	trx domain.Transaction,
+	ctx context.Context, querier *queries.Queries, trx domain.Transaction,
 ) error {
 	if _, err := querier.UpdateTransaction(ctx, queries.UpdateTransactionParams{
 		TxHex:       trx.TxHex,
 		BlockHash:   trx.BlockHash,
 		BlockHeight: int32(trx.BlockHeight),
+		BlockTime:   sql.NullInt64{Int64: trx.BlockTime, Valid: true},
 		TxID:        trx.TxID,
 	}); err != nil {
 		return err
@@ -184,10 +187,12 @@ func (t *txRepositoryPg) updateTx(
 	}
 
 	for k := range trx.Accounts {
-		if _, err := querier.InsertTransactionInputAccount(ctx, queries.InsertTransactionInputAccountParams{
-			AccountName: k,
-			FkTxID:      trx.TxID,
-		}); err != nil {
+		if _, err := querier.InsertTransactionInputAccount(
+			ctx, queries.InsertTransactionInputAccountParams{
+				AccountName: k,
+				FkTxID:      trx.TxID,
+			},
+		); err != nil {
 			return err
 		}
 	}
@@ -219,6 +224,7 @@ func (t *txRepositoryPg) getTx(
 		TxHex:       tx[0].TxHex,
 		BlockHash:   tx[0].BlockHash,
 		BlockHeight: uint64(tx[0].BlockHeight),
+		BlockTime:   tx[0].BlockTime.Int64,
 		Accounts:    accounts,
 	}, nil
 }

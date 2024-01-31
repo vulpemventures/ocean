@@ -37,6 +37,7 @@ type Transaction struct {
 	TxHex       string
 	BlockHash   string
 	BlockHeight int32
+	BlockTime   sql.NullInt64
 }
 
 type TxInputAccount struct {

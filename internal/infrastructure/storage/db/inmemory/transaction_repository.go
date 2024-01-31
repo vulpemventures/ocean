@@ -46,12 +46,13 @@ func (r *txRepository) AddTransaction(
 }
 
 func (r *txRepository) ConfirmTransaction(
-	ctx context.Context, txid, blockHash string, blockheight uint64,
+	ctx context.Context,
+	txid, blockHash string, blockheight uint64, blocktime int64,
 ) (bool, error) {
 	r.store.lock.Lock()
 	defer r.store.lock.Unlock()
 
-	return r.confirmTx(ctx, txid, blockHash, blockheight)
+	return r.confirmTx(ctx, txid, blockHash, blockheight, blocktime)
 }
 
 func (r *txRepository) GetTransaction(
@@ -106,7 +107,8 @@ func (r *txRepository) addTx(
 }
 
 func (r *txRepository) confirmTx(
-	ctx context.Context, txid string, blockHash string, blockHeight uint64,
+	ctx context.Context,
+	txid string, blockHash string, blockHeight uint64, blocktime int64,
 ) (bool, error) {
 	tx, err := r.getTx(ctx, txid)
 	if err != nil {
@@ -117,7 +119,7 @@ func (r *txRepository) confirmTx(
 		return false, nil
 	}
 
-	tx.Confirm(blockHash, blockHeight)
+	tx.Confirm(blockHash, blockHeight, blocktime)
 
 	r.store.txs[txid] = tx
 

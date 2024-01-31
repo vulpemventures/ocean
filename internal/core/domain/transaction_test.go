@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/ocean/internal/core/domain"
@@ -11,7 +12,7 @@ func TestConfirmTransaction(t *testing.T) {
 	tx := &domain.Transaction{}
 	require.False(t, tx.IsConfirmed())
 
-	tx.Confirm("fa84eb6806daf1b3c495ed30554d80573a39335b2993b66b3cc1afaa53816e47", 1728312)
+	tx.Confirm("fa84eb6806daf1b3c495ed30554d80573a39335b2993b66b3cc1afaa53816e47", 1728312, time.Now().Unix())
 	require.True(t, tx.IsConfirmed())
 }
 

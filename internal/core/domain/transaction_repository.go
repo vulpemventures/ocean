@@ -39,7 +39,8 @@ type TransactionRepository interface {
 	// Transaction identified by the given txid.
 	// Generates a TransactionConfirmed event if successful.
 	ConfirmTransaction(
-		ctx context.Context, txid, blockHash string, blockheight uint64,
+		ctx context.Context,
+		txid, blockHash string, blockheight uint64, blocktime int64,
 	) (bool, error)
 	// GetTransaction returns the Transaction identified by the given txid.
 	GetTransaction(ctx context.Context, txid string) (*Transaction, error)
