@@ -397,10 +397,15 @@ func signTaproot(
 		return nil, err
 	}
 
-	prevout := ptx.Inputs[inIndex].GetUtxo()
-	prevoutScripts := [][]byte{prevout.Script}
-	prevoutAssets := [][]byte{prevout.Asset}
-	prevoutValues := [][]byte{prevout.Value}
+	prevoutScripts := make([][]byte, 0, len(unsignedTx.Inputs))
+	prevoutAssets := make([][]byte, 0, len(unsignedTx.Inputs))
+	prevoutValues := make([][]byte, 0, len(unsignedTx.Inputs))
+
+	for _, in := range ptx.Inputs {
+		prevoutScripts = append(prevoutScripts, in.GetUtxo().Script)
+		prevoutAssets = append(prevoutAssets, in.GetUtxo().Asset)
+		prevoutValues = append(prevoutValues, in.GetUtxo().Value)
+	}
 
 	hashForSignature := unsignedTx.HashForWitnessV1(
 		inIndex, prevoutScripts, prevoutAssets, prevoutValues, sighashType, genesisBlockHash, leafHash, nil,
