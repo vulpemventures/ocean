@@ -163,14 +163,14 @@ type SignTaprootArgs struct {
 }
 
 func (a SignTaprootArgs) validate() error {
-	decoded, err := psetv2.NewPsetFromBase64(a.PsetBase64)
+	ptx, err := psetv2.NewPsetFromBase64(a.PsetBase64)
 	if err != nil {
 		return err
 	}
 
-	for i, in := range decoded.Inputs {
-		if in.WitnessUtxo == nil {
-			return fmt.Errorf("missing witness utxo on input %d", i)
+	for i, in := range ptx.Inputs {
+		if in.GetUtxo() == nil {
+			return fmt.Errorf("missing prevout of input %d", i)
 		}
 	}
 
