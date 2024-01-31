@@ -38,8 +38,9 @@ func (n notification) TransactionNotifications(
 			var blockDetails *pb.BlockDetails
 			if e.Transaction.IsConfirmed() {
 				blockDetails = &pb.BlockDetails{
-					Hash:   e.Transaction.BlockHash,
-					Height: e.Transaction.BlockHeight,
+					Hash:      e.Transaction.BlockHash,
+					Height:    e.Transaction.BlockHeight,
+					Timestamp: e.Transaction.BlockTime,
 				}
 			}
 			if err := stream.Send(&pb.TransactionNotificationsResponse{
