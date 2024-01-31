@@ -163,9 +163,17 @@ type SignTaprootArgs struct {
 }
 
 func (a SignTaprootArgs) validate() error {
-	if _, err := psetv2.NewPsetFromBase64(a.PsetBase64); err != nil {
+	ptx, err := psetv2.NewPsetFromBase64(a.PsetBase64)
+	if err != nil {
 		return err
 	}
+
+	for i, in := range ptx.Inputs {
+		if in.GetUtxo() == nil {
+			return fmt.Errorf("missing prevout of input %d", i)
+		}
+	}
+
 	if len(a.DerivationPathMap) <= 0 {
 		return ErrMissingDerivationPaths
 	}
@@ -397,10 +405,15 @@ func signTaproot(
 		return nil, err
 	}
 
-	prevout := ptx.Inputs[inIndex].GetUtxo()
-	prevoutScripts := [][]byte{prevout.Script}
-	prevoutAssets := [][]byte{prevout.Asset}
-	prevoutValues := [][]byte{prevout.Value}
+	prevoutScripts := make([][]byte, 0, len(unsignedTx.Inputs))
+	prevoutAssets := make([][]byte, 0, len(unsignedTx.Inputs))
+	prevoutValues := make([][]byte, 0, len(unsignedTx.Inputs))
+
+	for _, in := range ptx.Inputs {
+		prevoutScripts = append(prevoutScripts, in.GetUtxo().Script)
+		prevoutAssets = append(prevoutAssets, in.GetUtxo().Asset)
+		prevoutValues = append(prevoutValues, in.GetUtxo().Value)
+	}
 
 	hashForSignature := unsignedTx.HashForWitnessV1(
 		inIndex, prevoutScripts, prevoutAssets, prevoutValues, sighashType, genesisBlockHash, leafHash, nil,
