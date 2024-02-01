@@ -30,6 +30,7 @@ require (
 require (
 	github.com/jackc/pgconn v1.12.1
 	github.com/jackc/pgx/v4 v4.16.1
+	github.com/shopspring/decimal v1.2.0
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/vulpemventures/go-bip32 v0.0.0-20200624192635-867c159da4d7
 )

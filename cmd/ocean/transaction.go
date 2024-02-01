@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/shopspring/decimal"
 	"github.com/spf13/cobra"
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 )
@@ -153,9 +154,11 @@ type output struct {
 }
 
 func (o output) proto() *pb.Output {
+	btc := decimal.NewFromFloat(math.Pow10(8))
+	amount := decimal.NewFromFloat(o.Amount).Mul(btc).BigInt().Uint64()
 	return &pb.Output{
 		Address: o.Address,
-		Amount:  uint64(o.Amount * math.Pow10(8)),
+		Amount:  amount,
 		Asset:   o.Asset,
 	}
 }
