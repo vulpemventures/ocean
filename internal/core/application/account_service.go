@@ -283,9 +283,26 @@ func (as *AccountService) listenToUtxoChannel(
 		for _, u := range utxos {
 			utxoKeys = append(utxoKeys, u.Key())
 		}
+
+		if utxos[0].IsConfirmedSpent() {
+			count, err := as.repoManager.UtxoRepository().ConfirmSpendUtxos(
+				context.Background(), utxoKeys, utxos[0].SpentStatus,
+			)
+			if err != nil {
+				as.warn(
+					err, "error while updating utxos status to confirmed spend for account %s",
+					accountName,
+				)
+			}
+			if count > 0 {
+				as.log("confirmed spend of %d utxos for account %s", count, accountName)
+			}
+			continue
+		}
+
 		if utxos[0].IsSpent() {
 			count, err := as.repoManager.UtxoRepository().SpendUtxos(
-				context.Background(), utxoKeys, utxos[0].SpentStatus,
+				context.Background(), utxoKeys, utxos[0].SpentStatus.Txid,
 			)
 			if err != nil {
 				as.warn(

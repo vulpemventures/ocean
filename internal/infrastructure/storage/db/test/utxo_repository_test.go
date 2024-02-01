@@ -51,6 +51,8 @@ func testUtxoRepository(t *testing.T, repo domain.UtxoRepository) {
 	testUnlockUtxos(t, repo)
 
 	testSpendUtxos(t, repo)
+
+	testConfirmSpentUtxos(t, repo)
 }
 
 func testAddAndGetUtxos(t *testing.T, repo domain.UtxoRepository) {
@@ -121,7 +123,11 @@ func testGetBalanceForAccount(t *testing.T, repo domain.UtxoRepository) {
 
 func testConfirmUtxos(t *testing.T, repo domain.UtxoRepository) {
 	t.Run("confirm_utxos", func(t *testing.T) {
-		status := domain.UtxoStatus{"", 1, 0, ""}
+		status := domain.UtxoStatus{
+			BlockHeight: 1,
+			BlockTime:   time.Now().Unix(),
+			BlockHash:   randomHex(32),
+		}
 		count, err := repo.ConfirmUtxos(ctx, utxoKeys, status)
 		require.NoError(t, err)
 		require.Equal(t, len(newUtxos), count)
@@ -220,12 +226,41 @@ func testUnlockUtxos(t *testing.T, repo domain.UtxoRepository) {
 
 func testSpendUtxos(t *testing.T, repo domain.UtxoRepository) {
 	t.Run("spend_utxos", func(t *testing.T) {
-		status := domain.UtxoStatus{txid, 1, 0, ""}
-		count, err := repo.SpendUtxos(ctx, utxoKeys, status)
+		count, err := repo.SpendUtxos(ctx, utxoKeys, txid)
 		require.NoError(t, err)
 		require.Equal(t, len(newUtxos), count)
 
-		count, err = repo.SpendUtxos(ctx, utxoKeys, status)
+		count, err = repo.SpendUtxos(ctx, utxoKeys, txid)
+		require.NoError(t, err)
+		require.Zero(t, count)
+
+		utxos, err := repo.GetSpendableUtxos(ctx)
+		require.NoError(t, err)
+		require.Empty(t, utxos)
+
+		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName)
+		require.NoError(t, err)
+		require.Empty(t, utxos)
+
+		utxoBalance, err := repo.GetBalanceForAccount(ctx, accountName)
+		require.NoError(t, err)
+		require.Empty(t, utxoBalance)
+	})
+}
+
+func testConfirmSpentUtxos(t *testing.T, repo domain.UtxoRepository) {
+	t.Run("confirm_spent_utxos", func(t *testing.T) {
+		status := domain.UtxoStatus{
+			Txid:        txid,
+			BlockHeight: 1,
+			BlockTime:   time.Now().Unix(),
+			BlockHash:   randomHex(32),
+		}
+		count, err := repo.ConfirmSpendUtxos(ctx, utxoKeys, status)
+		require.NoError(t, err)
+		require.Equal(t, len(newUtxos), count)
+
+		count, err = repo.ConfirmSpendUtxos(ctx, utxoKeys, status)
 		require.NoError(t, err)
 		require.Zero(t, count)
 
@@ -250,7 +285,7 @@ func newUtxoRepositories(handlerFactory func(repoType string) ports.UtxoEventHan
 		return nil, err
 	}
 	handlers := []ports.UtxoEventHandler{
-		handlerFactory("badger"), handlerFactory("inmemory"),
+		handlerFactory("badger"), handlerFactory("inmemory"), handlerFactory("postgres"),
 	}
 
 	repoManagers := []ports.RepoManager{badgerRepoManager, inmemoryRepoManager, pgRepoManager}
@@ -262,6 +297,7 @@ func newUtxoRepositories(handlerFactory func(repoType string) ports.UtxoEventHan
 		repoManager.RegisterHandlerForUtxoEvent(domain.UtxoLocked, handler)
 		repoManager.RegisterHandlerForUtxoEvent(domain.UtxoUnlocked, handler)
 		repoManager.RegisterHandlerForUtxoEvent(domain.UtxoSpent, handler)
+		repoManager.RegisterHandlerForUtxoEvent(domain.UtxoConfirmedSpend, handler)
 	}
 	return map[string]domain.UtxoRepository{
 		"inmemory": inmemoryRepoManager.UtxoRepository(),

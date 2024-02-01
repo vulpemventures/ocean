@@ -110,7 +110,7 @@ func (q *Queries) GetAllScripts(ctx context.Context) ([]ExternalScript, error) {
 }
 
 const getAllUtxos = `-- name: GetAllUtxos :many
-SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+SELECT u.id, u.tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id, us.tx_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
 `
 
 type GetAllUtxosRow struct {
@@ -136,6 +136,7 @@ type GetAllUtxosRow struct {
 	BlockHash           sql.NullString
 	Status              sql.NullInt32
 	FkUtxoID            sql.NullInt32
+	TxID_2              sql.NullString
 }
 
 func (q *Queries) GetAllUtxos(ctx context.Context) ([]GetAllUtxosRow, error) {
@@ -170,6 +171,7 @@ func (q *Queries) GetAllUtxos(ctx context.Context) ([]GetAllUtxosRow, error) {
 			&i.BlockHash,
 			&i.Status,
 			&i.FkUtxoID,
+			&i.TxID_2,
 		); err != nil {
 			return nil, err
 		}
@@ -237,7 +239,7 @@ func (q *Queries) GetTransaction(ctx context.Context, txID string) ([]GetTransac
 }
 
 const getUtxoForKey = `-- name: GetUtxoForKey :many
-SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+SELECT u.id, u.tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id, us.tx_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
 WHERE u.tx_id = $1 AND u.vout = $2
 `
 
@@ -269,6 +271,7 @@ type GetUtxoForKeyRow struct {
 	BlockHash           sql.NullString
 	Status              sql.NullInt32
 	FkUtxoID            sql.NullInt32
+	TxID_2              sql.NullString
 }
 
 func (q *Queries) GetUtxoForKey(ctx context.Context, arg GetUtxoForKeyParams) ([]GetUtxoForKeyRow, error) {
@@ -303,6 +306,7 @@ func (q *Queries) GetUtxoForKey(ctx context.Context, arg GetUtxoForKeyParams) ([
 			&i.BlockHash,
 			&i.Status,
 			&i.FkUtxoID,
+			&i.TxID_2,
 		); err != nil {
 			return nil, err
 		}
@@ -315,7 +319,7 @@ func (q *Queries) GetUtxoForKey(ctx context.Context, arg GetUtxoForKeyParams) ([
 }
 
 const getUtxosForAccount = `-- name: GetUtxosForAccount :many
-SELECT u.id, tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
+SELECT u.id, u.tx_id, vout, value, asset, value_commitment, asset_commitment, value_blinder, asset_blinder, script, nonce, range_proof, surjection_proof, account_name, lock_timestamp, lock_expiry_timestamp, us.id, block_height, block_time, block_hash, status, fk_utxo_id, us.tx_id FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id
 WHERE u.account_name = $1
 `
 
@@ -342,6 +346,7 @@ type GetUtxosForAccountRow struct {
 	BlockHash           sql.NullString
 	Status              sql.NullInt32
 	FkUtxoID            sql.NullInt32
+	TxID_2              sql.NullString
 }
 
 func (q *Queries) GetUtxosForAccount(ctx context.Context, accountName string) ([]GetUtxosForAccountRow, error) {
@@ -376,6 +381,7 @@ func (q *Queries) GetUtxosForAccount(ctx context.Context, accountName string) ([
 			&i.BlockHash,
 			&i.Status,
 			&i.FkUtxoID,
+			&i.TxID_2,
 		); err != nil {
 			return nil, err
 		}
@@ -674,8 +680,8 @@ func (q *Queries) InsertUtxo(ctx context.Context, arg InsertUtxoParams) (Utxo, e
 }
 
 const insertUtxoStatus = `-- name: InsertUtxoStatus :one
-INSERT INTO utxo_status(block_height,block_time,block_hash,status,fk_utxo_id)
-VALUES($1,$2,$3,$4,$5) RETURNING id, block_height, block_time, block_hash, status, fk_utxo_id
+INSERT INTO utxo_status(block_height,block_time,block_hash,status,fk_utxo_id,tx_id)
+VALUES($1,$2,$3,$4,$5,$6) RETURNING id, block_height, block_time, block_hash, status, fk_utxo_id, tx_id
 `
 
 type InsertUtxoStatusParams struct {
@@ -684,6 +690,7 @@ type InsertUtxoStatusParams struct {
 	BlockHash   string
 	Status      int32
 	FkUtxoID    int32
+	TxID        sql.NullString
 }
 
 func (q *Queries) InsertUtxoStatus(ctx context.Context, arg InsertUtxoStatusParams) (UtxoStatus, error) {
@@ -693,6 +700,7 @@ func (q *Queries) InsertUtxoStatus(ctx context.Context, arg InsertUtxoStatusPara
 		arg.BlockHash,
 		arg.Status,
 		arg.FkUtxoID,
+		arg.TxID,
 	)
 	var i UtxoStatus
 	err := row.Scan(
@@ -702,6 +710,7 @@ func (q *Queries) InsertUtxoStatus(ctx context.Context, arg InsertUtxoStatusPara
 		&i.BlockHash,
 		&i.Status,
 		&i.FkUtxoID,
+		&i.TxID,
 	)
 	return i, err
 }

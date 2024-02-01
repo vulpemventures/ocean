@@ -234,6 +234,8 @@ func parseUtxoEventType(eventType domain.UtxoEventType) pb.UtxoEventType {
 		return pb.UtxoEventType_UTXO_EVENT_TYPE_UNLOCKED
 	case domain.UtxoSpent:
 		return pb.UtxoEventType_UTXO_EVENT_TYPE_SPENT
+	case domain.UtxoConfirmedSpend:
+		return pb.UtxoEventType_UTXO_EVENT_TYPE_CONFIRMED_SPENT
 	default:
 		return pb.UtxoEventType_UTXO_EVENT_TYPE_UNSPECIFIED
 	}

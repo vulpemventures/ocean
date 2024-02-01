@@ -177,10 +177,18 @@ func (ns *NotificationService) listenToUtxoChannel(
 	ns.log("start listening to utxo channel for script %s", scriptHash)
 
 	for utxos := range chUtxos {
-		eventType := domain.UtxoAdded
-		if utxos[0].IsSpent() {
+		var eventType domain.UtxoEventType
+		switch {
+		case utxos[0].IsConfirmedSpent():
+			eventType = domain.UtxoConfirmedSpend
+		case utxos[0].IsSpent():
 			eventType = domain.UtxoSpent
+		case utxos[0].IsConfirmed():
+			eventType = domain.UtxoConfirmed
+		default:
+			eventType = domain.UtxoAdded
 		}
+
 		utxoInfo := make([]domain.UtxoInfo, 0, len(utxos))
 		for _, u := range utxos {
 			utxoInfo = append(utxoInfo, u.Info())

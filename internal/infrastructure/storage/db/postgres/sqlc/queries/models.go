@@ -72,6 +72,7 @@ type UtxoStatus struct {
 	BlockHash   string
 	Status      int32
 	FkUtxoID    int32
+	TxID        sql.NullString
 }
 
 type Wallet struct {

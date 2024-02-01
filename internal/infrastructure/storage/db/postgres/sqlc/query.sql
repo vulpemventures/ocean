@@ -37,8 +37,8 @@ INSERT INTO utxo(tx_id,vout,value,asset,value_commitment,asset_commitment,value_
 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, $15) RETURNING *;
 
 -- name: InsertUtxoStatus :one
-INSERT INTO utxo_status(block_height,block_time,block_hash,status,fk_utxo_id)
-VALUES($1,$2,$3,$4,$5) RETURNING *;
+INSERT INTO utxo_status(block_height,block_time,block_hash,status,fk_utxo_id,tx_id)
+VALUES($1,$2,$3,$4,$5,$6) RETURNING *;
 
 -- name: GetUtxoForKey :many
 SELECT * FROM utxo u left join utxo_status us on u.id = us.fk_utxo_id

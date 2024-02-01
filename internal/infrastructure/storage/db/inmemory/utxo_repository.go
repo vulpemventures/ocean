@@ -137,12 +137,21 @@ func (r *utxoRepository) GetBalanceForAccount(
 }
 
 func (r *utxoRepository) SpendUtxos(
+	_ context.Context, utxos []domain.UtxoKey, txid string,
+) (int, error) {
+	r.store.lock.Lock()
+	defer r.store.lock.Unlock()
+
+	return r.spendUtxos(utxos, txid)
+}
+
+func (r *utxoRepository) ConfirmSpendUtxos(
 	_ context.Context, utxos []domain.UtxoKey, status domain.UtxoStatus,
 ) (int, error) {
 	r.store.lock.Lock()
 	defer r.store.lock.Unlock()
 
-	return r.spendUtxos(utxos, status)
+	return r.confirmSpendUtxos(utxos, status)
 }
 
 func (r *utxoRepository) ConfirmUtxos(
@@ -261,7 +270,7 @@ func (r *utxoRepository) getUtxosForAccount(
 }
 
 func (r *utxoRepository) spendUtxos(
-	keys []domain.UtxoKey, status domain.UtxoStatus,
+	keys []domain.UtxoKey, txid string,
 ) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0, len(keys))
@@ -275,7 +284,7 @@ func (r *utxoRepository) spendUtxos(
 			continue
 		}
 
-		if err := utxo.Spend(status); err != nil {
+		if err := utxo.Spend(txid); err != nil {
 			return -1, err
 		}
 
@@ -286,6 +295,39 @@ func (r *utxoRepository) spendUtxos(
 	if count > 0 {
 		go r.publishEvent(domain.UtxoEvent{
 			EventType: domain.UtxoSpent,
+			Utxos:     utxosInfo,
+		})
+	}
+
+	return count, nil
+}
+
+func (r *utxoRepository) confirmSpendUtxos(
+	keys []domain.UtxoKey, status domain.UtxoStatus,
+) (int, error) {
+	count := 0
+	utxosInfo := make([]domain.UtxoInfo, 0, len(keys))
+	for _, key := range keys {
+		utxo, ok := r.store.utxos[key.Hash()]
+		if !ok {
+			continue
+		}
+
+		if utxo.IsConfirmedSpent() {
+			continue
+		}
+
+		if err := utxo.ConfirmSpend(status); err != nil {
+			return -1, err
+		}
+
+		utxosInfo = append(utxosInfo, utxo.Info())
+		count++
+	}
+
+	if count > 0 {
+		go r.publishEvent(domain.UtxoEvent{
+			EventType: domain.UtxoConfirmedSpend,
 			Utxos:     utxosInfo,
 		})
 	}

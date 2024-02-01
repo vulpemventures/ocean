@@ -65,8 +65,8 @@ func TestAccountService(t *testing.T) {
 
 	// Simulate withdrawing all funds by spending every spendable utxo coming
 	// from ListUtxosForAccount.
-	status := domain.UtxoStatus{hex.EncodeToString(make([]byte, 32)), 1, 0, ""}
-	_, err = repoManager.UtxoRepository().SpendUtxos(ctx, utxos.Spendable.Keys(), status)
+	txid := hex.EncodeToString(make([]byte, 32))
+	_, err = repoManager.UtxoRepository().SpendUtxos(ctx, utxos.Spendable.Keys(), txid)
 	require.NoError(t, err)
 
 	// Now deleting the account should work without errors.

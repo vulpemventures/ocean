@@ -1,0 +1,1 @@
+ALTER TABLE utxo_status DROP COLUMN tx_id;
