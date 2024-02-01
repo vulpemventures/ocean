@@ -455,7 +455,10 @@ func (s *service) dbEventHandler(event dbEvent) {
 	newUtxos := make([]*domain.Utxo, 0)
 	spentUtxos := make([]*domain.Utxo, 0)
 	confirmedUtxos := make([]*domain.Utxo, 0)
-	var block *blockInfo
+	confirmedSpentUtxos := make([]*domain.Utxo, 0)
+	var blockhash string
+	var blocktime int64
+	var blockheight uint64
 
 	if event.tx.Height > 0 {
 		blocks, err := s.client.getBlocksInfo(
@@ -465,26 +468,43 @@ func (s *service) dbEventHandler(event dbEvent) {
 			s.warn(err, "failed to fetch block %d", event.tx.Height)
 			return
 		}
-		block = &blocks[0]
+		block := &blocks[0]
+		blockhash = block.hash().String()
+		blocktime = block.timestamp()
+		blockheight = uint64(event.tx.Height)
+	}
 
+	if event.eventType == txConfirmed {
 		for _, in := range tx.Inputs {
-			spentUtxos = append(spentUtxos, &domain.Utxo{
-				UtxoKey: domain.UtxoKey{
-					TxID: elementsutil.TxIDFromBytes(in.Hash),
-					VOut: in.Index,
-				},
+			// Let's try to fetch the input's prevout to check if the utxo belongs to
+			// watched script and has to be added to the list of those spent with
+			// confirmation.
+			// If for any reason the prevout is not fetched, the utxo is added to the
+			// list anyway, the receiver will ignore it.
+			utxoKey := domain.UtxoKey{
+				TxID: elementsutil.TxIDFromBytes(in.Hash),
+				VOut: in.Index,
+			}
+			prevout := s.getPrevout(utxoKey)
+			if prevout != nil {
+				scriptHash := calcScriptHash(hex.EncodeToString(prevout.Script))
+				addrInfo := s.getAddressByScriptHash(event.account, scriptHash)
+				if addrInfo == nil {
+					continue
+				}
+			}
+
+			confirmedSpentUtxos = append(confirmedSpentUtxos, &domain.Utxo{
+				UtxoKey: utxoKey,
 				SpentStatus: domain.UtxoStatus{
 					Txid:        event.tx.Txid,
-					BlockHash:   block.hash().String(),
-					BlockTime:   block.timestamp(),
-					BlockHeight: uint64(event.tx.Height),
+					BlockHash:   blockhash,
+					BlockTime:   blocktime,
+					BlockHeight: blockheight,
 				},
 				AccountName: event.account,
 			})
 		}
-	}
-
-	if event.eventType == txConfirmed {
 		for i, out := range tx.Outputs {
 			if len(out.Script) > 0 {
 				scriptHash := calcScriptHash(hex.EncodeToString(out.Script))
@@ -496,9 +516,9 @@ func (s *service) dbEventHandler(event dbEvent) {
 							VOut: uint32(i),
 						},
 						ConfirmedStatus: domain.UtxoStatus{
-							BlockHash:   block.hash().String(),
-							BlockTime:   block.timestamp(),
-							BlockHeight: uint64(event.tx.Height),
+							BlockHash:   blockhash,
+							BlockTime:   blocktime,
+							BlockHeight: blockheight,
 						},
 						AccountName: event.account,
 					})
@@ -508,6 +528,37 @@ func (s *service) dbEventHandler(event dbEvent) {
 	}
 
 	if event.eventType == txAdded {
+		for _, in := range tx.Inputs {
+			// Let's try to fetch the input's prevout to check if the utxo belongs to
+			// watched script and has to be added to the list of those spent.
+			// If for any reason the prevout is not fetched, the utxo is added to the
+			// list anyway, the receiver will ignore it.
+			utxoKey := domain.UtxoKey{
+				TxID: elementsutil.TxIDFromBytes(in.Hash),
+				VOut: in.Index,
+			}
+			prevout := s.getPrevout(utxoKey)
+			if prevout != nil {
+				scriptHash := calcScriptHash(hex.EncodeToString(prevout.Script))
+				addrInfo := s.getAddressByScriptHash(event.account, scriptHash)
+				if addrInfo == nil {
+					continue
+				}
+			}
+			spentUtxos = append(spentUtxos, &domain.Utxo{
+				UtxoKey: domain.UtxoKey{
+					TxID: elementsutil.TxIDFromBytes(in.Hash),
+					VOut: in.Index,
+				},
+				SpentStatus: domain.UtxoStatus{
+					Txid:        event.tx.Txid,
+					BlockHash:   blockhash,
+					BlockTime:   blocktime,
+					BlockHeight: blockheight,
+				},
+				AccountName: event.account,
+			})
+		}
 		for i, out := range tx.Outputs {
 			if len(out.Script) > 0 {
 				scriptHash := calcScriptHash(hex.EncodeToString(out.Script))
@@ -525,9 +576,9 @@ func (s *service) dbEventHandler(event dbEvent) {
 					var confirmedStatus domain.UtxoStatus
 					if event.tx.Height > 0 {
 						confirmedStatus = domain.UtxoStatus{
-							BlockHash:   block.hash().String(),
-							BlockTime:   block.timestamp(),
-							BlockHeight: uint64(event.tx.Height),
+							BlockHash:   blockhash,
+							BlockTime:   blocktime,
+							BlockHeight: blockheight,
 						}
 					}
 
@@ -555,24 +606,21 @@ func (s *service) dbEventHandler(event dbEvent) {
 	chTx := s.getTxChannelByAccount(event.account)
 	txHex, _ := tx.ToHex()
 
-	var hash string
-	var blockHeight uint64
-	if block != nil {
-		hash = block.hash().String()
-		blockHeight = uint64(event.tx.Height)
-	}
-
 	go func() {
 		chTx <- &domain.Transaction{
 			TxID:        event.tx.Txid,
 			TxHex:       txHex,
-			BlockHash:   hash,
-			BlockHeight: blockHeight,
+			BlockHash:   blockhash,
+			BlockHeight: blockheight,
 			Accounts:    map[string]struct{}{event.account: {}},
 		}
 	}()
 
 	chUtxos := s.getUtxoChannelByAccount(event.account)
+	if len(newUtxos) > 0 {
+		go func() { chUtxos <- newUtxos }()
+	}
+
 	if len(spentUtxos) > 0 {
 		go func() { chUtxos <- spentUtxos }()
 	}
@@ -581,8 +629,8 @@ func (s *service) dbEventHandler(event dbEvent) {
 		go func() { chUtxos <- confirmedUtxos }()
 	}
 
-	if len(newUtxos) > 0 {
-		go func() { chUtxos <- newUtxos }()
+	if len(confirmedSpentUtxos) > 0 {
+		go func() { chUtxos <- confirmedSpentUtxos }()
 	}
 }
 
@@ -676,4 +724,16 @@ func (s *service) restoreAddressesForAccount(
 	}
 
 	return restoredAddresses
+}
+
+func (s *service) getPrevout(utxo domain.UtxoKey) *transaction.TxOutput {
+	res, err := s.client.getTxs([]string{utxo.TxID})
+	if err != nil {
+		return nil
+	}
+	tx := res[0]
+	if len(tx.Outputs) <= int(utxo.VOut) {
+		return nil
+	}
+	return tx.Outputs[utxo.VOut]
 }
