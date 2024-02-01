@@ -10,15 +10,17 @@ const (
 	UtxoLocked
 	UtxoUnlocked
 	UtxoSpent
+	UtxoConfirmedSpend
 )
 
 var (
 	utxoTypeString = map[UtxoEventType]string{
-		UtxoAdded:     "UtxoAdded",
-		UtxoConfirmed: "UtxoConfirmed",
-		UtxoLocked:    "UtxoLocked",
-		UtxoUnlocked:  "UtxoUnlocked",
-		UtxoSpent:     "UtxoSpent",
+		UtxoAdded:          "UtxoAdded",
+		UtxoConfirmed:      "UtxoConfirmed",
+		UtxoLocked:         "UtxoLocked",
+		UtxoUnlocked:       "UtxoUnlocked",
+		UtxoSpent:          "UtxoSpent",
+		UtxoConfirmedSpend: "UtxoConfirmedSpend",
 	}
 )
 
@@ -60,9 +62,12 @@ type UtxoRepository interface {
 	// GetBalanceForAccount returns the confirmed, unconfirmed and locked
 	// balances per each asset for the given account.
 	GetBalanceForAccount(ctx context.Context, account string) (map[string]*Balance, error)
-	// SpendUtxos updates the status of the given list of utxos to "spent".
+	// SpendUtxos updates the status of the given list of utxos to "spent" by the given txid.
 	// Generates a UtxoSpent event if successfull.
-	SpendUtxos(ctx context.Context, utxoKeys []UtxoKey, status UtxoStatus) (int, error)
+	SpendUtxos(ctx context.Context, utxoKeys []UtxoKey, txid string) (int, error)
+	// ConfirmSpendUtxos updates the status of the given list of utxos to "confirmed spend".
+	// Generates a UtxoConfirmedSpend event if successfull.
+	ConfirmSpendUtxos(ctx context.Context, utxoKeys []UtxoKey, status UtxoStatus) (int, error)
 	// ConfirmUtxos updates the status of the given list of utxos to "confirmed".
 	// Generates a UtxoConfirmed event if successfull.
 	ConfirmUtxos(ctx context.Context, utxoKeys []UtxoKey, status UtxoStatus) (int, error)

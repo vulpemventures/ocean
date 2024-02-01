@@ -134,9 +134,15 @@ func (r *utxoRepository) GetBalanceForAccount(
 }
 
 func (r *utxoRepository) SpendUtxos(
+	ctx context.Context, utxoKeys []domain.UtxoKey, txid string,
+) (int, error) {
+	return r.spendUtxos(ctx, utxoKeys, txid)
+}
+
+func (r *utxoRepository) ConfirmSpendUtxos(
 	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
 ) (int, error) {
-	return r.spendUtxos(ctx, utxoKeys, status)
+	return r.confirmSpendUtxos(ctx, utxoKeys, status)
 }
 
 func (r *utxoRepository) ConfirmUtxos(
@@ -210,12 +216,12 @@ func (r *utxoRepository) getAllUtxos(ctx context.Context) ([]*domain.Utxo, error
 }
 
 func (r *utxoRepository) spendUtxos(
-	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
+	ctx context.Context, utxoKeys []domain.UtxoKey, txid string,
 ) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0)
 	for _, key := range utxoKeys {
-		done, info, err := r.spendUtxo(ctx, key, status)
+		done, info, err := r.spendUtxo(ctx, key, txid)
 		if err != nil {
 			return -1, err
 		}
@@ -227,6 +233,31 @@ func (r *utxoRepository) spendUtxos(
 	if count > 0 {
 		go r.publishEvent(domain.UtxoEvent{
 			EventType: domain.UtxoSpent,
+			Utxos:     utxosInfo,
+		})
+	}
+
+	return count, nil
+}
+
+func (r *utxoRepository) confirmSpendUtxos(
+	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
+) (int, error) {
+	count := 0
+	utxosInfo := make([]domain.UtxoInfo, 0)
+	for _, key := range utxoKeys {
+		done, info, err := r.confirmSpendUtxo(ctx, key, status)
+		if err != nil {
+			return -1, err
+		}
+		if done {
+			count++
+			utxosInfo = append(utxosInfo, *info)
+		}
+	}
+	if count > 0 {
+		go r.publishEvent(domain.UtxoEvent{
+			EventType: domain.UtxoConfirmedSpend,
 			Utxos:     utxosInfo,
 		})
 	}
@@ -314,7 +345,7 @@ func (r *utxoRepository) unlockUtxos(
 }
 
 func (r *utxoRepository) spendUtxo(
-	ctx context.Context, key domain.UtxoKey, status domain.UtxoStatus,
+	ctx context.Context, key domain.UtxoKey, txid string,
 ) (bool, *domain.UtxoInfo, error) {
 	query := badgerhold.Where("TxID").Eq(key.TxID).And("VOut").Eq(key.VOut)
 	utxos, err := r.findUtxos(ctx, query)
@@ -331,7 +362,36 @@ func (r *utxoRepository) spendUtxo(
 		return false, nil, nil
 	}
 
-	if err := utxo.Spend(status); err != nil {
+	if err := utxo.Spend(txid); err != nil {
+		return false, nil, err
+	}
+	if err := r.updateUtxo(ctx, utxo); err != nil {
+		return false, nil, err
+	}
+
+	utxoInfo := utxo.Info()
+	return true, &utxoInfo, nil
+}
+
+func (r *utxoRepository) confirmSpendUtxo(
+	ctx context.Context, key domain.UtxoKey, status domain.UtxoStatus,
+) (bool, *domain.UtxoInfo, error) {
+	query := badgerhold.Where("TxID").Eq(key.TxID).And("VOut").Eq(key.VOut)
+	utxos, err := r.findUtxos(ctx, query)
+	if err != nil {
+		return false, nil, err
+	}
+
+	if utxos == nil {
+		return false, nil, nil
+	}
+
+	utxo := utxos[0]
+	if utxo.IsConfirmedSpent() {
+		return false, nil, nil
+	}
+
+	if err := utxo.ConfirmSpend(status); err != nil {
 		return false, nil, err
 	}
 	if err := r.updateUtxo(ctx, utxo); err != nil {

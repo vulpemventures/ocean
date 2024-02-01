@@ -1,0 +1,1 @@
+ALTER TABLE utxo_status ADD COLUMN tx_id VARCHAR(64);

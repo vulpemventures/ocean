@@ -2,6 +2,7 @@ package postgresdb
 
 import (
 	"context"
+	"database/sql"
 	"sync"
 
 	"github.com/jackc/pgconn"
@@ -171,6 +172,7 @@ func (u *utxoRepositoryPg) GetUtxosByKey(
 				switch v.Status.Int32 {
 				case utxoSpent:
 					ut.SpentStatus = domain.UtxoStatus{
+						Txid:        v.TxID,
 						BlockHeight: uint64(v.BlockHeight.Int32),
 						BlockTime:   v.BlockTime.Int64,
 						BlockHash:   v.BlockHash.String,
@@ -210,74 +212,6 @@ func (u *utxoRepositoryPg) GetAllUtxos(
 	}
 
 	return resp, nil
-}
-
-func (u *utxoRepositoryPg) convertToUtxos(
-	utxos []queries.GetAllUtxosRow,
-) (map[domain.UtxoKey]*domain.Utxo, error) {
-	utxosByKey := make(map[domain.UtxoKey]*domain.Utxo)
-	for _, v := range utxos {
-		key := domain.UtxoKey{
-			TxID: v.TxID,
-			VOut: uint32(v.Vout),
-		}
-
-		utxo, ok := utxosByKey[key]
-		if !ok {
-			utxo = &domain.Utxo{
-				UtxoKey:             key,
-				Value:               uint64(v.Value),
-				Asset:               v.Asset,
-				ValueCommitment:     v.ValueCommitment,
-				AssetCommitment:     v.AssetCommitment,
-				ValueBlinder:        v.ValueBlinder,
-				AssetBlinder:        v.AssetBlinder,
-				Script:              v.Script,
-				Nonce:               v.Nonce,
-				RangeProof:          v.RangeProof,
-				SurjectionProof:     v.SurjectionProof,
-				AccountName:         v.AccountName,
-				LockTimestamp:       v.LockTimestamp,
-				LockExpiryTimestamp: v.LockExpiryTimestamp,
-			}
-			utxosByKey[key] = utxo
-			if v.Status.Valid {
-				switch v.Status.Int32 {
-				case utxoSpent:
-					utxo.SpentStatus = domain.UtxoStatus{
-						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Int64,
-						BlockHash:   v.BlockHash.String,
-					}
-				case utxoConfirmed:
-					utxo.ConfirmedStatus = domain.UtxoStatus{
-						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Int64,
-						BlockHash:   v.BlockHash.String,
-					}
-				}
-			}
-		} else {
-			if v.Status.Valid {
-				switch v.Status.Int32 {
-				case utxoSpent:
-					utxo.SpentStatus = domain.UtxoStatus{
-						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Int64,
-						BlockHash:   v.BlockHash.String,
-					}
-				case utxoConfirmed:
-					utxo.ConfirmedStatus = domain.UtxoStatus{
-						BlockHeight: uint64(v.BlockHeight.Int32),
-						BlockTime:   v.BlockTime.Int64,
-						BlockHash:   v.BlockHash.String,
-					}
-				}
-			}
-		}
-	}
-
-	return utxosByKey, nil
 }
 
 func (u *utxoRepositoryPg) GetSpendableUtxos(
@@ -445,9 +379,15 @@ func (u *utxoRepositoryPg) GetBalanceForAccount(
 }
 
 func (u *utxoRepositoryPg) SpendUtxos(
+	ctx context.Context, utxoKeys []domain.UtxoKey, txid string,
+) (int, error) {
+	return u.spendUtxos(ctx, utxoKeys, txid)
+}
+
+func (u *utxoRepositoryPg) ConfirmSpendUtxos(
 	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
 ) (int, error) {
-	return u.spendUtxos(ctx, utxoKeys, status)
+	return u.confirmSpendUtxos(ctx, utxoKeys, status)
 }
 
 func (u *utxoRepositoryPg) ConfirmUtxos(
@@ -532,12 +472,12 @@ func (u *utxoRepositoryPg) close() {
 }
 
 func (u *utxoRepositoryPg) spendUtxos(
-	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
+	ctx context.Context, utxoKeys []domain.UtxoKey, txid string,
 ) (int, error) {
 	count := 0
 	utxosInfo := make([]domain.UtxoInfo, 0)
 	for _, key := range utxoKeys {
-		done, info, err := u.spendUtxo(ctx, key, status)
+		done, info, err := u.spendUtxo(ctx, key, txid)
 		if err != nil {
 			return -1, err
 		}
@@ -557,7 +497,7 @@ func (u *utxoRepositoryPg) spendUtxos(
 }
 
 func (u *utxoRepositoryPg) spendUtxo(
-	ctx context.Context, key domain.UtxoKey, status domain.UtxoStatus,
+	ctx context.Context, key domain.UtxoKey, txid string,
 ) (bool, *domain.UtxoInfo, error) {
 	utxos, err := u.GetUtxosByKey(ctx, []domain.UtxoKey{key})
 	if err != nil {
@@ -573,7 +513,61 @@ func (u *utxoRepositoryPg) spendUtxo(
 		return false, nil, nil
 	}
 
-	if err := utxo.Spend(status); err != nil {
+	if err := utxo.Spend(txid); err != nil {
+		return false, nil, err
+	}
+
+	if err := u.updateUtxo(ctx, utxo); err != nil {
+		return false, nil, err
+	}
+
+	utxoInfo := utxo.Info()
+	return true, &utxoInfo, nil
+}
+
+func (u *utxoRepositoryPg) confirmSpendUtxos(
+	ctx context.Context, utxoKeys []domain.UtxoKey, status domain.UtxoStatus,
+) (int, error) {
+	count := 0
+	utxosInfo := make([]domain.UtxoInfo, 0)
+	for _, key := range utxoKeys {
+		done, info, err := u.confirmSpendUtxo(ctx, key, status)
+		if err != nil {
+			return -1, err
+		}
+		if done {
+			count++
+			utxosInfo = append(utxosInfo, *info)
+		}
+	}
+	if count > 0 {
+		go u.publishEvent(domain.UtxoEvent{
+			EventType: domain.UtxoConfirmedSpend,
+			Utxos:     utxosInfo,
+		})
+	}
+
+	return count, nil
+}
+
+func (u *utxoRepositoryPg) confirmSpendUtxo(
+	ctx context.Context, key domain.UtxoKey, status domain.UtxoStatus,
+) (bool, *domain.UtxoInfo, error) {
+	utxos, err := u.GetUtxosByKey(ctx, []domain.UtxoKey{key})
+	if err != nil {
+		return false, nil, err
+	}
+
+	if len(utxos) <= 0 {
+		return false, nil, nil
+	}
+
+	utxo := utxos[0]
+	if utxo.IsConfirmedSpent() {
+		return false, nil, nil
+	}
+
+	if err := utxo.ConfirmSpend(status); err != nil {
 		return false, nil, err
 	}
 
@@ -620,6 +614,10 @@ func (u *utxoRepositoryPg) updateUtxo(
 			BlockHash:   utxo.SpentStatus.BlockHash,
 			Status:      utxoSpent,
 			FkUtxoID:    ut.ID,
+			TxID: sql.NullString{
+				String: utxo.SpentStatus.Txid,
+				Valid:  true,
+			},
 		}); err != nil {
 			return err
 		}
@@ -795,6 +793,58 @@ func (u *utxoRepositoryPg) unlockUtxo(
 
 	utxoInfo := utxo.Info()
 	return true, &utxoInfo, nil
+}
+
+func (u *utxoRepositoryPg) convertToUtxos(
+	utxos []queries.GetAllUtxosRow,
+) (map[domain.UtxoKey]*domain.Utxo, error) {
+	utxosByKey := make(map[domain.UtxoKey]*domain.Utxo)
+	for _, v := range utxos {
+		key := domain.UtxoKey{
+			TxID: v.TxID,
+			VOut: uint32(v.Vout),
+		}
+
+		utxo, ok := utxosByKey[key]
+		if !ok {
+			utxo = &domain.Utxo{
+				UtxoKey:             key,
+				Value:               uint64(v.Value),
+				Asset:               v.Asset,
+				ValueCommitment:     v.ValueCommitment,
+				AssetCommitment:     v.AssetCommitment,
+				ValueBlinder:        v.ValueBlinder,
+				AssetBlinder:        v.AssetBlinder,
+				Script:              v.Script,
+				Nonce:               v.Nonce,
+				RangeProof:          v.RangeProof,
+				SurjectionProof:     v.SurjectionProof,
+				AccountName:         v.AccountName,
+				LockTimestamp:       v.LockTimestamp,
+				LockExpiryTimestamp: v.LockExpiryTimestamp,
+			}
+			utxosByKey[key] = utxo
+		}
+		if v.Status.Valid {
+			switch v.Status.Int32 {
+			case utxoSpent:
+				utxo.SpentStatus = domain.UtxoStatus{
+					Txid:        v.TxID,
+					BlockHeight: uint64(v.BlockHeight.Int32),
+					BlockTime:   v.BlockTime.Int64,
+					BlockHash:   v.BlockHash.String,
+				}
+			case utxoConfirmed:
+				utxo.ConfirmedStatus = domain.UtxoStatus{
+					BlockHeight: uint64(v.BlockHeight.Int32),
+					BlockTime:   v.BlockTime.Int64,
+					BlockHash:   v.BlockHash.String,
+				}
+			}
+		}
+	}
+
+	return utxosByKey, nil
 }
 
 func (u *utxoRepositoryPg) reset(

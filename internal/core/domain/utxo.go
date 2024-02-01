@@ -86,9 +86,14 @@ type Utxo struct {
 	ConfirmedStatus     UtxoStatus
 }
 
-// IsSpent returns whether the utxo have been spent.
+// IsSpent returns whether the utxo is spent by a tx in mempool.
 func (u *Utxo) IsSpent() bool {
 	return u.SpentStatus != UtxoStatus{}
+}
+
+// IsConfirmedSpent returns whether the utxo is spent by a tx in blockchain.
+func (u *Utxo) IsConfirmedSpent() bool {
+	return u.IsSpent() && len(u.SpentStatus.BlockHash) > 0
 }
 
 // IsConfirmed returns whether the utxo is confirmed.
@@ -133,9 +138,25 @@ func (u *Utxo) Info() UtxoInfo {
 	}
 }
 
-// Spend marks the utxos as spent.
-func (u *Utxo) Spend(status UtxoStatus) error {
+// Spend marks the utxos as spent and resets the lock timestamp.
+func (u *Utxo) Spend(txid string) error {
 	if u.IsSpent() {
+		return nil
+	}
+
+	if len(txid) <= 0 {
+		return fmt.Errorf("missing txid")
+	}
+	u.SpentStatus = UtxoStatus{
+		Txid: txid,
+	}
+	u.LockTimestamp = 0
+	return nil
+}
+
+// ConfirmSpend adds confirmation (block) info to a spent utxo.
+func (u *Utxo) ConfirmSpend(status UtxoStatus) error {
+	if u.IsConfirmedSpent() {
 		return nil
 	}
 
@@ -149,8 +170,8 @@ func (u *Utxo) Spend(status UtxoStatus) error {
 	if status.BlockHeight == 0 && status.BlockTime == 0 && status.BlockHash == "" {
 		return fmt.Errorf("missing block info")
 	}
+
 	u.SpentStatus = status
-	u.LockTimestamp = 0
 	return nil
 }
 
