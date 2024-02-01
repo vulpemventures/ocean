@@ -82,10 +82,11 @@ func testGetTxChannel(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	blockHash := randomHex(32)
-	blockHeight := uint64(randomIntInRange(1, 300))
+	blockhash := randomHex(32)
+	blockheight := uint64(randomIntInRange(1, 300))
+	blocktime := time.Now().Unix()
 	repoManager.TransactionRepository().ConfirmTransaction(
-		ctx, txid, blockHash, blockHeight,
+		ctx, txid, blockhash, blockheight, blocktime,
 	)
 
 	repoManager.TransactionRepository().UpdateTransaction(

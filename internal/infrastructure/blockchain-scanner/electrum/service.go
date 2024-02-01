@@ -612,6 +612,7 @@ func (s *service) dbEventHandler(event dbEvent) {
 			TxHex:       txHex,
 			BlockHash:   blockhash,
 			BlockHeight: blockheight,
+			BlockTime:   blocktime,
 			Accounts:    map[string]struct{}{event.account: {}},
 		}
 	}()

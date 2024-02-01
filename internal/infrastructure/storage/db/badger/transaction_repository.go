@@ -55,7 +55,8 @@ func (r *transactionRepository) AddTransaction(
 }
 
 func (r *transactionRepository) ConfirmTransaction(
-	ctx context.Context, txid, blockHash string, blockheight uint64,
+	ctx context.Context,
+	txid, blockHash string, blockheight uint64, blocktime int64,
 ) (bool, error) {
 	tx, err := r.getTx(ctx, txid)
 	if err != nil {
@@ -66,7 +67,7 @@ func (r *transactionRepository) ConfirmTransaction(
 		return false, nil
 	}
 
-	tx.Confirm(blockHash, blockheight)
+	tx.Confirm(blockHash, blockheight, blocktime)
 
 	if err := r.updateTx(ctx, *tx); err != nil {
 		return false, err
