@@ -74,9 +74,6 @@ func txTransfer(_ *cobra.Command, _ []string) error {
 		}
 		receivers = append(receivers, receiver)
 	}
-	for _, r := range receivers {
-		fmt.Printf("amount: %7.8f\n", r.Amount)
-	}
 
 	reply, err := client.Transfer(ctx, &pb.TransferRequest{
 		AccountName:      accountName,
