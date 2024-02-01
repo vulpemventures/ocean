@@ -372,7 +372,7 @@ func (as *AccountService) storeQueuedTransactions() {
 			as.log("received confirmed tx %s from channel", tx.TxID)
 
 			if _, err := txRepo.ConfirmTransaction(
-				ctx, tx.TxID, tx.BlockHash, tx.BlockHeight,
+				ctx, tx.TxID, tx.BlockHash, tx.BlockHeight, tx.BlockTime,
 			); err != nil {
 				as.warn(
 					err, "error while confirming transaction %s for account(s) %s",

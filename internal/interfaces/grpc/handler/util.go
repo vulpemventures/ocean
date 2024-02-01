@@ -109,7 +109,7 @@ func parseBlockDetails(tx application.TransactionInfo) *pb.BlockDetails {
 	return &pb.BlockDetails{
 		Hash:      tx.BlockHash,
 		Height:    tx.BlockHeight,
-		Timestamp: int64(tx.BlockHeight),
+		Timestamp: tx.BlockTime,
 	}
 }
 

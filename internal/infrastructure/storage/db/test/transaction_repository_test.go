@@ -3,6 +3,7 @@ package db_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/vulpemventures/ocean/internal/core/domain"
@@ -62,12 +63,13 @@ func testTransactionRepository(t *testing.T, repo domain.TransactionRepository) 
 	t.Run("confirm_transaction", func(t *testing.T) {
 		blockHash := randomHex(32)
 		blockHeight := uint64(randomIntInRange(100, 1000))
+		blocktime := time.Now().Unix()
 
-		done, err := repo.ConfirmTransaction(ctx, txid, blockHash, blockHeight)
+		done, err := repo.ConfirmTransaction(ctx, txid, blockHash, blockHeight, blocktime)
 		require.NoError(t, err)
 		require.True(t, done)
 
-		done, err = repo.ConfirmTransaction(ctx, txid, blockHash, blockHeight)
+		done, err = repo.ConfirmTransaction(ctx, txid, blockHash, blockHeight, blocktime)
 		require.NoError(t, err)
 		require.False(t, done)
 
