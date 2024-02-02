@@ -39,6 +39,7 @@ type AppConfig struct {
 	Network            *network.Network
 	UtxoExpiryDuration time.Duration
 	DustAmount         uint64
+	EsploraUrl         string
 
 	RepoManagerType         string
 	BlockchainScannerType   string
@@ -62,6 +63,9 @@ func (c *AppConfig) Validate() error {
 	}
 	if c.DustAmount == 0 {
 		return fmt.Errorf("missing dust amount threshold")
+	}
+	if len(c.EsploraUrl) <= 0 {
+		return fmt.Errorf("missing esplora url")
 	}
 	if len(c.RepoManagerType) == 0 {
 		return fmt.Errorf("missing repo manager type")
@@ -256,7 +260,7 @@ func (c *AppConfig) transactionService() *application.TransactionService {
 	rm, _ := c.repoManager()
 	bcs, _ := c.bcScanner()
 	c.txSvc = application.NewTransactionService(
-		rm, bcs, c.Network, c.UtxoExpiryDuration, c.DustAmount,
+		rm, bcs, c.Network, c.UtxoExpiryDuration, c.DustAmount, c.EsploraUrl,
 	)
 	return c.txSvc
 }

@@ -5,8 +5,11 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math"
+	"net/http"
 	"strings"
 	"time"
 
@@ -59,6 +62,7 @@ type TransactionService struct {
 	network            *network.Network
 	utxoExpiryDuration time.Duration
 	dustAmount         uint64
+	esploraUrl         string
 
 	log func(format string, a ...interface{})
 }
@@ -66,13 +70,15 @@ type TransactionService struct {
 func NewTransactionService(
 	repoManager ports.RepoManager, bcScanner ports.BlockchainScanner,
 	net *network.Network, utxoExpiryDuration time.Duration, dustAmount uint64,
+	esploraUrl string,
 ) *TransactionService {
 	logFn := func(format string, a ...interface{}) {
 		format = fmt.Sprintf("transaction service: %s", format)
 		log.Debugf(format, a...)
 	}
+
 	svc := &TransactionService{
-		repoManager, bcScanner, net, utxoExpiryDuration, dustAmount, logFn,
+		repoManager, bcScanner, net, utxoExpiryDuration, dustAmount, esploraUrl, logFn,
 	}
 	svc.registerHandlerForUtxoEvents()
 	svc.registerHandlerForWalletEvents()
@@ -90,6 +96,13 @@ func (ts *TransactionService) GetTransactionInfo(
 			return nil, err
 		}
 		tx = &res[0]
+		if !tx.IsConfirmed() {
+			block, _ := ts.fetchTxConfirmationDetails(tx.TxID)
+			if block != nil {
+				tx.Confirm(block.BlockHash, block.BlockHeight, block.BlockTime)
+			}
+		}
+
 	}
 	return (*TransactionInfo)(tx), nil
 }
@@ -1027,6 +1040,42 @@ func (ts *TransactionService) getExternalInputs(
 		})
 	}
 	return externalInputs, nil
+}
+
+func (ts *TransactionService) fetchTxConfirmationDetails(txid string) (*domain.UtxoStatus, error) {
+	resp, err := http.Get(fmt.Sprintf("%s/tx/%s", ts.esploraUrl, txid))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(string(body))
+	}
+
+	v := make(map[string]interface{})
+	if err := json.Unmarshal(body, &v); err != nil {
+		return nil, err
+	}
+
+	if v["status"] == nil {
+		return nil, nil
+	}
+
+	status := v["status"].(map[string]interface{})
+	confirmed := status["confirmed"].(bool)
+	if !confirmed {
+		return nil, nil
+	}
+
+	return &domain.UtxoStatus{
+		BlockHash:   status["block_hash"].(string),
+		BlockHeight: uint64(status["block_height"].(float64)),
+		BlockTime:   int64(status["block_time"].(float64)),
+	}, nil
 }
 
 func utxoKeysFromRawTx(txHex string) ([]domain.UtxoKey, error) {

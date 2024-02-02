@@ -105,7 +105,6 @@ var (
 	defaultProfilerPort       = 18001
 	defaultStatsInterval      = 600 // 10 minutes
 	defaultUtxoExpiryDuration = 360 // 6 minutes (3 blocks)
-	defaultEsploraUrl         = "https://blockstream.info/liquid/api"
 	defaultElectrumUrl        = "ssl://blockstream.info:995"
 	defaultDustAmount         = uint64(450)
 
@@ -147,7 +146,6 @@ func init() {
 	vip.SetDefault(ProfilerPortKey, defaultProfilerPort)
 	vip.SetDefault(StatsIntervalKey, defaultStatsInterval)
 	vip.SetDefault(UtxoExpiryDurationKey, defaultUtxoExpiryDuration)
-	vip.SetDefault(EsploraUrlKey, defaultEsploraUrl)
 	vip.SetDefault(DbUserKey, "root")
 	vip.SetDefault(DbPassKey, "secret")
 	vip.SetDefault(DbHostKey, "127.0.0.1")
@@ -244,6 +242,23 @@ func GetNetwork() *network.Network {
 	}
 
 	return net
+}
+
+func GetEsploraUrl() string {
+	url := GetString(EsploraUrlKey)
+	if len(url) > 0 {
+		return url
+	}
+	switch supportedNetworks[GetString(NetworkKey)].Name {
+	case network.Regtest.Name:
+		return "http://localhost:3001/api"
+	case network.Testnet.Name:
+		return "https://blockstream.info/liquidtestnet/api"
+	case network.Liquid.Name:
+		fallthrough
+	default:
+		return "https://blockstream.info/liquid/api"
+	}
 }
 
 func GetRootPath() string {

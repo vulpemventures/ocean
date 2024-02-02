@@ -50,6 +50,7 @@ var (
 	dbName             = config.GetString(config.DbNameKey)
 	migrationSourceURL = config.GetString(config.DbMigrationPath)
 	dustAmount         = uint64(config.GetInt(config.DustAmountKey))
+	esploraUrl         = config.GetEsploraUrl()
 )
 
 func main() {
@@ -89,6 +90,7 @@ func main() {
 		Network:                 network,
 		UtxoExpiryDuration:      utxoExpiryDuration * time.Second,
 		DustAmount:              dustAmount,
+		EsploraUrl:              esploraUrl,
 		RepoManagerType:         dbType,
 		BlockchainScannerType:   bcScannerType,
 		RepoManagerConfig:       repoManagerConfig,
