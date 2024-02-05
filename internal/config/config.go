@@ -59,9 +59,6 @@ const (
 	// RootPathKey is the key to use a custom root path for the wallet,
 	// instead of the default m/84'/[1776|1]' (depending on network).
 	RootPathKey = "ROOT_PATH"
-	// EsploraUrlKey is the key for the esplora block esplorer consumed by the
-	// neutrino blockchain scanner.
-	EsploraUrlKey = "ESPLORA_URL"
 	// ElectrumUrlKey is the key for the electrum server endpoint consumed by the
 	// electrum blockchain scanner.
 	ElectrumUrlKey = "ELECTRUM_URL"
@@ -242,23 +239,6 @@ func GetNetwork() *network.Network {
 	}
 
 	return net
-}
-
-func GetEsploraUrl() string {
-	url := GetString(EsploraUrlKey)
-	if len(url) > 0 {
-		return url
-	}
-	switch supportedNetworks[GetString(NetworkKey)].Name {
-	case network.Regtest.Name:
-		return "http://localhost:3001/api"
-	case network.Testnet.Name:
-		return "https://blockstream.info/liquidtestnet/api"
-	case network.Liquid.Name:
-		fallthrough
-	default:
-		return "https://blockstream.info/liquid/api"
-	}
 }
 
 func GetRootPath() string {

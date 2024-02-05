@@ -29,6 +29,7 @@ type service struct {
 	utxoChannelByAccount         map[string]chan []*domain.Utxo
 	txChannelByAccount           map[string]chan *domain.Transaction
 	reportChannelByAccount       map[string]chan accountReport
+	blocksByHeight               map[uint64]blockInfo
 
 	log  func(format string, a ...interface{})
 	warn func(err error, format string, a ...interface{})
@@ -80,6 +81,7 @@ func NewService(args ServiceArgs) (ports.BlockchainScanner, error) {
 	accountAddressesByScriptHash := make(
 		map[string]map[string]domain.AddressInfo,
 	)
+	blocksByHeight := make(map[uint64]blockInfo)
 
 	client, err := args.client()
 	if err != nil {
@@ -98,7 +100,7 @@ func NewService(args ServiceArgs) (ports.BlockchainScanner, error) {
 	svc := &service{
 		client, db, lock, args.Network, accountAddressesByScriptHash,
 		utxoChannelByAccount, txChannelByAccount, reportChannelByAccount,
-		logFn, warnFn,
+		blocksByHeight, logFn, warnFn,
 	}
 	svc.db.registerEventHandler(svc.dbEventHandler)
 
@@ -382,10 +384,42 @@ func (s *service) GetTransactions(txids []string) ([]domain.Transaction, error) 
 	}
 	txs := make([]domain.Transaction, 0, len(res))
 	for _, tx := range res {
+		txid := tx.TxHash().String()
+		scriptHash := calcScriptHash(hex.EncodeToString(tx.Outputs[0].Script))
+		history, _ := s.client.getScriptHashesHistory([]string{scriptHash})
+		var height int64
+		for _, tx := range history[scriptHash] {
+			if tx.Txid == txid {
+				height = tx.Height
+				break
+			}
+		}
+		var blockhash string
+		var blockheight uint64
+		var blocktime int64
+		if height > 0 {
+			info, ok := s.blocksByHeight[uint64(height)]
+			if ok {
+				blockhash = info.hash().String()
+				blockheight = info.Height
+				blocktime = info.timestamp()
+			} else {
+				info, _ := s.client.getBlocksInfo([]uint32{uint32(height)})
+				if len(info) > 0 {
+					s.blocksByHeight[uint64(height)] = info[0]
+					blockhash = info[0].hash().String()
+					blockheight = info[0].Height
+					blocktime = info[0].timestamp()
+				}
+			}
+		}
 		txHex, _ := tx.ToHex()
 		txs = append(txs, domain.Transaction{
-			TxID:  tx.TxHash().String(),
-			TxHex: txHex,
+			TxID:        txid,
+			TxHex:       txHex,
+			BlockHash:   blockhash,
+			BlockHeight: blockheight,
+			BlockTime:   blocktime,
 		})
 	}
 	return txs, nil
