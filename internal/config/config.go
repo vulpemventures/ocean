@@ -59,9 +59,6 @@ const (
 	// RootPathKey is the key to use a custom root path for the wallet,
 	// instead of the default m/84'/[1776|1]' (depending on network).
 	RootPathKey = "ROOT_PATH"
-	// EsploraUrlKey is the key for the esplora block esplorer consumed by the
-	// neutrino blockchain scanner.
-	EsploraUrlKey = "ESPLORA_URL"
 	// ElectrumUrlKey is the key for the electrum server endpoint consumed by the
 	// electrum blockchain scanner.
 	ElectrumUrlKey = "ELECTRUM_URL"
@@ -105,7 +102,6 @@ var (
 	defaultProfilerPort       = 18001
 	defaultStatsInterval      = 600 // 10 minutes
 	defaultUtxoExpiryDuration = 360 // 6 minutes (3 blocks)
-	defaultEsploraUrl         = "https://blockstream.info/liquid/api"
 	defaultElectrumUrl        = "ssl://blockstream.info:995"
 	defaultDustAmount         = uint64(450)
 
@@ -147,7 +143,6 @@ func init() {
 	vip.SetDefault(ProfilerPortKey, defaultProfilerPort)
 	vip.SetDefault(StatsIntervalKey, defaultStatsInterval)
 	vip.SetDefault(UtxoExpiryDurationKey, defaultUtxoExpiryDuration)
-	vip.SetDefault(EsploraUrlKey, defaultEsploraUrl)
 	vip.SetDefault(DbUserKey, "root")
 	vip.SetDefault(DbPassKey, "secret")
 	vip.SetDefault(DbHostKey, "127.0.0.1")

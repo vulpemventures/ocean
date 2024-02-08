@@ -71,6 +71,7 @@ func NewTransactionService(
 		format = fmt.Sprintf("transaction service: %s", format)
 		log.Debugf(format, a...)
 	}
+
 	svc := &TransactionService{
 		repoManager, bcScanner, net, utxoExpiryDuration, dustAmount, logFn,
 	}
