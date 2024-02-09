@@ -1,5 +1,5 @@
 # first image used to build the sources
-FROM golang:1.18-buster AS builder
+FROM golang:1.20-buster AS builder
 
 ARG VERSION
 ARG COMMIT
@@ -17,33 +17,25 @@ RUN go build -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${COMMIT}' -
 # Second image, running the oceand executable
 FROM debian:buster-slim
 
-# $USER name, and data $DIR to be used in the `final` image
-ARG USER=ocean
-ARG DIR=/home/ocean
+# Set the working directory inside the container
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
-COPY --from=builder /app/bin/* /usr/local/bin/
+COPY --from=builder /app/bin/* /app
 COPY --from=builder /app/internal/infrastructure/storage/db/postgres/migration/* /
 
 ENV OCEAN_DB_MIGRATION_PATH=file://
-
-# NOTE: Default GID == UID == 1000
-RUN adduser --disabled-password \
-            --home "$DIR/" \
-            --gecos "" \
-            "$USER"
-USER $USER
-
-# Prevents `VOLUME $DIR/.oceand/` being created as owned by `root`
-RUN mkdir -p "$DIR/.oceand/"
+ENV OCEAN_DATADIR=/app/data/oceand 
+ENV OCEAN_CLI_DATADIR=/app/data/ocean
+ENV PATH="/app:${PATH}"
 
 # Expose volume containing all `oceand` data
-VOLUME $DIR/.oceand/
+VOLUME /app/data
 
 # Expose ports of grpc server and profiler
 EXPOSE 18000
 EXPOSE 18001
 
-ENTRYPOINT [ "oceand" ]
+ENTRYPOINT ["oceand"]
 
