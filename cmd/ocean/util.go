@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -92,7 +91,7 @@ func getClientConn() (*grpc.ClientConn, error) {
 }
 
 func getState() (map[string]string, error) {
-	file, err := ioutil.ReadFile(statePath)
+	file, err := os.ReadFile(statePath)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -121,8 +120,17 @@ func setState(partialState map[string]string) error {
 }
 
 func writeState(state map[string]string) error {
+
+	dir := filepath.Dir(statePath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return fmt.Errorf("failed to create directory: %v", err)
+		}
+	}
+
 	buf, _ := json.MarshalIndent(state, "", "  ")
-	if err := ioutil.WriteFile(statePath, buf, 0755); err != nil {
+	if err := os.WriteFile(statePath, buf, 0755); err != nil {
 		return fmt.Errorf("writing to file: %w", err)
 	}
 
