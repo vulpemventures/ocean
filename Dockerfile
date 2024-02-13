@@ -31,7 +31,8 @@ ENV OCEAN_CLI_DATADIR=/app/data/ocean
 ENV PATH="/app:${PATH}"
 
 # Expose volume containing all `oceand` data
-VOLUME /app/data
+VOLUME /app/data/oceand
+VOLUME /app/data/ocean
 
 # Expose ports of grpc server and profiler
 EXPOSE 18000

@@ -39,8 +39,8 @@ func newRpcClient(
 
 	useSSL := strings.HasPrefix(addr, "https")
 	if useSSL {
-		// #nosec
 		t := &http.Transport{
+			// #nosec G402
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 		httpClient = &http.Client{Transport: t}
