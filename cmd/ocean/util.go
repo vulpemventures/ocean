@@ -96,10 +96,10 @@ func getState() (map[string]string, error) {
 		if !os.IsNotExist(err) {
 			return nil, err
 		}
-		if err := writeState(initialState); err != nil {
+		if err := writeState(initialState()); err != nil {
 			return nil, err
 		}
-		return initialState, nil
+		return initialState(), nil
 	}
 
 	data := map[string]string{}
@@ -120,7 +120,6 @@ func setState(partialState map[string]string) error {
 }
 
 func writeState(state map[string]string) error {
-
 	dir := filepath.Dir(statePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)

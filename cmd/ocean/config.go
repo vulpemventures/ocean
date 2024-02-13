@@ -39,7 +39,7 @@ var (
 
 func init() {
 	configInitCmd.Flags().StringVar(
-		&rpcServer, "rpcserver", initialState["rpcserver"],
+		&rpcServer, "rpcserver", initialState()["rpcserver"],
 		"address of the ocean wallet to connect to",
 	)
 	configInitCmd.Flags().BoolVar(
@@ -47,7 +47,7 @@ func init() {
 		"this must be set if the ocean wallet has TLS disabled",
 	)
 	configInitCmd.Flags().StringVar(
-		&tlsCertPath, "tls-cert-path", initialState["tls_cert_path"],
+		&tlsCertPath, "tls-cert-path", initialState()["tls_cert_path"],
 		"the path of the TLS certificate file to use to connect to the ocean "+
 			"wallet if it has TLS enabled",
 	)
@@ -59,7 +59,7 @@ func configSet(cmd *cobra.Command, args []string) error {
 	value := args[1]
 
 	// Prevent setting anything that is not part of the state.
-	if _, ok := initialState[key]; !ok {
+	if _, ok := initialState()[key]; !ok {
 		return nil
 	}
 
@@ -67,7 +67,7 @@ func configSet(cmd *cobra.Command, args []string) error {
 	if key == "no_tls" {
 		partialState["tls_cert_path"] = ""
 		if val, _ := strconv.ParseBool(value); !val {
-			partialState["tls_cert_path"] = initialState["tls_cert_path"]
+			partialState["tls_cert_path"] = initialState()["tls_cert_path"]
 		}
 	}
 	if key == "tls_cert_path" {
@@ -87,10 +87,9 @@ func configSet(cmd *cobra.Command, args []string) error {
 }
 
 func configInit(cmd *cobra.Command, args []string) error {
-	if _, err := getState(); err != nil {
-		return err
+	if noTLS {
+		tlsCertPath = ""
 	}
-
 	if err := setState(map[string]string{
 		"rpcserver":     rpcServer,
 		"no_tls":        strconv.FormatBool(noTLS),

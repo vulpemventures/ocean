@@ -4,17 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"path/filepath"
 
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/spf13/cobra"
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 )
 
 var (
-	datadir   = btcutil.AppDataDir("ocean-cli", false)
-	statePath = filepath.Join(datadir, "state.json")
-
 	mnemonic,
 	password,
 	oldPassword,
