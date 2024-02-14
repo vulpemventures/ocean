@@ -3,7 +3,7 @@ package neutrino_scanner
 import (
 	"context"
 
-	"github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v4"
 	"github.com/timshannon/badgerhold/v4"
 	"github.com/vulpemventures/neutrino-elements/pkg/repository"
 )
