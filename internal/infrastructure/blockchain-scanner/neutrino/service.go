@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/dgraph-io/badger/v3"
-	"github.com/dgraph-io/badger/v3/options"
+	"github.com/dgraph-io/badger/v4"
+	"github.com/dgraph-io/badger/v4/options"
 	log "github.com/sirupsen/logrus"
 	"github.com/timshannon/badgerhold/v4"
 	"github.com/vulpemventures/go-elements/transaction"
