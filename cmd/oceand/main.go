@@ -50,6 +50,8 @@ var (
 	dbName             = config.GetString(config.DbNameKey)
 	migrationSourceURL = config.GetString(config.DbMigrationPath)
 	dustAmount         = uint64(config.GetInt(config.DustAmountKey))
+	walletPassword     = config.GetString(config.PasswordKey)
+	walletMnemonic     = config.GetString(config.MnemonicKey)
 )
 
 func main() {
@@ -89,6 +91,8 @@ func main() {
 		Network:                 network,
 		UtxoExpiryDuration:      utxoExpiryDuration * time.Second,
 		DustAmount:              dustAmount,
+		Password:                walletPassword,
+		Mnemonic:                walletMnemonic,
 		RepoManagerType:         dbType,
 		BlockchainScannerType:   bcScannerType,
 		RepoManagerConfig:       repoManagerConfig,

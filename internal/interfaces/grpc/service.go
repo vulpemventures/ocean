@@ -1,8 +1,11 @@
 package grpc_interface
 
 import (
+	"context"
 	"fmt"
 	"math/big"
+	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
@@ -25,13 +28,18 @@ type service struct {
 	grpcServer               *grpc.Server
 	chCloseStreamConnections chan (struct{})
 
-	log func(format string, a ...interface{})
+	log  func(format string, a ...interface{})
+	warn func(err error, format string, a ...interface{})
 }
 
 func NewService(config ServiceConfig, appConfig *appconfig.AppConfig) (*service, error) {
 	logFn := func(format string, a ...interface{}) {
 		format = fmt.Sprintf("service: %s", format)
 		log.Infof(format, a...)
+	}
+	warnFn := func(err error, format string, a ...interface{}) {
+		format = fmt.Sprintf("account service: %s", format)
+		log.WithError(err).Warnf(format, a...)
 	}
 	if err := config.validate(); err != nil {
 		return nil, fmt.Errorf("invalid config: %s", err)
@@ -49,7 +57,9 @@ func NewService(config ServiceConfig, appConfig *appconfig.AppConfig) (*service,
 		logFn("created TLS keypair in path %s", config.TLSLocation)
 	}
 	chCloseStreamConnections := make(chan struct{})
-	return &service{config, appConfig, nil, chCloseStreamConnections, logFn}, nil
+	return &service{
+		config, appConfig, nil, chCloseStreamConnections, logFn, warnFn,
+	}, nil
 }
 
 func (s *service) Start() error {
@@ -110,6 +120,13 @@ func (s *service) start() (*grpc.Server, error) {
 
 	go grpcServer.Serve(s.config.listener())
 
+	switch {
+	case s.appConfig.WithAutoInit():
+		go s.autoInitAndUnlock()
+	case s.appConfig.WithAutoUnlock():
+		go s.autoUnlock()
+	}
+
 	return grpcServer, nil
 }
 
@@ -130,4 +147,51 @@ func (s *service) stop(onlyGrpcServer bool) {
 	s.log("stopped blockchain scanner")
 	s.appConfig.RepoManager().Close()
 	s.log("closed connection with db")
+}
+
+func (s *service) autoInitAndUnlock() {
+	wallet := s.appConfig.WalletService()
+	status := wallet.GetStatus(context.Background())
+	if !status.IsInitialized {
+		s.autoInit()
+	}
+
+	s.autoUnlock()
+}
+
+func (s *service) autoUnlock() {
+	attempts := 0
+	ctx := context.Background()
+	wallet := s.appConfig.WalletService()
+	for attempts < 3 {
+		if err := wallet.Unlock(ctx, s.appConfig.Password); err != nil {
+			attempts++
+			s.warn(err, "failed to auto unlock, retrying...")
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		s.log("wallet auto unlocked")
+		return
+	}
+	s.warn(nil, "failed to auto unlock, the operation must be done manually")
+}
+
+func (s *service) autoInit() {
+	attempts := 0
+	ctx := context.Background()
+	wallet := s.appConfig.WalletService()
+	for attempts < 3 {
+		mnemonic := strings.Split(s.appConfig.Mnemonic, " ")
+		if err := wallet.CreateWallet(
+			ctx, mnemonic, s.appConfig.Password,
+		); err != nil {
+			attempts++
+			s.warn(err, "failed to auto init, retrying...")
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		s.log("wallet auto initialized")
+		return
+	}
+	s.warn(nil, "failed to auto initialize, the operation must be done manually")
 }

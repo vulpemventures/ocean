@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/vulpemventures/go-bip39"
 	"github.com/vulpemventures/go-elements/network"
 	"github.com/vulpemventures/ocean/internal/config"
 	"github.com/vulpemventures/ocean/internal/core/application"
@@ -39,6 +40,8 @@ type AppConfig struct {
 	Network            *network.Network
 	UtxoExpiryDuration time.Duration
 	DustAmount         uint64
+	Password           string
+	Mnemonic           string
 
 	RepoManagerType         string
 	BlockchainScannerType   string
@@ -51,6 +54,14 @@ type AppConfig struct {
 	accountSvc *application.AccountService
 	txSvc      *application.TransactionService
 	notifySvc  *application.NotificationService
+}
+
+func (c *AppConfig) WithAutoUnlock() bool {
+	return len(c.Password) > 0
+}
+
+func (c *AppConfig) WithAutoInit() bool {
+	return len(c.Mnemonic) > 0
 }
 
 func (c *AppConfig) Validate() error {
@@ -92,6 +103,14 @@ func (c *AppConfig) Validate() error {
 	}
 	if _, err := path.ParseRootDerivationPath(c.RootPath); err != nil {
 		return err
+	}
+	if len(c.Mnemonic) > 0 {
+		if !bip39.IsMnemonicValid(c.Mnemonic) {
+			return fmt.Errorf("invalid mnemonic")
+		}
+		if c.Password == "" {
+			return fmt.Errorf("missing password for auto init&unlock")
+		}
 	}
 
 	return nil
