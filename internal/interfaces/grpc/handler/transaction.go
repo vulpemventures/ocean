@@ -69,6 +69,26 @@ func (t *transaction) SelectUtxos(
 	}, nil
 }
 
+func (t *transaction) LockUtxos(
+	ctx context.Context, req *pb.LockUtxosRequest,
+) (*pb.LockUtxosResponse, error) {
+	accountName, err := parseAccountName(req.GetAccountName())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	inputs, err := parseInputs(req.GetUtxos())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	expirationDate, err := t.appSvc.LockUtxos(ctx, accountName, inputs)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.LockUtxosResponse{
+		ExpirationDate: expirationDate,
+	}, nil
+}
+
 func (t *transaction) EstimateFees(
 	ctx context.Context, req *pb.EstimateFeesRequest,
 ) (*pb.EstimateFeesResponse, error) {

@@ -10,11 +10,15 @@ import "ocean/v1/types.proto";
 service TransactionService {
   // GetTransaction returns the hex of a transaction given its id.
   rpc GetTransaction(GetTransactionRequest) returns (GetTransactionResponse);
+
   // SelectUtxos returns a selction of utxos, to be used in another 
   // transaction, for provided target amount and strategy.
   // Selected utxos are locked for predefined amount of time to prevent 
   // double-spending them.
   rpc SelectUtxos(SelectUtxosRequest) returns (SelectUtxosResponse);
+
+  // LockUtxos allows to manually select utxos to spend by a subsequent tx.
+  rpc LockUtxos(LockUtxosRequest) returns (LockUtxosResponse);
 
   // EstimateFees returns the fee amount to pay for a tx containing the given 
   // inputs and outputs.
@@ -99,6 +103,14 @@ message SelectUtxosResponse{
   // Expiration date for the selected utxo, which are temporary locked to
   // prevent double spending them.
   int64 expiration_date = 3;
+}
+
+message LockUtxosRequest{
+  string account_name = 1;
+  repeated Input utxos = 2;
+}
+message LockUtxosResponse{
+  int64 expiration_date = 1;
 }
 
 message EstimateFeesRequest{

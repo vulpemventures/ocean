@@ -121,10 +121,10 @@ func (ts *TransactionService) SelectUtxos(
 		return nil, 0, -1, err
 	}
 	now := time.Now()
-	lockExpiration := now.Add(ts.utxoExpiryDuration)
+	lockExpiration := now.Add(ts.utxoExpiryDuration).Unix()
 	keys := Utxos(utxos).Keys()
 	count, err := ts.repoManager.UtxoRepository().LockUtxos(
-		ctx, keys, now.Unix(), lockExpiration.Unix(),
+		ctx, keys, now.Unix(), lockExpiration,
 	)
 	if err != nil {
 		return nil, 0, -1, err
@@ -136,8 +136,33 @@ func (ts *TransactionService) SelectUtxos(
 		)
 	}
 
-	expirationDate := time.Now().Add(ts.utxoExpiryDuration).Unix()
-	return utxos, change, expirationDate, nil
+	return utxos, change, lockExpiration, nil
+}
+
+func (ts *TransactionService) LockUtxos(
+	ctx context.Context, accountName string, ins Inputs,
+) (int64, error) {
+	account, err := ts.getAccount(ctx, accountName)
+	if err != nil {
+		return -1, err
+	}
+
+	now := time.Now()
+	lockExpiration := now.Add(ts.utxoExpiryDuration).Unix()
+	keys := ins.Keys()
+	count, err := ts.repoManager.UtxoRepository().LockUtxos(
+		ctx, keys, now.Unix(), lockExpiration,
+	)
+	if err != nil {
+		return -1, err
+	}
+	if count > 0 {
+		ts.log(
+			"locked %d utxo(s) for account %s (%s)",
+			count, account.Namespace, UtxoKeys(keys),
+		)
+	}
+	return lockExpiration, nil
 }
 
 func (ts *TransactionService) EstimateFees(

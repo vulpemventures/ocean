@@ -175,6 +175,14 @@ func (o Output) Validate() error {
 
 type Inputs []Input
 
+func (i Inputs) Keys() []domain.UtxoKey {
+	keys := make([]domain.UtxoKey, 0, len(i))
+	for _, in := range i {
+		keys = append(keys, in.toUtxoKey())
+	}
+	return keys
+}
+
 type Outputs []Output
 
 type CoinSelectorFactory func() ports.CoinSelector
