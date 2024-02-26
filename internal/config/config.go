@@ -227,7 +227,7 @@ func validate() error {
 	}
 
 	if IsSet(MnemonicKey) && !IsSet(PasswordKey) {
-		return fmt.Errorf("password must be defined is mnemonic is set")
+		return fmt.Errorf("password must be defined if mnemonic is set")
 	}
 
 	return nil
