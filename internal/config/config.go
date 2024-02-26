@@ -76,6 +76,10 @@ const (
 	DbMigrationPath = "DB_MIGRATION_PATH"
 	// DustAmountKey is the key to customize the dust amount threshold
 	DustAmountKey = "DUST_AMOUNT"
+	// PasswordKey is the key to set the password for auto-init/auto-unlock.
+	PasswordKey = "PASSWORD"
+	// MnemonicKey is the key to set the mnemonic for auto-init.
+	MnemonicKey = "MNEMONIC"
 
 	// DbLocation is the folder inside the datadir containing db files.
 	DbLocation = "db"
@@ -220,6 +224,10 @@ func validate() error {
 		if port == profilerPort {
 			return fmt.Errorf("port and profiler port must not be equal")
 		}
+	}
+
+	if IsSet(MnemonicKey) && !IsSet(PasswordKey) {
+		return fmt.Errorf("password must be defined if mnemonic is set")
 	}
 
 	return nil
