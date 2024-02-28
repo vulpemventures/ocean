@@ -83,20 +83,26 @@ func (r *utxoRepository) GetAllUtxosForAccount(
 }
 
 func (r *utxoRepository) GetSpendableUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).
 		And("LockTimestamp").Eq(int64(0)).And("AccountName").Eq(accountName)
+	if len(scripts) > 0 {
+		query = query.And("Script").In(scripts)
+	}
 
 	return r.findUtxos(ctx, query)
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("LockTimestamp").Gt(int64(0)).And("AccountName").Eq(accountName)
+	if len(scripts) > 0 {
+		query = query.And("Script").In(scripts)
+	}
 
 	return r.findUtxos(ctx, query)
 }
