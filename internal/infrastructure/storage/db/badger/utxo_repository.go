@@ -1,6 +1,7 @@
 package dbbadger
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"sync"
@@ -88,11 +89,26 @@ func (r *utxoRepository) GetSpendableUtxosForAccount(
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).
 		And("LockTimestamp").Eq(int64(0)).And("AccountName").Eq(accountName)
-	if len(scripts) > 0 {
-		query = query.And("Script").In(scripts)
+
+	utxos, err := r.findUtxos(ctx, query)
+	if err != nil {
+		return nil, err
 	}
 
-	return r.findUtxos(ctx, query)
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		for _, script := range scripts {
+			if bytes.Equal(u.Script, script) {
+				filteredUtxos = append(filteredUtxos, u)
+				break
+			}
+		}
+	}
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
@@ -100,11 +116,26 @@ func (r *utxoRepository) GetLockedUtxosForAccount(
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("LockTimestamp").Gt(int64(0)).And("AccountName").Eq(accountName)
-	if len(scripts) > 0 {
-		query = query.And("Script").In(scripts)
+
+	utxos, err := r.findUtxos(ctx, query)
+	if err != nil {
+		return nil, err
 	}
 
-	return r.findUtxos(ctx, query)
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		for _, script := range scripts {
+			if bytes.Equal(u.Script, script) {
+				filteredUtxos = append(filteredUtxos, u)
+				break
+			}
+		}
+	}
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) GetBalanceForAccount(
