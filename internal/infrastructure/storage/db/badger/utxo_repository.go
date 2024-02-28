@@ -76,72 +76,54 @@ func (r *utxoRepository) GetSpendableUtxos(
 }
 
 func (r *utxoRepository) GetAllUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("AccountName").Eq(accountName)
 
-	return r.findUtxos(ctx, query)
+	utxos, err := r.findUtxos(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		for _, script := range scripts {
+			if bytes.Equal(u.Script, script) {
+				filteredUtxos = append(filteredUtxos, u)
+				break
+			}
+		}
+	}
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) GetSpendableUtxosForAccount(
-	ctx context.Context, accountName string, scripts [][]byte,
+	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).
 		And("LockTimestamp").Eq(int64(0)).And("AccountName").Eq(accountName)
 
-	utxos, err := r.findUtxos(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(scripts) <= 0 {
-		return utxos, nil
-	}
-
-	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
-	for _, u := range utxos {
-		for _, script := range scripts {
-			if bytes.Equal(u.Script, script) {
-				filteredUtxos = append(filteredUtxos, u)
-				break
-			}
-		}
-	}
-	return filteredUtxos, nil
+	return r.findUtxos(ctx, query)
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
-	ctx context.Context, accountName string, scripts [][]byte,
+	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("LockTimestamp").Gt(int64(0)).And("AccountName").Eq(accountName)
 
-	utxos, err := r.findUtxos(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(scripts) <= 0 {
-		return utxos, nil
-	}
-
-	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
-	for _, u := range utxos {
-		for _, script := range scripts {
-			if bytes.Equal(u.Script, script) {
-				filteredUtxos = append(filteredUtxos, u)
-				break
-			}
-		}
-	}
-	return filteredUtxos, nil
+	return r.findUtxos(ctx, query)
 }
 
 func (r *utxoRepository) GetBalanceForAccount(
 	ctx context.Context, accountName string,
 ) (map[string]*domain.Balance, error) {
-	utxos, err := r.GetAllUtxosForAccount(ctx, accountName)
+	utxos, err := r.GetAllUtxosForAccount(ctx, accountName, nil)
 	if err != nil {
 		return nil, err
 	}

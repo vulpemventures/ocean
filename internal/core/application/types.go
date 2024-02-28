@@ -55,8 +55,9 @@ type BuildInfo struct {
 }
 
 type UtxoInfo struct {
-	Spendable Utxos
-	Locked    Utxos
+	Spendable   Utxos
+	Locked      Utxos
+	Unconfirmed Utxos
 }
 
 type TransactionInfo domain.Transaction

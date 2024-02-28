@@ -105,7 +105,7 @@ func (ts *TransactionService) SelectUtxos(
 	}
 
 	utxos, err := ts.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
-		ctx, account.Namespace, nil,
+		ctx, account.Namespace,
 	)
 	if err != nil {
 		return nil, 0, -1, err
@@ -396,7 +396,7 @@ func (ts *TransactionService) Transfer(
 	}
 
 	utxos, err := utxoRepo.GetSpendableUtxosForAccount(
-		ctx, account.Namespace, nil,
+		ctx, account.Namespace,
 	)
 	if err != nil {
 		return "", err
@@ -778,7 +778,7 @@ func (ts *TransactionService) scheduleUtxoUnlocker() {
 
 	for accountName := range w.Accounts {
 		utxos, _ := utxoRepo.GetLockedUtxosForAccount(
-			ctx, accountName, nil,
+			ctx, accountName,
 		)
 		if len(utxos) > 0 {
 			utxosToUnlock := make([]domain.UtxoKey, 0, len(utxos))

@@ -80,30 +80,30 @@ func (r *utxoRepository) GetSpendableUtxos(_ context.Context) ([]*domain.Utxo, e
 }
 
 func (r *utxoRepository) GetAllUtxosForAccount(
+	_ context.Context, account string, scripts [][]byte,
+) ([]*domain.Utxo, error) {
+	r.store.lock.RLock()
+	defer r.store.lock.RUnlock()
+
+	return r.getUtxosForAccount(account, false, false, scripts)
+}
+
+func (r *utxoRepository) GetSpendableUtxosForAccount(
 	_ context.Context, account string,
 ) ([]*domain.Utxo, error) {
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	return r.getUtxosForAccount(account, false, false, nil)
-}
-
-func (r *utxoRepository) GetSpendableUtxosForAccount(
-	_ context.Context, account string, scripts [][]byte,
-) ([]*domain.Utxo, error) {
-	r.store.lock.RLock()
-	defer r.store.lock.RUnlock()
-
-	return r.getUtxosForAccount(account, true, false, scripts)
+	return r.getUtxosForAccount(account, true, false, nil)
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
-	_ context.Context, account string, scripts [][]byte,
+	_ context.Context, account string,
 ) ([]*domain.Utxo, error) {
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	return r.getUtxosForAccount(account, false, true, scripts)
+	return r.getUtxosForAccount(account, false, true, nil)
 }
 
 func (r *utxoRepository) GetBalanceForAccount(
