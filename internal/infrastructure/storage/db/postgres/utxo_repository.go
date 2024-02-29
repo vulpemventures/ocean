@@ -230,7 +230,7 @@ func (u *utxoRepositoryPg) GetSpendableUtxos(
 	}
 
 	for _, v := range utxosByKey {
-		if !v.IsLocked() && v.IsConfirmed() && !v.IsSpent() {
+		if !v.IsLocked() && !v.IsSpent() {
 			resp = append(resp, v)
 		}
 	}
@@ -301,7 +301,7 @@ func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
 	}
 
 	for _, v := range utxosByKey {
-		if !v.IsLocked() && v.IsConfirmed() && !v.IsSpent() {
+		if !v.IsLocked() && !v.IsSpent() {
 			resp = append(resp, v)
 		}
 	}
@@ -333,7 +333,7 @@ func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
 	}
 
 	for _, v := range utxosByKey {
-		if v.IsLocked() {
+		if v.IsLocked() && !v.IsSpent() {
 			resp = append(resp, v)
 		}
 	}

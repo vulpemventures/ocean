@@ -229,7 +229,7 @@ func (r *utxoRepository) getUtxos(spendableOnly bool) []*domain.Utxo {
 	utxos := make([]*domain.Utxo, 0, len(r.store.utxos))
 	for _, u := range r.store.utxos {
 		if spendableOnly {
-			if !u.IsLocked() && u.IsConfirmed() && !u.IsSpent() {
+			if !u.IsLocked() && !u.IsSpent() {
 				utxos = append(utxos, u)
 			}
 			continue
@@ -252,14 +252,14 @@ func (r *utxoRepository) getUtxosForAccount(
 		u := r.store.utxos[k.Hash()]
 
 		if spendableOnly {
-			if !u.IsLocked() && u.IsConfirmed() && !u.IsSpent() {
+			if !u.IsLocked() && !u.IsSpent() {
 				utxos = append(utxos, u)
 			}
 			continue
 		}
 
 		if lockedOnly {
-			if u.IsLocked() {
+			if u.IsLocked() && !u.IsSpent() {
 				utxos = append(utxos, u)
 			}
 			continue

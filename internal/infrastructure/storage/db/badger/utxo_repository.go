@@ -70,7 +70,7 @@ func (r *utxoRepository) GetSpendableUtxos(
 	ctx context.Context,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
-		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).And("LockTimestamp").Eq(int64(0))
+		And("LockTimestamp").Eq(int64(0))
 
 	return r.findUtxos(ctx, query)
 }
@@ -105,7 +105,6 @@ func (r *utxoRepository) GetSpendableUtxosForAccount(
 	ctx context.Context, accountName string,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
-		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).
 		And("LockTimestamp").Eq(int64(0)).And("AccountName").Eq(accountName)
 
 	return r.findUtxos(ctx, query)
