@@ -273,15 +273,11 @@ func (r *utxoRepository) getUtxosForAccount(
 
 	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
 	for _, u := range utxos {
-		found := false
 		for _, script := range scripts {
 			if bytes.Equal(u.Script, script) {
-				found = true
+				filteredUtxos = append(filteredUtxos, u)
 				break
 			}
-		}
-		if found {
-			filteredUtxos = append(filteredUtxos, u)
 		}
 	}
 	return filteredUtxos, nil
