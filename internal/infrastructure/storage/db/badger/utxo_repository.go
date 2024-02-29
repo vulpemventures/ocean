@@ -1,6 +1,7 @@
 package dbbadger
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"sync"
@@ -69,7 +70,7 @@ func (r *utxoRepository) GetSpendableUtxos(
 	ctx context.Context,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
-		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).And("LockTimestamp").Eq(int64(0))
+		And("LockTimestamp").Eq(int64(0))
 
 	return r.findUtxos(ctx, query)
 }
@@ -83,22 +84,57 @@ func (r *utxoRepository) GetAllUtxosForAccount(
 }
 
 func (r *utxoRepository) GetSpendableUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
-		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).
 		And("LockTimestamp").Eq(int64(0)).And("AccountName").Eq(accountName)
 
-	return r.findUtxos(ctx, query)
+	utxos, err := r.findUtxos(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		for _, script := range scripts {
+			if bytes.Equal(u.Script, script) {
+				filteredUtxos = append(filteredUtxos, u)
+				break
+			}
+		}
+	}
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("LockTimestamp").Gt(int64(0)).And("AccountName").Eq(accountName)
 
-	return r.findUtxos(ctx, query)
+	utxos, err := r.findUtxos(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		for _, script := range scripts {
+			if bytes.Equal(u.Script, script) {
+				filteredUtxos = append(filteredUtxos, u)
+				break
+			}
+		}
+	}
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) GetBalanceForAccount(

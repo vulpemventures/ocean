@@ -55,10 +55,11 @@ type UtxoRepository interface {
 	GetAllUtxosForAccount(ctx context.Context, account string) ([]*Utxo, error)
 	// GetSpendableUtxosForAccount returns the list of spendable utxos for the
 	// given account. The list incldues only confirmed and unlocked utxos.
-	GetSpendableUtxosForAccount(ctx context.Context, account string) ([]*Utxo, error)
+	// Can be filtered by output scripts.
+	GetSpendableUtxosForAccount(ctx context.Context, account string, scripts [][]byte) ([]*Utxo, error)
 	// GetLockedUtxosForAccount returns the list of all currently locked utxos
-	// for the given account.
-	GetLockedUtxosForAccount(ctx context.Context, account string) ([]*Utxo, error)
+	// for the given account. Can be filtered by output scripts.
+	GetLockedUtxosForAccount(ctx context.Context, account string, scripts [][]byte) ([]*Utxo, error)
 	// GetBalanceForAccount returns the confirmed, unconfirmed and locked
 	// balances per each asset for the given account.
 	GetBalanceForAccount(ctx context.Context, account string) (map[string]*Balance, error)
