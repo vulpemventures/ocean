@@ -150,8 +150,6 @@ message ListUtxosResponse{
   Utxos spendable_utxos = 1;
   // List of currently locked utxos.
   Utxos locked_utxos = 2;
-  // List of unconfirmed utxos.
-  Utxos unconfirmed_utxos = 3;
 }
 
 message DeleteAccountRequest{

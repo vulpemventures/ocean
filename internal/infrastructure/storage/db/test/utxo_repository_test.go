@@ -70,11 +70,11 @@ func testAddAndGetUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
 
-		utxos, err = repo.GetAllUtxosForAccount(ctx, accountName, nil)
+		utxos, err = repo.GetAllUtxosForAccount(ctx, accountName)
 		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
 
-		utxos, err = repo.GetAllUtxosForAccount(ctx, wrongAccountName, nil)
+		utxos, err = repo.GetAllUtxosForAccount(ctx, wrongAccountName)
 		require.NoError(t, err)
 		require.Empty(t, utxos)
 
@@ -91,7 +91,7 @@ func testAddAndGetUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.Empty(t, confirmedUtxos)
 		require.Len(t, unconfirmedUtxos, len(newUtxos))
 
-		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName)
+		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName, nil)
 		require.NoError(t, err)
 		confirmedUtxos, unconfirmedUtxos = make([]*domain.Utxo, 0), make([]*domain.Utxo, 0)
 		for _, u := range utxos {
@@ -104,7 +104,7 @@ func testAddAndGetUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.Empty(t, confirmedUtxos)
 		require.Len(t, unconfirmedUtxos, len(newUtxos))
 
-		utxos, err = repo.GetLockedUtxosForAccount(ctx, accountName)
+		utxos, err = repo.GetLockedUtxosForAccount(ctx, accountName, nil)
 		require.NoError(t, err)
 		require.Empty(t, utxos)
 
@@ -167,7 +167,7 @@ func testConfirmUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.Empty(t, unconfirmedUtxos)
 		require.Len(t, confirmedUtxos, len(newUtxos))
 
-		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName)
+		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName, nil)
 		require.NoError(t, err)
 		confirmedUtxos, unconfirmedUtxos = make([]*domain.Utxo, 0), make([]*domain.Utxo, 0)
 		for _, u := range utxos {
@@ -202,7 +202,7 @@ func testLockUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.NoError(t, err)
 		require.Zero(t, count)
 
-		utxos, err := repo.GetLockedUtxosForAccount(ctx, accountName)
+		utxos, err := repo.GetLockedUtxosForAccount(ctx, accountName, nil)
 		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
 
@@ -210,7 +210,7 @@ func testLockUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.NoError(t, err)
 		require.Empty(t, utxos)
 
-		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName)
+		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName, nil)
 		require.NoError(t, err)
 		require.Empty(t, utxos)
 
@@ -236,7 +236,7 @@ func testUnlockUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.NoError(t, err)
 		require.Zero(t, count)
 
-		utxos, err := repo.GetLockedUtxosForAccount(ctx, accountName)
+		utxos, err := repo.GetLockedUtxosForAccount(ctx, accountName, nil)
 		require.NoError(t, err)
 		require.Empty(t, utxos)
 
@@ -244,7 +244,7 @@ func testUnlockUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
 
-		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName)
+		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName, nil)
 		require.NoError(t, err)
 		require.Len(t, utxos, len(newUtxos))
 
@@ -274,7 +274,7 @@ func testSpendUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.NoError(t, err)
 		require.Empty(t, utxos)
 
-		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName)
+		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName, nil)
 		require.NoError(t, err)
 		require.Empty(t, utxos)
 
@@ -304,7 +304,7 @@ func testConfirmSpentUtxos(t *testing.T, repo domain.UtxoRepository) {
 		require.NoError(t, err)
 		require.Empty(t, utxos)
 
-		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName)
+		utxos, err = repo.GetSpendableUtxosForAccount(ctx, accountName, nil)
 		require.NoError(t, err)
 		require.Empty(t, utxos)
 

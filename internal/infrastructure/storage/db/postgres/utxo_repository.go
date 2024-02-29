@@ -239,6 +239,36 @@ func (u *utxoRepositoryPg) GetSpendableUtxos(
 }
 
 func (u *utxoRepositoryPg) GetAllUtxosForAccount(
+	ctx context.Context, account string,
+) ([]*domain.Utxo, error) {
+	resp := make([]*domain.Utxo, 0)
+	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
+	if err != nil {
+		return nil, nil
+	}
+
+	req := make([]queries.GetAllUtxosRow, 0, len(utxos))
+	for _, v := range utxos {
+		req = append(
+			req,
+			toGetAllUtxosRow(v),
+		)
+
+	}
+
+	utxosByKey, err := u.convertToUtxos(req)
+	if err != nil {
+		return nil, nil
+	}
+
+	for _, v := range utxosByKey {
+		resp = append(resp, v)
+	}
+
+	return resp, nil
+}
+
+func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
 	ctx context.Context, account string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
@@ -262,47 +292,17 @@ func (u *utxoRepositoryPg) GetAllUtxosForAccount(
 	}
 
 	for _, v := range utxosByKey {
-		found := len(scripts) <= 0
-		for _, script := range scripts {
-			if bytes.Equal(v.Script, script) {
-				found = true
-				break
-			}
-		}
-		if found {
-			resp = append(resp, v)
-		}
-	}
-
-	return resp, nil
-}
-
-func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
-	ctx context.Context, account string,
-) ([]*domain.Utxo, error) {
-	resp := make([]*domain.Utxo, 0)
-	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
-	if err != nil {
-		return nil, nil
-	}
-
-	req := make([]queries.GetAllUtxosRow, 0, len(utxos))
-	for _, v := range utxos {
-		req = append(
-			req,
-			toGetAllUtxosRow(v),
-		)
-
-	}
-
-	utxosByKey, err := u.convertToUtxos(req)
-	if err != nil {
-		return nil, nil
-	}
-
-	for _, v := range utxosByKey {
 		if !v.IsLocked() && !v.IsSpent() {
-			resp = append(resp, v)
+			found := len(scripts) <= 0
+			for _, script := range scripts {
+				if bytes.Equal(v.Script, script) {
+					found = true
+					break
+				}
+			}
+			if found {
+				resp = append(resp, v)
+			}
 		}
 	}
 
@@ -310,7 +310,7 @@ func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
-	ctx context.Context, account string,
+	ctx context.Context, account string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
 	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
@@ -334,7 +334,16 @@ func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
 
 	for _, v := range utxosByKey {
 		if v.IsLocked() && !v.IsSpent() {
-			resp = append(resp, v)
+			found := len(scripts) <= 0
+			for _, script := range scripts {
+				if bytes.Equal(v.Script, script) {
+					found = true
+					break
+				}
+			}
+			if found {
+				resp = append(resp, v)
+			}
 		}
 	}
 

@@ -172,30 +172,21 @@ func (as *AccountService) ListUtxosForAccount(
 		return nil, err
 	}
 
-	utxos, err := as.repoManager.UtxoRepository().GetAllUtxosForAccount(
+	spendableUtxos, err := as.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
 		ctx, account.Namespace, scripts,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	spendableUtxos := make([]*domain.Utxo, 0, len(utxos))
-	unconfirmedUtxos := make([]*domain.Utxo, 0, len(utxos))
-	lockedUtxos := make([]*domain.Utxo, 0, len(utxos))
-
-	for _, u := range utxos {
-		if u.IsLocked() {
-			lockedUtxos = append(lockedUtxos, u)
-		} else {
-			if u.IsConfirmed() {
-				spendableUtxos = append(spendableUtxos, u)
-			} else {
-				unconfirmedUtxos = append(unconfirmedUtxos, u)
-			}
-		}
+	lockedUtxos, err := as.repoManager.UtxoRepository().GetLockedUtxosForAccount(
+		ctx, account.Namespace, scripts,
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return &UtxoInfo{spendableUtxos, lockedUtxos, unconfirmedUtxos}, nil
+	return &UtxoInfo{spendableUtxos, lockedUtxos}, nil
 }
 
 func (as *AccountService) DeleteAccount(

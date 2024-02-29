@@ -190,7 +190,6 @@ func (a *account) ListUtxos(
 	}
 	spendableUtxos := parseUtxos(utxosInfo.Spendable.Info())
 	lockedUtxos := parseUtxos(utxosInfo.Locked.Info())
-	unconfirmedUtxos := parseUtxos(utxosInfo.Unconfirmed.Info())
 	return &pb.ListUtxosResponse{
 		SpendableUtxos: &pb.Utxos{
 			AccountName: name,
@@ -199,10 +198,6 @@ func (a *account) ListUtxos(
 		LockedUtxos: &pb.Utxos{
 			AccountName: name,
 			Utxos:       lockedUtxos,
-		},
-		UnconfirmedUtxos: &pb.Utxos{
-			AccountName: name,
-			Utxos:       unconfirmedUtxos,
 		},
 	}, nil
 }
