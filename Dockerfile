@@ -23,7 +23,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
 COPY --from=builder /app/bin/* /app
-COPY --from=builder /app/internal/infrastructure/storage/db/postgres/migration/* /
+COPY --from=builder /app/internal/infrastructure/storage/db/postgres/migration/* /app
 
 ENV OCEAN_DB_MIGRATION_PATH=file://
 ENV OCEAN_DATADIR=/app/data/oceand 
