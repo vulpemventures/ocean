@@ -11,8 +11,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN GOPROXY=https://goproxy.io CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="-X 'main.Version=${COMMIT}' -X 'main.Commit=${COMMIT}' -X 'main.Date=${COMMIT}'" -o bin/oceand cmd/oceand/main.go
-RUN GOPROXY=https://goproxy.io go build -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${COMMIT}' -X 'main.date=${DATE}'" -o bin/ocean cmd/ocean/*
+RUN CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="-X 'main.Version=${COMMIT}' -X 'main.Commit=${COMMIT}' -X 'main.Date=${COMMIT}'" -o bin/oceand cmd/oceand/main.go
+RUN go build -ldflags="-X 'main.version=${VERSION}' -X 'main.commit=${COMMIT}' -X 'main.date=${DATE}'" -o bin/ocean cmd/ocean/*
 
 # Second image, running the oceand executable
 FROM debian:buster-slim
