@@ -1,6 +1,7 @@
 package inmemory
 
 import (
+	"bytes"
 	"context"
 	"sync"
 
@@ -84,25 +85,25 @@ func (r *utxoRepository) GetAllUtxosForAccount(
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	return r.getUtxosForAccount(account, false, false)
+	return r.getUtxosForAccount(account, false, false, nil)
 }
 
 func (r *utxoRepository) GetSpendableUtxosForAccount(
-	_ context.Context, account string,
+	_ context.Context, account string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	return r.getUtxosForAccount(account, true, false)
+	return r.getUtxosForAccount(account, true, false, scripts)
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
-	_ context.Context, account string,
+	_ context.Context, account string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	return r.getUtxosForAccount(account, false, true)
+	return r.getUtxosForAccount(account, false, true, scripts)
 }
 
 func (r *utxoRepository) GetBalanceForAccount(
@@ -111,7 +112,7 @@ func (r *utxoRepository) GetBalanceForAccount(
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	utxos, _ := r.getUtxosForAccount(account, false, false)
+	utxos, _ := r.getUtxosForAccount(account, false, false, nil)
 	balance := make(map[string]*domain.Balance)
 	for _, u := range utxos {
 		if u.IsSpent() {
@@ -228,7 +229,7 @@ func (r *utxoRepository) getUtxos(spendableOnly bool) []*domain.Utxo {
 	utxos := make([]*domain.Utxo, 0, len(r.store.utxos))
 	for _, u := range r.store.utxos {
 		if spendableOnly {
-			if !u.IsLocked() && u.IsConfirmed() && !u.IsSpent() {
+			if !u.IsLocked() && !u.IsSpent() {
 				utxos = append(utxos, u)
 			}
 			continue
@@ -239,7 +240,7 @@ func (r *utxoRepository) getUtxos(spendableOnly bool) []*domain.Utxo {
 }
 
 func (r *utxoRepository) getUtxosForAccount(
-	account string, spendableOnly, lockedOnly bool,
+	account string, spendableOnly, lockedOnly bool, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	keys := r.store.utxosByAccount[account]
 	if len(keys) == 0 {
@@ -251,14 +252,14 @@ func (r *utxoRepository) getUtxosForAccount(
 		u := r.store.utxos[k.Hash()]
 
 		if spendableOnly {
-			if !u.IsLocked() && u.IsConfirmed() && !u.IsSpent() {
+			if !u.IsLocked() && !u.IsSpent() {
 				utxos = append(utxos, u)
 			}
 			continue
 		}
 
 		if lockedOnly {
-			if u.IsLocked() {
+			if u.IsLocked() && !u.IsSpent() {
 				utxos = append(utxos, u)
 			}
 			continue
@@ -266,7 +267,20 @@ func (r *utxoRepository) getUtxosForAccount(
 		utxos = append(utxos, u)
 	}
 
-	return utxos, nil
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		for _, script := range scripts {
+			if bytes.Equal(u.Script, script) {
+				filteredUtxos = append(filteredUtxos, u)
+				break
+			}
+		}
+	}
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) spendUtxos(

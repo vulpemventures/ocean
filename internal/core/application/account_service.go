@@ -160,7 +160,7 @@ func (as *AccountService) GetBalanceForAccount(
 }
 
 func (as *AccountService) ListUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, scripts [][]byte,
 ) (*UtxoInfo, error) {
 	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
@@ -173,14 +173,14 @@ func (as *AccountService) ListUtxosForAccount(
 	}
 
 	spendableUtxos, err := as.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
-		ctx, account.Namespace,
+		ctx, account.Namespace, scripts,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	lockedUtxos, err := as.repoManager.UtxoRepository().GetLockedUtxosForAccount(
-		ctx, account.Namespace,
+		ctx, account.Namespace, scripts,
 	)
 	if err != nil {
 		return nil, err
