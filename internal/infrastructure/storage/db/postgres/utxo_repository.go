@@ -1,6 +1,7 @@
 package postgresdb
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"sync"
@@ -229,7 +230,7 @@ func (u *utxoRepositoryPg) GetSpendableUtxos(
 	}
 
 	for _, v := range utxosByKey {
-		if !v.IsLocked() && v.IsConfirmed() && !v.IsSpent() {
+		if !v.IsLocked() && !v.IsSpent() {
 			resp = append(resp, v)
 		}
 	}
@@ -268,7 +269,7 @@ func (u *utxoRepositoryPg) GetAllUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
-	ctx context.Context, account string,
+	ctx context.Context, account string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
 	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
@@ -291,8 +292,17 @@ func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
 	}
 
 	for _, v := range utxosByKey {
-		if !v.IsLocked() && v.IsConfirmed() && !v.IsSpent() {
-			resp = append(resp, v)
+		if !v.IsLocked() && !v.IsSpent() {
+			found := len(scripts) <= 0
+			for _, script := range scripts {
+				if bytes.Equal(v.Script, script) {
+					found = true
+					break
+				}
+			}
+			if found {
+				resp = append(resp, v)
+			}
 		}
 	}
 
@@ -300,7 +310,7 @@ func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
-	ctx context.Context, account string,
+	ctx context.Context, account string, scripts [][]byte,
 ) ([]*domain.Utxo, error) {
 	resp := make([]*domain.Utxo, 0)
 	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
@@ -323,8 +333,17 @@ func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
 	}
 
 	for _, v := range utxosByKey {
-		if v.IsLocked() {
-			resp = append(resp, v)
+		if v.IsLocked() && !v.IsSpent() {
+			found := len(scripts) <= 0
+			for _, script := range scripts {
+				if bytes.Equal(v.Script, script) {
+					found = true
+					break
+				}
+			}
+			if found {
+				resp = append(resp, v)
+			}
 		}
 	}
 

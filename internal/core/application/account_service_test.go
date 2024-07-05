@@ -49,7 +49,7 @@ func TestAccountService(t *testing.T) {
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(addresses), 2)
 
-	utxos, err := svc.ListUtxosForAccount(ctx, accountName)
+	utxos, err := svc.ListUtxosForAccount(ctx, accountName, nil)
 	require.NoError(t, err)
 	require.NotNil(t, utxos)
 	require.NotEmpty(t, utxos.Spendable)

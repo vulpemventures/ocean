@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/vulpemventures/go-elements/address"
 	pb "github.com/vulpemventures/ocean/api-spec/protobuf/gen/go/ocean/v1"
 	"github.com/vulpemventures/ocean/internal/core/application"
 	"google.golang.org/grpc/codes"
@@ -173,8 +174,17 @@ func (a *account) ListUtxos(
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	addresses := req.GetAddresses()
+	scripts := make([][]byte, 0, len(addresses))
+	for _, addr := range addresses {
+		script, err := address.ToOutputScript(addr)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid address %s", addr))
+		}
+		scripts = append(scripts, script)
+	}
 
-	utxosInfo, err := a.appSvc.ListUtxosForAccount(ctx, name)
+	utxosInfo, err := a.appSvc.ListUtxosForAccount(ctx, name, scripts)
 	if err != nil {
 		return nil, err
 	}
