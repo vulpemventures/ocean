@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/vulpemventures/go-elements/address"
 	"github.com/vulpemventures/ocean/internal/core/domain"
 	"github.com/vulpemventures/ocean/internal/core/ports"
 )
@@ -160,8 +161,18 @@ func (as *AccountService) GetBalanceForAccount(
 }
 
 func (as *AccountService) ListUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, addresses []string,
 ) (*UtxoInfo, error) {
+	scripts := make([][]byte, 0, len(addresses))
+	if len(addresses) > 0 {
+		for _, addr := range addresses {
+			script, err := address.ToOutputScript(addr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid address %s", addr)
+			}
+			scripts = append(scripts, script)
+		}
+	}
 	w, err := as.repoManager.WalletRepository().GetWallet(ctx)
 	if err != nil {
 		return nil, err
@@ -173,14 +184,14 @@ func (as *AccountService) ListUtxosForAccount(
 	}
 
 	spendableUtxos, err := as.repoManager.UtxoRepository().GetSpendableUtxosForAccount(
-		ctx, account.Namespace,
+		ctx, account.Namespace, scripts...,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	lockedUtxos, err := as.repoManager.UtxoRepository().GetLockedUtxosForAccount(
-		ctx, account.Namespace,
+		ctx, account.Namespace, scripts...,
 	)
 	if err != nil {
 		return nil, err

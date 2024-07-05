@@ -173,8 +173,9 @@ func (a *account) ListUtxos(
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	addresses := req.GetAddresses()
 
-	utxosInfo, err := a.appSvc.ListUtxosForAccount(ctx, name)
+	utxosInfo, err := a.appSvc.ListUtxosForAccount(ctx, name, addresses)
 	if err != nil {
 		return nil, err
 	}

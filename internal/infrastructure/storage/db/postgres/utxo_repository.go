@@ -3,6 +3,7 @@ package postgresdb
 import (
 	"context"
 	"database/sql"
+	"encoding/hex"
 	"sync"
 
 	"github.com/jackc/pgconn"
@@ -268,67 +269,87 @@ func (u *utxoRepositoryPg) GetAllUtxosForAccount(
 }
 
 func (u *utxoRepositoryPg) GetSpendableUtxosForAccount(
-	ctx context.Context, account string,
+	ctx context.Context, account string, scripts ...[]byte,
 ) ([]*domain.Utxo, error) {
-	resp := make([]*domain.Utxo, 0)
-	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
+	utxos := make([]*domain.Utxo, 0)
+	rows, err := u.querier.GetUtxosForAccount(ctx, account)
 	if err != nil {
 		return nil, nil
 	}
 
-	req := make([]queries.GetAllUtxosRow, 0, len(utxos))
-	for _, v := range utxos {
-		req = append(
-			req,
-			toGetAllUtxosRow(v),
-		)
-
+	query := make([]queries.GetAllUtxosRow, 0, len(rows))
+	for _, row := range rows {
+		query = append(query, toGetAllUtxosRow(row))
 	}
 
-	utxosByKey, err := u.convertToUtxos(req)
+	utxosByKey, err := u.convertToUtxos(query)
 	if err != nil {
 		return nil, nil
 	}
 
-	for _, v := range utxosByKey {
-		if !v.IsLocked() && v.IsConfirmed() && !v.IsSpent() {
-			resp = append(resp, v)
+	indexedScripts := make(map[string]struct{})
+	if len(scripts) > 0 {
+		for _, script := range scripts {
+			indexedScripts[hex.EncodeToString(script)] = struct{}{}
 		}
 	}
 
-	return resp, nil
+	for _, utxo := range utxosByKey {
+		if !utxo.IsLocked() && utxo.IsConfirmed() && !utxo.IsSpent() {
+			if len(indexedScripts) <= 0 {
+				utxos = append(utxos, utxo)
+				continue
+			}
+
+			if _, ok := indexedScripts[hex.EncodeToString(utxo.Script)]; ok {
+				utxos = append(utxos, utxo)
+			}
+		}
+	}
+
+	return utxos, nil
 }
 
 func (u *utxoRepositoryPg) GetLockedUtxosForAccount(
-	ctx context.Context, account string,
+	ctx context.Context, account string, scripts ...[]byte,
 ) ([]*domain.Utxo, error) {
-	resp := make([]*domain.Utxo, 0)
-	utxos, err := u.querier.GetUtxosForAccount(ctx, account)
+	utxos := make([]*domain.Utxo, 0)
+	rows, err := u.querier.GetUtxosForAccount(ctx, account)
 	if err != nil {
 		return nil, nil
 	}
 
-	req := make([]queries.GetAllUtxosRow, 0, len(utxos))
-	for _, v := range utxos {
-		req = append(
-			req,
-			toGetAllUtxosRow(v),
-		)
-
+	query := make([]queries.GetAllUtxosRow, 0, len(rows))
+	for _, v := range rows {
+		query = append(query, toGetAllUtxosRow(v))
 	}
 
-	utxosByKey, err := u.convertToUtxos(req)
+	utxosByKey, err := u.convertToUtxos(query)
 	if err != nil {
 		return nil, nil
 	}
 
-	for _, v := range utxosByKey {
-		if v.IsLocked() {
-			resp = append(resp, v)
+	indexedScripts := make(map[string]struct{})
+	if len(scripts) > 0 {
+		for _, script := range scripts {
+			indexedScripts[hex.EncodeToString(script)] = struct{}{}
 		}
 	}
 
-	return resp, nil
+	for _, utxo := range utxosByKey {
+		if utxo.IsLocked() {
+			if len(indexedScripts) <= 0 {
+				utxos = append(utxos, utxo)
+				continue
+			}
+
+			if _, ok := indexedScripts[hex.EncodeToString(utxo.Script)]; ok {
+				utxos = append(utxos, utxo)
+			}
+		}
+	}
+
+	return utxos, nil
 }
 
 func (u *utxoRepositoryPg) GetBalanceForAccount(

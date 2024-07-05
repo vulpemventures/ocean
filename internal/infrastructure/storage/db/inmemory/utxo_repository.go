@@ -2,6 +2,7 @@ package inmemory
 
 import (
 	"context"
+	"encoding/hex"
 	"sync"
 
 	"github.com/vulpemventures/ocean/internal/core/domain"
@@ -88,21 +89,65 @@ func (r *utxoRepository) GetAllUtxosForAccount(
 }
 
 func (r *utxoRepository) GetSpendableUtxosForAccount(
-	_ context.Context, account string,
+	_ context.Context, account string, scripts ...[]byte,
 ) ([]*domain.Utxo, error) {
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	return r.getUtxosForAccount(account, true, false)
+	utxos, err := r.getUtxosForAccount(account, true, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	indexedScripts := make(map[string]struct{})
+	for _, script := range scripts {
+		indexedScripts[hex.EncodeToString(script)] = struct{}{}
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		script := hex.EncodeToString(u.Script)
+		if _, ok := indexedScripts[script]; ok {
+			filteredUtxos = append(filteredUtxos, u)
+		}
+	}
+
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
-	_ context.Context, account string,
+	_ context.Context, account string, scripts ...[]byte,
 ) ([]*domain.Utxo, error) {
 	r.store.lock.RLock()
 	defer r.store.lock.RUnlock()
 
-	return r.getUtxosForAccount(account, false, true)
+	utxos, err := r.getUtxosForAccount(account, true, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	indexedScripts := make(map[string]struct{})
+	for _, script := range scripts {
+		indexedScripts[hex.EncodeToString(script)] = struct{}{}
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		script := hex.EncodeToString(u.Script)
+		if _, ok := indexedScripts[script]; ok {
+			filteredUtxos = append(filteredUtxos, u)
+		}
+	}
+
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) GetBalanceForAccount(

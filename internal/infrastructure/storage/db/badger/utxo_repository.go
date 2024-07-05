@@ -2,6 +2,7 @@ package dbbadger
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -83,22 +84,66 @@ func (r *utxoRepository) GetAllUtxosForAccount(
 }
 
 func (r *utxoRepository) GetSpendableUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, scripts ...[]byte,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("ConfirmedStatus").Ne(domain.UtxoStatus{}).
 		And("LockTimestamp").Eq(int64(0)).And("AccountName").Eq(accountName)
 
-	return r.findUtxos(ctx, query)
+	utxos, err := r.findUtxos(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	indexedScripts := make(map[string]struct{})
+	for _, script := range scripts {
+		indexedScripts[hex.EncodeToString(script)] = struct{}{}
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		script := hex.EncodeToString(u.Script)
+		if _, ok := indexedScripts[script]; ok {
+			filteredUtxos = append(filteredUtxos, u)
+		}
+	}
+
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) GetLockedUtxosForAccount(
-	ctx context.Context, accountName string,
+	ctx context.Context, accountName string, scripts ...[]byte,
 ) ([]*domain.Utxo, error) {
 	query := badgerhold.Where("SpentStatus").Eq(domain.UtxoStatus{}).
 		And("LockTimestamp").Gt(int64(0)).And("AccountName").Eq(accountName)
 
-	return r.findUtxos(ctx, query)
+	utxos, err := r.findUtxos(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(scripts) <= 0 {
+		return utxos, nil
+	}
+
+	indexedScripts := make(map[string]struct{})
+	for _, script := range scripts {
+		indexedScripts[hex.EncodeToString(script)] = struct{}{}
+	}
+
+	filteredUtxos := make([]*domain.Utxo, 0, len(utxos))
+	for _, u := range utxos {
+		script := hex.EncodeToString(u.Script)
+		if _, ok := indexedScripts[script]; ok {
+			filteredUtxos = append(filteredUtxos, u)
+		}
+	}
+
+	return filteredUtxos, nil
 }
 
 func (r *utxoRepository) GetBalanceForAccount(
